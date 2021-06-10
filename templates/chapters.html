@@ -4,7 +4,7 @@
 <h2>Chapters</h2>
 <ul>
   {% for page in section.pages | reverse %}
-  <li><a href="{{ page.permalink }}">{{ page.title }}</a></li>
+  <li><a href="{{ page.permalink | safe }}">{{ page.title }}</a></li>
   {% endfor %}
 </ul>
 {% endblock content %}
