@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Explaining althttpd</title>
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">Escape</h1>
+<p class="subtitle"><strong>2021-06-10</strong></p>
+<p>This function accepts a C-string and returns another C-string with every double-quote doubled.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Double any double-quote characters in a string.
+*/
+</span><span style="color:#b48ead;">static char </span><span style="color:#c0c5ce;">*</span><span style="color:#8fa1b3;">Escape</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">z</span><span style="color:#c0c5ce;">){
+  size_t i, j;
+  size_t n;
+  </span><span style="color:#b48ead;">char</span><span style="color:#c0c5ce;"> c;
+  </span><span style="color:#b48ead;">char </span><span style="color:#c0c5ce;">*zOut;
+  </span><span style="color:#b48ead;">for</span><span style="color:#c0c5ce;">(i=</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">; (c=z[i])!=</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">&amp;&amp; c!=&#39;</span><span style="color:#a3be8c;">&quot;</span><span style="color:#c0c5ce;">&#39;; i++){}
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( c==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;"> z;
+  n = </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">;
+  </span><span style="color:#b48ead;">for</span><span style="color:#c0c5ce;">(i++; (c=z[i])!=</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">; i++){ </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( c==&#39;</span><span style="color:#a3be8c;">&quot;</span><span style="color:#c0c5ce;">&#39; ) n++; }
+  zOut = </span><span style="color:#96b5b4;">malloc</span><span style="color:#c0c5ce;">( i+n+</span><span style="color:#d08770;">1 </span><span style="color:#c0c5ce;">);
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zOut==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">return </span><span style="color:#c0c5ce;">&quot;&quot;;
+  </span><span style="color:#b48ead;">for</span><span style="color:#c0c5ce;">(i=j=</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">; (c=z[i])!=</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">; i++){
+    zOut[j++] = c;
+    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( c==&#39;</span><span style="color:#a3be8c;">&quot;</span><span style="color:#c0c5ce;">&#39; ) zOut[j++] = c;
+  }
+  zOut[j] = </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">;
+  </span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;"> zOut;
+}
+</span></code></pre>
+<p>First we have the variable declarations at the top of the function...
+So its one of those code. <em>sigh</em>.
+Second, we can see that there is 0 calls to <code>strlen</code>.
+We perform a single pass on the original strings and a second one on the output string.
+Pretty cool.</p>
+<p>Notice that the caller of this function have no real way to know if allocations have been made.
+However, from the design philosophy,</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">Because each althttpd process only needs to service a single connection, althttpd is single threaded.
+Furthermore, each process only lives for the duration of a single connection, which means that althttpd does not need to worry too much about memory leaks.
+These design factors help keep the althttpd source code simple, which facilitates security auditing and analysis.
+</span></code></pre>
+<p>So this seems like a conscious desicion.
+If you grep for this function, its only being used in one place.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">bash-3.2$</span><span style="color:#c0c5ce;"> rg &#39;</span><span style="color:#a3be8c;">Escape</span><span style="color:#c0c5ce;">&#39; ./content/althttpd.c
+</span><span style="color:#bf616a;">387:static</span><span style="color:#c0c5ce;"> char *Escape(char *z){
+</span><span style="color:#bf616a;">481:</span><span style="color:#c0c5ce;">        zDate, zRemoteAddr, zHttp, Escape(zHttpHost)</span><span style="color:#bf616a;">,</span><span style="color:#c0c5ce;"> Escape(zScript)</span><span style="color:#bf616a;">,
+482:</span><span style="color:#c0c5ce;">        Escape(zReferer)</span><span style="color:#bf616a;">,</span><span style="color:#c0c5ce;"> zReplyStatus, nIn, nOut,
+</span><span style="color:#bf616a;">488:</span><span style="color:#c0c5ce;">        nRequest, Escape(zAgent)</span><span style="color:#bf616a;">,</span><span style="color:#c0c5ce;"> Escape(zRM)</span><span style="color:#bf616a;">,
+</span></code></pre>
+<p>Notice that they don't even assign the pointer returned by this function!
+I will let you judge whether this is good idea or not.</p>
+ </div>
+      <p>[<a href="/">index</a>][<a href="/chapters">chapters</a>]</p>
+    </section>
+  </body>
+</html>

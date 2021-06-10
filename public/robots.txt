@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: hbina.github.io/explaining-althttpd/sitemap.xml
