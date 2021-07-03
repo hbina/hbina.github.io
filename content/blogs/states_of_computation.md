@@ -265,4 +265,7 @@ This is mostly because you need to jump through lot of syntax to do anything mea
 This is why Haskell does away with almost all syntax to function application (the only thing that matters really is the position).
 This makes Haskell's implementation of this concept a lot more compact.
 
+One thing to notice is that we didn't have to perform any check on the behavior that "division by 0 is bad" anywhere in `multiplication`.
+The error handling is done automatically and we only concern ourselves with the details to implement multiplication.
+
 ## State Monad
