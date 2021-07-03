@@ -1,14 +1,16 @@
 {% extends "base.html" %}
 <!-- Header -->
 {% block header %}
-<title>{{ page.title }}</title>
+<title>{{ section.title }}</title>
 {% endblock header %}
 <!-- Content -->
 {% block content %}
-<h1 class="title">{{ page.title }}</h1>
-<p class="subtitle"><strong>{{ page.date }}</strong></p>
-{{ page.content | safe }}
-<p>[<a href="/althttpd">Chapters</a>]</p>
+<h1 class="title">{{ section.title }}</h1>
+<ul>
+  {% for page in section.pages | reverse %}
+  <li><a href="{{ page.permalink | safe }}">{{ page.title }}</a></li>
+  {% endfor %}
+</ul>
 <p>
   If you see any errors please raise one
   <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>

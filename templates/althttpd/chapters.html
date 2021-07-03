@@ -1,4 +1,10 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %}
+<!-- Header -->
+{% block header %}
+<title>{{ section.title }}</title>
+{% endblock header %}
+<!-- Content -->
+{% block content %}
 <h1 class="title">{{ section.title }}</h1>
 <p>Click <a href="althttpd.c">here</a> to see the source code</p>
 <h2>Chapters</h2>
@@ -7,5 +13,8 @@
   <li><a href="{{ page.permalink | safe }}">{{ page.title }}</a></li>
   {% endfor %}
 </ul>
-<p>If you see any errors please raise one <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a></p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
 {% endblock content %}
