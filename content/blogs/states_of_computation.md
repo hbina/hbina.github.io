@@ -9,13 +9,20 @@ This is just my opinion on the matter.
 I am still learning it myself (when does one ever stop?).
 If you have any objection, comments, or corrections, please raise an issue in the the Github source for this page :).
 
+Furthermore, I will mostly be using `TypeScript` to show a version of monad in its imperative form.
+So this is just a note that it will not be as powerful and as elegant as its "equivalence" or superior form in `Haskell`.
+
 ## Introduction
 
 In programming, we have to deal with a lot of complexities.
 There some tools to help us narrow down the set of possible issues/states that we have to deal with.
 Types is possibly the most reliable and most used static analysis tool.
 
-## We Beging With Dynamic Types
+One thing about complexity is that they will always exist.
+The only thing that we can do is to abstract it away and pray that the abstraction doesn't break in really bad ways down the line.
+Bsically, _someone_ gotta pay for the complexity.
+
+## We Begin with Dynamic Types
 
 Dynamic languages will "allow" us to write anything we like.
 I say in quotes because this is actually not true.
@@ -190,10 +197,11 @@ We can simply "lift" any given function using the unit function.
 `lift` takes any function from `T -> number` into `T -> MaybeNumber`
 
 ```typescript
-const lift =
-  <T>(f: (a: T) => number): ((a: T) => MaybeNumber) =>
-  (a: T) =>
-    unit(f(a));
+type BindArg = (a: number) => number;
+type BindResult = (a: number) => MaybeNumber;
+function lift(f: BindArg): BindResult {
+  return (a) => unit(f(a));
+}
 ```
 
 And so if we have functions like,
@@ -220,7 +228,7 @@ In my (humble) opinion, monads is just a way to express computations as types.
 Computations produces result and instead of actually using the result, we just provide a function `f` to the type that performs the computation itself.
 
 A monad is not any specific type, it is more like an instance.
-In Haskell, `Monad` is a typeclass defined as,
+In `Haskell`, `Monad` is a typeclass defined as,
 
 ```haskell
 class  Monad m  where
