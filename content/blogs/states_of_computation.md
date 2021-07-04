@@ -166,7 +166,7 @@ class MaybeNumber {
       this.value === Infinity ||
       this.value === -Infinity /* and the rest */
     ) {
-      return undefined;
+      return this;
     } else {
       return f(this.value);
     }
@@ -186,14 +186,14 @@ First, lets deal with the fact that the signature requires us to return a `Maybe
 Does this mean that we need to reimplement all the functions that didn't use `MaybeNumber` into one?
 Fear not, for we can lift these functions.
 
-We can simply "lift" any given function using the pure function.
+We can simply "lift" any given function using the unit function.
 `lift` takes any function from `T -> number` into `T -> MaybeNumber`
 
 ```typescript
 const lift =
   <T>(f: (a: T) => number): ((a: T) => MaybeNumber) =>
   (a: T) =>
-    pure(f(a));
+    unit(f(a));
 ```
 
 And so if we have functions like,
@@ -209,7 +209,7 @@ We can simply lifts them and use them like so,
 const times2M = lift(times2);
 const adds2M = lift(adds2);
 
-const b = pure(10);
+const b = unit(10);
 const b2 = b.use(times2M);
 const b2M = b2.use(times2M).use(adds2M).use(times2M).use(adds2M);
 ```
@@ -234,7 +234,7 @@ In this hypothetical TypeScript, it could be written like this,
 
 ```typescript
 export interface Monad<T> {
-  // also called pure
+  // also called unit
   static return(t: T): Monad<T>;
   // The monad's >== function is also called bind
   bind(f: (t: T) => Monad<R>): Monad<R>;
