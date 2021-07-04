@@ -160,7 +160,7 @@ class MaybeNumber {
   constructor(v: number) {
     this.value = v;
   }
-  use(f: (t: number) => MaybeNumber): MaybeNumber {
+  bind(f: (t: number) => MaybeNumber): MaybeNumber {
     if (
       this.value === NaN ||
       this.value === Infinity ||
@@ -177,7 +177,7 @@ class MaybeNumber {
 Let's go through the class slowly.
 First, we note that the class contains 1 member variable, `value` which contains the `number` that we want to hide.
 Then we have a simply constructor to create this container from a pure `number`.
-Lastly, we have the `use` function that takes a `number` and returns the `MaybeNumber`.
+Lastly, we have the `bind` function that takes a `number` and returns the `MaybeNumber`.
 You might be thinking, why does it return a `MaybeNumber` and not a I`number`?
 
 This is a deliberate choice because we want to force the user of this value to always deal with this class and it enables nice composition ala `Promise`s.
@@ -210,8 +210,8 @@ const times2M = lift(times2);
 const adds2M = lift(adds2);
 
 const b = unit(10);
-const b2 = b.use(times2M);
-const b2M = b2.use(times2M).use(adds2M).use(times2M).use(adds2M);
+const b2 = b.bind(times2M);
+const b2M = b2.bind(times2M).bind(adds2M).bind(times2M).bind(adds2M);
 ```
 
 ## Enter Monads
@@ -220,7 +220,7 @@ In my (humble) opinion, monads is just a way to express computations as types.
 Computations produces result and instead of actually using the result, we just provide a function `f` to the type that performs the computation itself.
 
 A monad is not any specific type, it is more like an instance.
-In Haskell, `Monad` is a class defined as,
+In Haskell, `Monad` is a typeclass defined as,
 
 ```haskell
 class  Monad m  where
