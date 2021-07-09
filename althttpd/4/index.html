@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>MakeLogEntry</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">MakeLogEntry</h1>
+<p class="subtitle"><strong>2021-06-12</strong></p>
+<p>This function is quite big.
+Lets dig in.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Make an entry in the log file.  If the HTTP connection should be
+** closed, then terminate this process.  Otherwise return.
+*/
+</span><span style="color:#b48ead;">static void </span><span style="color:#8fa1b3;">MakeLogEntry</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">exitCode</span><span style="color:#c0c5ce;">, </span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">lineNum</span><span style="color:#c0c5ce;">){
+  FILE *log;
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zTmpNam ){
+    </span><span style="color:#bf616a;">unlink</span><span style="color:#c0c5ce;">(zTmpNam);
+  }
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zLogFile &amp;&amp; !omitLog ){
+    </span><span style="color:#b48ead;">struct</span><span style="color:#c0c5ce;"> timeval now;
+    </span><span style="color:#b48ead;">struct</span><span style="color:#c0c5ce;"> tm *pTm;
+    </span><span style="color:#b48ead;">struct</span><span style="color:#c0c5ce;"> rusage self, children;
+    </span><span style="color:#b48ead;">int</span><span style="color:#c0c5ce;"> waitStatus;
+    </span><span style="color:#b48ead;">char </span><span style="color:#c0c5ce;">*zRM = zRemoteUser ? zRemoteUser : &quot;&quot;;
+    </span><span style="color:#b48ead;">char </span><span style="color:#c0c5ce;">*zFilename;
+    size_t sz;
+    </span><span style="color:#b48ead;">char</span><span style="color:#c0c5ce;"> zDate[</span><span style="color:#d08770;">200</span><span style="color:#c0c5ce;">];
+    </span><span style="color:#b48ead;">char</span><span style="color:#c0c5ce;"> zExpLogFile[</span><span style="color:#d08770;">500</span><span style="color:#c0c5ce;">];
+
+    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zScript==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zScript = &quot;&quot;;
+    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zRealScript==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zRealScript = &quot;&quot;;
+    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zRemoteAddr==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zRemoteAddr = &quot;&quot;;
+    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zHttpHost==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zHttpHost = &quot;&quot;;
+    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zReferer==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zReferer = &quot;&quot;;
+    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zAgent==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zAgent = &quot;&quot;;
+    </span><span style="color:#bf616a;">gettimeofday</span><span style="color:#c0c5ce;">(&amp;now, </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">);
+    pTm = </span><span style="color:#96b5b4;">localtime</span><span style="color:#c0c5ce;">(&amp;now.</span><span style="color:#bf616a;">tv_sec</span><span style="color:#c0c5ce;">);
+    </span><span style="color:#96b5b4;">strftime</span><span style="color:#c0c5ce;">(zDate, sizeof(zDate), &quot;</span><span style="color:#a3be8c;">%Y-%m-</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;"> %H:%M:</span><span style="color:#d08770;">%S</span><span style="color:#c0c5ce;">&quot;, pTm);
+    sz = </span><span style="color:#96b5b4;">strftime</span><span style="color:#c0c5ce;">(zExpLogFile, sizeof(zExpLogFile), zLogFile, pTm);
+    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( sz&gt;</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">&amp;&amp; sz&lt;sizeof(zExpLogFile)-</span><span style="color:#d08770;">2 </span><span style="color:#c0c5ce;">){
+      zFilename = zExpLogFile;
+    }</span><span style="color:#b48ead;">else</span><span style="color:#c0c5ce;">{
+      zFilename = zLogFile;
+    }
+    </span><span style="color:#bf616a;">waitpid</span><span style="color:#c0c5ce;">(-</span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">, &amp;waitStatus, WNOHANG);
+    </span><span style="color:#bf616a;">getrusage</span><span style="color:#c0c5ce;">(RUSAGE_SELF, &amp;self);
+    </span><span style="color:#bf616a;">getrusage</span><span style="color:#c0c5ce;">(RUSAGE_CHILDREN, &amp;children);
+    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( (log = </span><span style="color:#96b5b4;">fopen</span><span style="color:#c0c5ce;">(zFilename,&quot;</span><span style="color:#a3be8c;">a</span><span style="color:#c0c5ce;">&quot;))!=</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">){
+</span><span style="color:#b48ead;">#ifdef</span><span style="color:#c0c5ce;"> COMBINED_LOG_FORMAT
+      </span><span style="color:#96b5b4;">strftime</span><span style="color:#c0c5ce;">(zDate, sizeof(zDate), &quot;</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;">/%b/%Y:%H:%M:</span><span style="color:#d08770;">%S</span><span style="color:#a3be8c;"> %Z</span><span style="color:#c0c5ce;">&quot;, pTm);
+      </span><span style="color:#96b5b4;">fprintf</span><span style="color:#c0c5ce;">(log, &quot;</span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;"> - - [</span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;">] </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">%s %s %s</span><span style="color:#96b5b4;">\&quot; </span><span style="color:#d08770;">%s %d </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">%s</span><span style="color:#96b5b4;">\&quot; \&quot;</span><span style="color:#d08770;">%s</span><span style="color:#96b5b4;">\&quot;\n</span><span style="color:#c0c5ce;">&quot;,
+              zRemoteAddr, zDate, zMethod, zScript, zProtocol,
+              zReplyStatus, nOut, zReferer, zAgent);
+</span><span style="color:#b48ead;">#else
+      </span><span style="color:#96b5b4;">strftime</span><span style="color:#c0c5ce;">(zDate, sizeof(zDate), &quot;</span><span style="color:#a3be8c;">%Y-%m-</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;"> %H:%M:</span><span style="color:#d08770;">%S</span><span style="color:#c0c5ce;">&quot;, pTm);
+      </span><span style="color:#65737e;">/* Log record files:
+      **  (1) Date and time
+      **  (2) IP address
+      **  (3) URL being accessed
+      **  (4) Referer
+      **  (5) Reply status
+      **  (6) Bytes received
+      **  (7) Bytes sent
+      **  (8) Self user time
+      **  (9) Self system time
+      ** (10) Children user time
+      ** (11) Children system time
+      ** (12) Total wall-clock time
+      ** (13) Request number for same TCP/IP connection
+      ** (14) User agent
+      ** (15) Remote user
+      ** (16) Bytes of URL that correspond to the SCRIPT_NAME
+      ** (17) Line number in source file
+      */
+      </span><span style="color:#96b5b4;">fprintf</span><span style="color:#c0c5ce;">(log,
+        &quot;</span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;">,</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;">://</span><span style="color:#d08770;">%s%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">,</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">,</span><span style="color:#c0c5ce;">&quot;
+           &quot;</span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%lld</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%lld</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%lld</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%lld</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%lld</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;">,</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">,</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%d</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;,
+        zDate, zRemoteAddr, zHttp, </span><span style="color:#bf616a;">Escape</span><span style="color:#c0c5ce;">(zHttpHost), </span><span style="color:#bf616a;">Escape</span><span style="color:#c0c5ce;">(zScript),
+        </span><span style="color:#bf616a;">Escape</span><span style="color:#c0c5ce;">(zReferer), zReplyStatus, nIn, nOut,
+        </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;self.</span><span style="color:#bf616a;">ru_utime</span><span style="color:#c0c5ce;">) - </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;priorSelf.</span><span style="color:#bf616a;">ru_utime</span><span style="color:#c0c5ce;">),
+        </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;self.</span><span style="color:#bf616a;">ru_stime</span><span style="color:#c0c5ce;">) - </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;priorSelf.</span><span style="color:#bf616a;">ru_stime</span><span style="color:#c0c5ce;">),
+        </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;children.</span><span style="color:#bf616a;">ru_utime</span><span style="color:#c0c5ce;">) - </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;priorChild.</span><span style="color:#bf616a;">ru_utime</span><span style="color:#c0c5ce;">),
+        </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;children.</span><span style="color:#bf616a;">ru_stime</span><span style="color:#c0c5ce;">) - </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;priorChild.</span><span style="color:#bf616a;">ru_stime</span><span style="color:#c0c5ce;">),
+        </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;now) - </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;beginTime),
+        nRequest, </span><span style="color:#bf616a;">Escape</span><span style="color:#c0c5ce;">(zAgent), </span><span style="color:#bf616a;">Escape</span><span style="color:#c0c5ce;">(zRM),
+        (</span><span style="color:#b48ead;">int</span><span style="color:#c0c5ce;">)(</span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zHttp)+</span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zHttpHost)+</span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zRealScript)+</span><span style="color:#d08770;">3</span><span style="color:#c0c5ce;">),
+        lineNum
+      );
+      priorSelf = self;
+      priorChild = children;
+</span><span style="color:#b48ead;">#endif
+      </span><span style="color:#96b5b4;">fclose</span><span style="color:#c0c5ce;">(log);
+      nIn = nOut = </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">;
+    }
+  }
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( closeConnection ){
+    </span><span style="color:#96b5b4;">exit</span><span style="color:#c0c5ce;">(exitCode);
+  }
+  statusSent = </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">;
+}
+</span></code></pre>
+<p>Grepping for the usage of this function, we get:</p>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">bash-3.2$</span><span style="color:#c0c5ce;"> rg &#39;</span><span style="color:#a3be8c;">MakeLogEntry</span><span style="color:#c0c5ce;">&#39; ./content/althttpd/althttpd.c
+</span><span style="color:#bf616a;">417:static</span><span style="color:#c0c5ce;"> void MakeLogEntry(int exitCode, int lineNum){
+</span><span style="color:#bf616a;">514:</span><span style="color:#c0c5ce;">    MakeLogEntry(1,100);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Malloc() </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">708:</span><span style="color:#c0c5ce;">  MakeLogEntry(0, lineno);
+</span><span style="color:#bf616a;">723:</span><span style="color:#c0c5ce;">  MakeLogEntry(0, lineno);
+</span><span style="color:#bf616a;">741:</span><span style="color:#c0c5ce;">  MakeLogEntry(0, 110);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Not authorized */
+</span><span style="color:#bf616a;">756:</span><span style="color:#c0c5ce;">  MakeLogEntry(0, 120);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: CGI Error */
+</span><span style="color:#bf616a;">773:</span><span style="color:#c0c5ce;">      MakeLogEntry(0, 130);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Timeout */
+</span><span style="color:#bf616a;">789:</span><span style="color:#c0c5ce;">  MakeLogEntry(0, 140);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: CGI script is writable */
+</span><span style="color:#bf616a;">809:</span><span style="color:#c0c5ce;">  MakeLogEntry(0, linenum);
+</span><span style="color:#bf616a;">840:</span><span style="color:#c0c5ce;">    MakeLogEntry(0, lineno);
+</span><span style="color:#bf616a;">1323:</span><span style="color:#c0c5ce;">    MakeLogEntry(0, 470);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: ETag Cache Hit */
+</span><span style="color:#bf616a;">1347:</span><span style="color:#c0c5ce;">    MakeLogEntry(0, 2); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Normal HEAD reply */
+</span><span style="color:#bf616a;">1684:</span><span style="color:#c0c5ce;">    MakeLogEntry(0, 200); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: bad protocol in HTTP header */
+</span><span style="color:#bf616a;">1709:</span><span style="color:#c0c5ce;">    MakeLogEntry(0, 220); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Unknown request method */
+</span><span style="color:#bf616a;">1908:</span><span style="color:#c0c5ce;">      MakeLogEntry(0, 270); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Request too large */
+</span><span style="color:#bf616a;">1926:</span><span style="color:#c0c5ce;">      MakeLogEntry(0, 290); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: cannot create temp file for POST */
+</span><span style="color:#bf616a;">2219:</span><span style="color:#c0c5ce;">  MakeLogEntry(0, 0);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Normal reply */
+</span></code></pre>
+<p>It seems that most (if not all) of these usages are related to logging before killing the connection process.
+It accepts the <code>exitCode</code> that the process should return, and a <code>lineNum</code>.</p>
+<p>The second parameter is supposed to indicate the approximate line number this function is called.
+Probably for debugging purposes.</p>
+<p>The first thing we do in the function is to unlink a file.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zTmpNam ){
+  </span><span style="color:#bf616a;">unlink</span><span style="color:#c0c5ce;">(zTmpNam);
+}
+</span></code></pre>
+<p>Grepping for <code>zTmpNam</code> yields,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">bash-3.2$</span><span style="color:#c0c5ce;"> rg &#39;</span><span style="color:#a3be8c;">zTmpNam</span><span style="color:#c0c5ce;">&#39; ./content/althttpd/althttpd.c
+</span><span style="color:#bf616a;">290:static</span><span style="color:#c0c5ce;"> char *zTmpNam = 0;        </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> Name of a temporary file */
+</span><span style="color:#bf616a;">291:static</span><span style="color:#c0c5ce;"> char zTmpNamBuf</span><span style="color:#b48ead;">[</span><span style="color:#c0c5ce;">500</span><span style="color:#b48ead;">]</span><span style="color:#c0c5ce;">;     </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> Space to hold the temporary filename */
+</span><span style="color:#bf616a;">419:</span><span style="color:#c0c5ce;">  if( zTmpNam ){
+</span><span style="color:#bf616a;">420:</span><span style="color:#c0c5ce;">    unlink(zTmpNam);
+</span><span style="color:#bf616a;">1310:</span><span style="color:#c0c5ce;">  if( zTmpNam ) </span><span style="color:#bf616a;">unlink</span><span style="color:#c0c5ce;">(zTmpNam);
+</span><span style="color:#bf616a;">1610:   </span><span style="color:#c0c5ce;">&amp;&amp; (</span><span style="color:#bf616a;">in</span><span style="color:#c0c5ce;"> = fopen(zTmpNam,&quot;</span><span style="color:#a3be8c;">r</span><span style="color:#c0c5ce;">&quot;))</span><span style="color:#bf616a;">!</span><span style="color:#c0c5ce;">=</span><span style="color:#a3be8c;">0 </span><span style="color:#c0c5ce;">){
+</span><span style="color:#bf616a;">1912:</span><span style="color:#c0c5ce;">    sprintf(zTmpNamBuf, &quot;</span><span style="color:#a3be8c;">/tmp/-post-data-XXXXXX</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1913:</span><span style="color:#c0c5ce;">    zTmpNam = zTmpNamBuf;
+</span><span style="color:#bf616a;">1914:</span><span style="color:#c0c5ce;">    if( mkstemp(zTmpNam)&lt;</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">){
+</span><span style="color:#bf616a;">1918:</span><span style="color:#c0c5ce;">    out = fopen(zTmpNam,&quot;</span><span style="color:#a3be8c;">wb</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1924:        </span><span style="color:#c0c5ce;">&quot;</span><span style="color:#a3be8c;">Could not open </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;"> for writing\n</span><span style="color:#c0c5ce;">&quot;, zTmpNam
+</span><span style="color:#bf616a;">2155:</span><span style="color:#c0c5ce;">      open(zTmpNam, O_RDONLY);
+</span></code></pre>
+<p>So <code>zTmpNam</code> is basically a temporary file created from <code>mkstemp</code>.
+Then, if <code>zLogFile</code> is provided and <code>omitLog</code> is false, we start some logging procedure.s
+This block of statements here:</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zScript==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zScript = &quot;&quot;;
+</span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zRealScript==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zRealScript = &quot;&quot;;
+</span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zRemoteAddr==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zRemoteAddr = &quot;&quot;;
+</span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zHttpHost==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zHttpHost = &quot;&quot;;
+</span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zReferer==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zReferer = &quot;&quot;;
+</span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zAgent==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zAgent = &quot;&quot;;
+</span><span style="color:#bf616a;">gettimeofday</span><span style="color:#c0c5ce;">(&amp;now, </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">);
+pTm = </span><span style="color:#96b5b4;">localtime</span><span style="color:#c0c5ce;">(&amp;now.</span><span style="color:#bf616a;">tv_sec</span><span style="color:#c0c5ce;">);
+</span><span style="color:#bf616a;">strftime</span><span style="color:#c0c5ce;">(zDate, sizeof(zDate), &quot;</span><span style="color:#a3be8c;">%Y-%m-</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;"> %H:%M:</span><span style="color:#d08770;">%S</span><span style="color:#c0c5ce;">&quot;, pTm);
+sz = </span><span style="color:#96b5b4;">strftime</span><span style="color:#c0c5ce;">(zExpLogFile, sizeof(zExpLogFile), zLogFile, pTm);
+</span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( sz&gt;</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">&amp;&amp; sz&lt;sizeof(zExpLogFile)-</span><span style="color:#d08770;">2 </span><span style="color:#c0c5ce;">){
+  zFilename = zExpLogFile;
+}</span><span style="color:#b48ead;">else</span><span style="color:#c0c5ce;">{
+  zFilename = zLogFile;
+}
+</span><span style="color:#bf616a;">waitpid</span><span style="color:#c0c5ce;">(-</span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">, &amp;waitStatus, WNOHANG);
+</span><span style="color:#bf616a;">getrusage</span><span style="color:#c0c5ce;">(RUSAGE_SELF, &amp;self);
+</span><span style="color:#bf616a;">getrusage</span><span style="color:#c0c5ce;">(RUSAGE_CHILDREN, &amp;children);
+</span></code></pre>
+<p>Is basically to get the current state of the process that will be logged.
+The other interesting part of the program is in the logging itself.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#bf616a;">fprintf</span><span style="color:#c0c5ce;">(log,
+  &quot;</span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;">,</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;">://</span><span style="color:#d08770;">%s%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">,</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">,</span><span style="color:#c0c5ce;">&quot;
+      &quot;</span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%lld</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%lld</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%lld</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%lld</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%lld</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;">,</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">,</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;">,</span><span style="color:#d08770;">%d</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;,
+  zDate, zRemoteAddr, zHttp, </span><span style="color:#bf616a;">Escape</span><span style="color:#c0c5ce;">(zHttpHost), </span><span style="color:#bf616a;">Escape</span><span style="color:#c0c5ce;">(zScript),
+  </span><span style="color:#bf616a;">Escape</span><span style="color:#c0c5ce;">(zReferer), zReplyStatus, nIn, nOut,
+  </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;self.</span><span style="color:#bf616a;">ru_utime</span><span style="color:#c0c5ce;">) - </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;priorSelf.</span><span style="color:#bf616a;">ru_utime</span><span style="color:#c0c5ce;">),
+  </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;self.</span><span style="color:#bf616a;">ru_stime</span><span style="color:#c0c5ce;">) - </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;priorSelf.</span><span style="color:#bf616a;">ru_stime</span><span style="color:#c0c5ce;">),
+  </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;children.</span><span style="color:#bf616a;">ru_utime</span><span style="color:#c0c5ce;">) - </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;priorChild.</span><span style="color:#bf616a;">ru_utime</span><span style="color:#c0c5ce;">),
+  </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;children.</span><span style="color:#bf616a;">ru_stime</span><span style="color:#c0c5ce;">) - </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;priorChild.</span><span style="color:#bf616a;">ru_stime</span><span style="color:#c0c5ce;">),
+  </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;now) - </span><span style="color:#bf616a;">tvms</span><span style="color:#c0c5ce;">(&amp;beginTime),
+  nRequest, </span><span style="color:#bf616a;">Escape</span><span style="color:#c0c5ce;">(zAgent), </span><span style="color:#bf616a;">Escape</span><span style="color:#c0c5ce;">(zRM),
+  (</span><span style="color:#b48ead;">int</span><span style="color:#c0c5ce;">)(</span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zHttp)+</span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zHttpHost)+</span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zRealScript)+</span><span style="color:#d08770;">3</span><span style="color:#c0c5ce;">),
+  lineNum
+);
+</span></code></pre>
+<p>Remember the function <code>Escape</code>?
+This is the ony place where its being used and the pointer returned isn't assigned to anything.
+So we can't possibly free any of the allocations made.</p>
+<p>However, just after this, we have:</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( closeConnection ){
+  </span><span style="color:#96b5b4;">exit</span><span style="color:#c0c5ce;">(exitCode);
+}
+</span></code></pre>
+<p>Additionally based on the grepped usage of this function above.
+We saw that most of the time, they immediately exit process.
+So all those &quot;memory leaks&quot; previously (AFAIK) will be inconsequential.</p>
+<h1 id="references">References:</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/mkstemp.3.html">mkstemp</a></li>
+<li><a href="https://man7.org/linux/man-pages/man2/unlink.2.html">unlink</a></li>
+<li><a href="https://man7.org/linux/man-pages/man2/gettimeofday.2.html">gettimeofday</a></li>
+<li><a href="https://man7.org/linux/man-pages/man3/localtime.3p.html">localtime</a></li>
+<li><a href="https://man7.org/linux/man-pages/man3/strftime.3.html">strftime</a></li>
+<li><a href="https://man7.org/linux/man-pages/man3/exit.3.html">exit</a></li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

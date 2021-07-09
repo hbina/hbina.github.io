@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>TestParseRfc822Date</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">TestParseRfc822Date</h1>
+<p class="subtitle"><strong>2021-06-21</strong></p>
+<p>This function only exists for testing purposes.
+I wonder how plausible it is to test <em>all</em> the possible values by forking a bunch of process...</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Test procedure for ParseRfc822Date
+*/
+</span><span style="color:#b48ead;">void </span><span style="color:#8fa1b3;">TestParseRfc822Date</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">void</span><span style="color:#c0c5ce;">){
+  time_t t1, t2;
+  </span><span style="color:#b48ead;">for</span><span style="color:#c0c5ce;">(t1=</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">; t1&lt;</span><span style="color:#d08770;">0x7fffffff</span><span style="color:#c0c5ce;">; t1 += </span><span style="color:#d08770;">127</span><span style="color:#c0c5ce;">){
+    t2 = </span><span style="color:#bf616a;">ParseRfc822Date</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">Rfc822Date</span><span style="color:#c0c5ce;">(t1));
+    </span><span style="color:#96b5b4;">assert</span><span style="color:#c0c5ce;">( t1==t2 );
+  }
+}
+</span></code></pre>
+<p>To show that its only used once,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">hbina.github.io</span><span style="color:#c0c5ce;"> on  master </span><span style="color:#b48ead;">[</span><span style="color:#c0c5ce;">?⇡</span><span style="color:#b48ead;">]
+</span><span style="color:#bf616a;">❯</span><span style="color:#c0c5ce;"> cat ./static/althttpd/althttpd.c | </span><span style="color:#bf616a;">rg --line-number </span><span style="color:#c0c5ce;">&#39;</span><span style="color:#a3be8c;">TestParseRfc822Date</span><span style="color:#c0c5ce;">&#39;
+</span><span style="color:#bf616a;">666:void</span><span style="color:#c0c5ce;"> TestParseRfc822Date(void){
+</span><span style="color:#bf616a;">2425:</span><span style="color:#c0c5ce;">      TestParseRfc822Date();
+</span></code></pre><h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/assert.3.html">assert</a></li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

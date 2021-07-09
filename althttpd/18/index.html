@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>Forbidden</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">Forbidden</h1>
+<p class="subtitle"><strong>2021-06-24</strong></p>
+<p>Another HTTP response template.
+This time its to indicate that the request is forbidden.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Tell the client that they are not welcomed here.
+*/
+</span><span style="color:#b48ead;">static void </span><span style="color:#8fa1b3;">Forbidden</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">lineno</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#bf616a;">StartResponse</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">403 Forbidden</span><span style="color:#c0c5ce;">&quot;);
+  nOut += </span><span style="color:#96b5b4;">printf</span><span style="color:#c0c5ce;">(
+    &quot;</span><span style="color:#a3be8c;">Content-type: text/plain; charset=utf-8</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">Access denied</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;
+  );
+  closeConnection = </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">;
+  </span><span style="color:#bf616a;">MakeLogEntry</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">, lineno);
+  </span><span style="color:#96b5b4;">exit</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">);
+}
+</span></code></pre><h1 id="what-is-forbidden">What is Forbidden?</h1>
+<p>I think its amusing to look at the usage of this function.
+It's being used at several places,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#c0c5ce;">hbina.</span><span style="color:#bf616a;">github</span><span style="color:#c0c5ce;">.</span><span style="color:#bf616a;">io</span><span style="color:#c0c5ce;"> on  master took </span><span style="color:#d08770;">4</span><span style="background-color:#bf616a;color:#2b303b;">s</span><span style="color:#c0c5ce;">
+❯ cat ./</span><span style="color:#b48ead;">static</span><span style="color:#c0c5ce;">/althttpd/althttpd.</span><span style="color:#bf616a;">c </span><span style="color:#c0c5ce;">| rg --line-number &#39;</span><span style="color:#a3be8c;">Forbidden</span><span style="color:#c0c5ce;">&#39;
+</span><span style="color:#d08770;">715</span><span style="color:#c0c5ce;">:</span><span style="color:#b48ead;">static void </span><span style="color:#bf616a;">Forbidden</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">int</span><span style="color:#c0c5ce;"> lineno){
+</span><span style="color:#d08770;">716</span><span style="color:#c0c5ce;">:  </span><span style="color:#bf616a;">StartResponse</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">403 Forbidden</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#d08770;">1764</span><span style="color:#c0c5ce;">:        </span><span style="color:#bf616a;">Forbidden</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">230</span><span style="color:#c0c5ce;">); </span><span style="color:#65737e;">/* LOG: Referrer is devids.net */
+</span><span style="color:#d08770;">1778</span><span style="color:#c0c5ce;">:        </span><span style="color:#bf616a;">Forbidden</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">240</span><span style="color:#c0c5ce;">);  </span><span style="color:#65737e;">/* LOG: Illegal content in HOST: parameter */
+</span><span style="color:#d08770;">1838</span><span style="color:#c0c5ce;">:        </span><span style="color:#bf616a;">Forbidden</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">250</span><span style="color:#c0c5ce;">);  </span><span style="color:#65737e;">/* LOG: Disallowed user agent */
+</span><span style="color:#d08770;">1846</span><span style="color:#c0c5ce;">:      </span><span style="color:#bf616a;">Forbidden</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">251</span><span style="color:#c0c5ce;">);  </span><span style="color:#65737e;">/* LOG: Disallowed user agent (20190424) */
+</span></code></pre><h2 id="forbidden-referer">Forbidden Referer</h2>
+<p>HTTP headers have a &quot;referer&quot; value when making requests so that the server can know who made the request.
+For whatever reason, the author decides to forbid anyone from <code>devids.net</code>!</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#c0c5ce;">    </span><span style="background-color:#bf616a;color:#2b303b;">}</span><span style="color:#b48ead;">else if</span><span style="color:#c0c5ce;">( </span><span style="color:#bf616a;">strcasecmp</span><span style="color:#c0c5ce;">(zFieldName,&quot;</span><span style="color:#a3be8c;">Referer:</span><span style="color:#c0c5ce;">&quot;)==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">){
+      zReferer = </span><span style="color:#bf616a;">StrDup</span><span style="color:#c0c5ce;">(zVal);
+      </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( </span><span style="color:#96b5b4;">strstr</span><span style="color:#c0c5ce;">(zVal, &quot;</span><span style="color:#a3be8c;">devids.net/</span><span style="color:#c0c5ce;">&quot;)!=</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">){ zReferer = &quot;</span><span style="color:#a3be8c;">devids.net.smut</span><span style="color:#c0c5ce;">&quot;;
+        </span><span style="color:#bf616a;">Forbidden</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">230</span><span style="color:#c0c5ce;">); </span><span style="color:#65737e;">/* LOG: Referrer is devids.net */
+      </span><span style="color:#c0c5ce;">}
+</span></code></pre><h2 id="forbidden-host">Forbidden Host</h2>
+<p>When parsing the <code>Host</code> header value, the server will also reply with forbidden if there's illegal content in it.
+We will cover what <code>sanitizeString</code> is later.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#c0c5ce;">    </span><span style="background-color:#bf616a;color:#2b303b;">}</span><span style="color:#b48ead;">else if</span><span style="color:#c0c5ce;">( </span><span style="color:#bf616a;">strcasecmp</span><span style="color:#c0c5ce;">(zFieldName,&quot;</span><span style="color:#a3be8c;">Host:</span><span style="color:#c0c5ce;">&quot;)==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">){
+      </span><span style="color:#b48ead;">int</span><span style="color:#c0c5ce;"> inSquare = </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">;
+      </span><span style="color:#b48ead;">char</span><span style="color:#c0c5ce;"> c;
+      </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( </span><span style="color:#bf616a;">sanitizeString</span><span style="color:#c0c5ce;">(zVal) ){
+        </span><span style="color:#bf616a;">Forbidden</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">240</span><span style="color:#c0c5ce;">);  </span><span style="color:#65737e;">/* LOG: Illegal content in HOST: parameter */
+      </span><span style="color:#c0c5ce;">}
+</span></code></pre><h2 id="forbidden-agents">Forbidden Agents</h2>
+<p>There's also a list of disallowed agents.
+I am not sure why half of these are in here...
+I guess its just what the author had accumulated after over 20 years of running this program.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zAgent ){
+    </span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*azDisallow[] = {
+      &quot;</span><span style="color:#a3be8c;">Windows 9</span><span style="color:#c0c5ce;">&quot;,
+      &quot;</span><span style="color:#a3be8c;">Download Master</span><span style="color:#c0c5ce;">&quot;,
+      &quot;</span><span style="color:#a3be8c;">Ezooms/</span><span style="color:#c0c5ce;">&quot;,
+      &quot;</span><span style="color:#a3be8c;">HTTrace</span><span style="color:#c0c5ce;">&quot;,
+      &quot;</span><span style="color:#a3be8c;">AhrefsBot</span><span style="color:#c0c5ce;">&quot;,
+      &quot;</span><span style="color:#a3be8c;">MicroMessenger</span><span style="color:#c0c5ce;">&quot;,
+      &quot;</span><span style="color:#a3be8c;">OPPO A33 Build</span><span style="color:#c0c5ce;">&quot;,
+      &quot;</span><span style="color:#a3be8c;">SemrushBot</span><span style="color:#c0c5ce;">&quot;,
+      &quot;</span><span style="color:#a3be8c;">MegaIndex.ru</span><span style="color:#c0c5ce;">&quot;,
+      &quot;</span><span style="color:#a3be8c;">MJ12bot</span><span style="color:#c0c5ce;">&quot;,
+      &quot;</span><span style="color:#a3be8c;">Chrome/0.A.B.C</span><span style="color:#c0c5ce;">&quot;,
+      &quot;</span><span style="color:#a3be8c;">Neevabot/</span><span style="color:#c0c5ce;">&quot;,
+      &quot;</span><span style="color:#a3be8c;">BLEXBot/</span><span style="color:#c0c5ce;">&quot;,
+    };
+    size_t ii;
+    </span><span style="color:#b48ead;">for</span><span style="color:#c0c5ce;">(ii=</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">; ii&lt;sizeof(azDisallow)/sizeof(azDisallow[</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">]); ii++){
+      </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( </span><span style="color:#96b5b4;">strstr</span><span style="color:#c0c5ce;">(zAgent,azDisallow[ii])!=</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">){
+        </span><span style="color:#bf616a;">Forbidden</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">250</span><span style="color:#c0c5ce;">);  </span><span style="color:#65737e;">/* LOG: Disallowed user agent */
+      </span><span style="color:#c0c5ce;">}
+    }
+</span></code></pre><h2 id="forbidden-spiders">Forbidden Spiders</h2>
+<p>This one is disabled and its actually quite new!
+I am not sure what this is?
+I suppose there's a specific misbehaving/malicious website crawler attack the author's server at that time.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#b48ead;">#if </span><span style="color:#d08770;">0
+</span><span style="color:#65737e;">    /* Spider attack from 2019-04-24 */
+    if( strcmp(zAgent,
+            &quot;Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 &quot;
+            &quot;(KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36&quot;)==0 ){
+      Forbidden(251);  /* LOG: Disallowed user agent (20190424) */
+    }
+</span><span style="color:#b48ead;">#endif
+</span></code></pre><h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/printf.3.html">printf</a>.</li>
+<li><a href="https://man7.org/linux/man-pages/man3/exit.3.html">exit</a>.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referer">HTTP Header Referer</a>.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Host">HTTP Header Host</a>.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent">HTTP Header User-Agent</a>.</li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

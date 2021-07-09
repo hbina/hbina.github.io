@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>Malfunction</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">Malfunction</h1>
+<p class="subtitle"><strong>2021-06-29</strong></p>
+<p>This is a template for a generic error in the server.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Tell the client that the server malfunctioned.
+*/
+</span><span style="color:#b48ead;">static void </span><span style="color:#8fa1b3;">Malfunction</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">linenum</span><span style="color:#c0c5ce;">, </span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zFormat</span><span style="color:#c0c5ce;">, ...){
+  va_list ap;
+  </span><span style="color:#96b5b4;">va_start</span><span style="color:#c0c5ce;">(ap, zFormat);
+  </span><span style="color:#bf616a;">StartResponse</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">500 Server Malfunction</span><span style="color:#c0c5ce;">&quot;);
+  nOut += </span><span style="color:#96b5b4;">printf</span><span style="color:#c0c5ce;">(
+    &quot;</span><span style="color:#a3be8c;">Content-type: text/plain; charset=utf-8</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">Web server malfunctioned; error number </span><span style="color:#d08770;">%d</span><span style="color:#96b5b4;">\n\n</span><span style="color:#c0c5ce;">&quot;, linenum);
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zFormat ){
+    nOut += </span><span style="color:#96b5b4;">vprintf</span><span style="color:#c0c5ce;">(zFormat, ap);
+    </span><span style="color:#96b5b4;">printf</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;);
+    nOut++;
+  }
+  </span><span style="color:#bf616a;">MakeLogEntry</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">, linenum);
+  </span><span style="color:#96b5b4;">exit</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">);
+}
+</span></code></pre>
+<p>The strange part about this is that it exit the process with 0.
+If its malfunctioning, I assume it's supposed to return a negative value.
+It's being used in a variety of places, covering various kinds of errors.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">hbina.github.io</span><span style="color:#c0c5ce;"> on  master </span><span style="color:#b48ead;">[</span><span style="color:#c0c5ce;">!?</span><span style="color:#b48ead;">]
+</span><span style="color:#bf616a;">❯</span><span style="color:#c0c5ce;"> cat static/althttpd/althttpd.c | </span><span style="color:#bf616a;">rg --line-number --fixed-strings </span><span style="color:#c0c5ce;">&quot;</span><span style="color:#a3be8c;">Malfunction</span><span style="color:#c0c5ce;">&quot;796:static void Malfunction(int linenum, const char *zFormat, ...){
+</span><span style="color:#bf616a;">799:</span><span style="color:#c0c5ce;">  StartResponse(&quot;</span><span style="color:#a3be8c;">500 Server Malfunction</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1413:</span><span style="color:#c0c5ce;">          Malfunction(600, &quot;</span><span style="color:#a3be8c;">Out of memory: %d bytes</span><span style="color:#c0c5ce;">&quot;, nMalloc);
+</span><span style="color:#bf616a;">1451:</span><span style="color:#c0c5ce;">           Malfunction(610, &quot;</span><span style="color:#a3be8c;">Out of memory: %d bytes</span><span style="color:#c0c5ce;">&quot;, nMalloc);
+</span><span style="color:#bf616a;">1492:</span><span style="color:#c0c5ce;">    Malfunction(700, &quot;</span><span style="color:#a3be8c;">cannot open </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">\n</span><span style="color:#c0c5ce;">&quot;, zFile);
+</span><span style="color:#bf616a;">1495:</span><span style="color:#c0c5ce;">    Malfunction(701, &quot;</span><span style="color:#a3be8c;">cannot read </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">\n</span><span style="color:#c0c5ce;">&quot;, zFile);
+</span><span style="color:#bf616a;">1498:</span><span style="color:#c0c5ce;">    Malfunction(702, &quot;</span><span style="color:#a3be8c;">misformatted SCGI spec </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">\n</span><span style="color:#c0c5ce;">&quot;, zFile);
+</span><span style="color:#bf616a;">1504:</span><span style="color:#c0c5ce;">    Malfunction(703, &quot;</span><span style="color:#a3be8c;">misformatted SCGI spec </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">\n</span><span style="color:#c0c5ce;">&quot;, zFile);
+</span><span style="color:#bf616a;">1521:</span><span style="color:#c0c5ce;">    Malfunction(704, &quot;</span><span style="color:#a3be8c;">unrecognized line in SCGI spec: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">%s %s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">\n</span><span style="color:#c0c5ce;">&quot;,
+</span><span style="color:#bf616a;">1531:</span><span style="color:#c0c5ce;">    Malfunction(704, &quot;</span><span style="color:#a3be8c;">cannot resolve SCGI server name %s:%s\n%s\n</span><span style="color:#c0c5ce;">&quot;,
+</span><span style="color:#bf616a;">1546:</span><span style="color:#c0c5ce;">          Malfunction(721,&quot;</span><span style="color:#a3be8c;">Relight failed with %d: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">\n</span><span style="color:#c0c5ce;">&quot;,
+</span><span style="color:#bf616a;">1560:</span><span style="color:#c0c5ce;">          Malfunction(720, /* LOG: chdir() </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">1571:</span><span style="color:#c0c5ce;">          Malfunction(706, &quot;</span><span style="color:#a3be8c;">bad fallback file: </span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">%s</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">\n</span><span style="color:#c0c5ce;">&quot;, zFallback);
+</span><span style="color:#bf616a;">1574:</span><span style="color:#c0c5ce;">      Malfunction(707, &quot;</span><span style="color:#a3be8c;">cannot open socket to SCGI server %s\n</span><span style="color:#c0c5ce;">&quot;,
+</span><span style="color:#bf616a;">1593:</span><span style="color:#c0c5ce;">        Malfunction(706, &quot;</span><span style="color:#a3be8c;">out of memory</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1648:</span><span style="color:#c0c5ce;">    Malfunction(190,   /* LOG: chdir() </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">1915:</span><span style="color:#c0c5ce;">      Malfunction(280,  /* LOG: mkstemp() </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">2017:</span><span style="color:#c0c5ce;">    Malfunction(360,  /* LOG: chdir() </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">2122:</span><span style="color:#c0c5ce;">      Malfunction(420, /* LOG: chdir() </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">2151:</span><span style="color:#c0c5ce;">        Malfunction(430,  /* LOG: dup(0) </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">2177:</span><span style="color:#c0c5ce;">        Malfunction(440, /* LOG: pipe() </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">2184:</span><span style="color:#c0c5ce;">          Malfunction(450, /* LOG: dup(1) </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">2408:</span><span style="color:#c0c5ce;">        Malfunction(500,  /* LOG: unknown IP protocol */
+</span><span style="color:#bf616a;">2421:</span><span style="color:#c0c5ce;">        Malfunction(501, /* LOG: cannot open</span><span style="color:#bf616a;"> --input</span><span style="color:#c0c5ce;"> file */
+</span><span style="color:#bf616a;">2429:</span><span style="color:#c0c5ce;">      Malfunction(510, /* LOG: unknown command-line argument on launch */
+</span><span style="color:#bf616a;">2439:</span><span style="color:#c0c5ce;">      Malfunction(520, /* LOG:</span><span style="color:#bf616a;"> --root</span><span style="color:#c0c5ce;"> argument missing */
+</span><span style="color:#bf616a;">2448:</span><span style="color:#c0c5ce;">    Malfunction(530, /* LOG: chdir() </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">2458:</span><span style="color:#c0c5ce;">      Malfunction(540, /* LOG: chroot() </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">2467:</span><span style="color:#c0c5ce;">    Malfunction(550, /* LOG: server startup failed */
+</span><span style="color:#bf616a;">2485:</span><span style="color:#c0c5ce;">        Malfunction(560, /* LOG: setgid() </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">2489:</span><span style="color:#c0c5ce;">        Malfunction(570, /* LOG: setuid() </span><span style="color:#bf616a;">failed </span><span style="color:#c0c5ce;">*/
+</span><span style="color:#bf616a;">2493:</span><span style="color:#c0c5ce;">      Malfunction(580, /* LOG: unknown user */
+</span><span style="color:#bf616a;">2498:</span><span style="color:#c0c5ce;">    Malfunction(590, /* LOG: cannot run as root */
+</span></code></pre><h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/exit.3.html">exit</a></li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

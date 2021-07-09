@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>BAT: Better cat</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">BAT: Better cat</h1>
+<p class="subtitle"><strong>2021-07-10</strong></p>
+<h2 id="introduction">Introduction</h2>
+<p><code>bat</code> is <code>cat</code>-like utility.
+See <a href="https://github.com/sharkdp/bat">Github repository</a>.
+This is some features of <code>bat</code> that I use.</p>
+<h3 id="prettier-cat">Prettier cat</h3>
+<p>By default, <code>bat</code> will include some fluff with it which doesn't look as good when you copy and paste them directly. As can be seen below,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-shell" data-lang="shell"><span style="color:#c0c5ce;">coreutils on  hbina-tr-return-err-when-extra-args [$!?] is 📦 v0.0.6 via 🦀 v1.53.0
+❯ bat file.txt
+───────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+       │ File: file.txt
+───────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1   │ esgesg
+───────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+</span></code></pre>
+<p>You can fix this by adding <code>--plain</code>.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-shell" data-lang="shell"><span style="color:#c0c5ce;">coreutils on  hbina-tr-return-err-when-extra-args [$!?] is 📦 v0.0.6 via 🦀 v1.53.0
+❯ bat --plain file.txt
+esgesg
+</span></code></pre>
+<p>So why is it better? Because it supports syntax highlighting :) but I can't really show it here either.</p>
+<h3 id="print-specific-lines-of-text-in-file">Print specific lines of text in file</h3>
+<p>I am sure you can do this with <code>cat --number</code> and <code>grep</code> for specific line or whatever. But this is a lot simpler,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-shell" data-lang="shell"><span style="color:#c0c5ce;">coreutils on  hbina-tr-return-err-when-extra-args [$!?] is 📦 v0.0.6 via 🦀 v1.53.0
+❯ bat --plain --line-range 363:369 src/uu/tr/src/tr.rs
+        .arg(
+            Arg::with_name(options::SETS)
+                .multiple(true)
+                .takes_value(true)
+                .min_values(1)
+                .max_values(2),
+        )
+</span></code></pre>
+<p>[<a href="/blogs/">Articles</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>DRAFT: States of Computations</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">DRAFT: States of Computations</h1>
+<p class="subtitle"><strong>2021-07-03</strong></p>
+<h2 id="disclaimer">Disclaimer</h2>
+<p>This is just my opinion on the matter.
+I am still learning it myself (when does one ever stop?).
+If you have any objection, comments, or corrections, please raise an issue in the the Github source for this page :).</p>
+<p>Furthermore, I will mostly be using <code>TypeScript</code> to show a version of monad in its imperative form.
+So this is just a note that it will not be as powerful and as elegant as its &quot;equivalence&quot; or superior form in <code>Haskell</code>.</p>
+<h2 id="introduction">Introduction</h2>
+<p>In programming, we have to deal with a lot of complexities.
+There some tools to help us narrow down the set of possible issues/states that we have to deal with.
+Types is possibly the most reliable and most used static analysis tool.</p>
+<p>One thing about complexity is that they will always exist.
+The only thing that we can do is to abstract it away and pray that the abstraction doesn't break in really bad ways down the line.
+Bsically, <em>someone</em> gotta pay for the complexity.</p>
+<h2 id="we-begin-with-dynamic-types">We Begin with Dynamic Types</h2>
+<p>Dynamic languages will &quot;allow&quot; us to write anything we like.
+I say in quotes because this is actually not true.
+It's more like letting you make silly mistakes and make you pay for it later.</p>
+<p>I think dynamic languages is the perfect tool for writing small scripts.
+However, the moment you want the program to span for more than 2 files or when you want to refactor/enhance the functionality; you will start having issues.</p>
+<p>In my experience, what ended up happening is some sort of ad-hoc type-checking anyways.</p>
+<p>First, you perform a manual check on the functions.
+You do this by going through all the possible states of the program to convince yourself that the function does what you think it does.</p>
+<p>Then, in languages like JavaScript you can do a type-guard to check that the values given to you are what you think it is.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-javascript" data-lang="javascript"><span style="color:#c0c5ce;">...
+</span><span style="color:#b48ead;">if </span><span style="color:#c0c5ce;">(typeof </span><span style="color:#bf616a;">value </span><span style="color:#c0c5ce;">=== &quot;</span><span style="color:#a3be8c;">string</span><span style="color:#c0c5ce;">&quot;) {
+    </span><span style="color:#65737e;">// Okay...its a string
+</span><span style="color:#c0c5ce;">} </span><span style="color:#b48ead;">else </span><span style="color:#c0c5ce;">{
+    </span><span style="color:#65737e;">// What the hell is this?
+</span><span style="color:#c0c5ce;">}
+</span></code></pre>
+<p>Another one is to just run the program or write a bunch of tests to simulate most situations.
+This is very cumbersome.
+Sometimes, you even need to asinine tests just to make sure.</p>
+<h2 id="enter-types">Enter Types</h2>
+<p>To me, type is just a way to constraint the possible states that a variable can take.
+If I annotated a variable as a <code>number</code>, then I don't have to think about it being anything other than a <code>number</code>.
+This alone removes a huge cognitive load from anyone attempting to understand the behavior of the program.</p>
+<p>Additionally, types also provides you hint about the implementation of any given function.
+For example, a function that takes 2 <code>number</code>s and returning a <code>number</code> will probably do some sort of calculations on them.
+Given a function like,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-typescript" data-lang="typescript"><span style="color:#b48ead;">const </span><span style="color:#8fa1b3;">HighestBidder </span><span style="color:#c0c5ce;">= (</span><span style="color:#bf616a;">bids</span><span style="color:#c0c5ce;">: [String, number][]) -&gt; [String, number] </span><span style="color:#b48ead;">=&gt; </span><span style="color:#c0c5ce;">{...}
+</span></code></pre>
+<p>I can already expect what the function does.
+If I want to be extra sure and really understand the implementation, the function name and the types will guide me through it.</p>
+<p>However, types alone is not powerful enough to constraint the possible states and especially unique/bad ones.</p>
+<h2 id="function-values-consequence">Function + Values = Consequence</h2>
+<p>Eventhough we have narrowed down a variable to just one type, some types can take on many different values with varying meanings. For example, if we have a type <code>number</code> it includes all the possible 64-bit floating points.</p>
+<p>Therefore, we can think of a type as having a set of values.
+And within this set, the values are divided into what we consider as &quot;normal values&quot; and some &quot;problematic values&quot;.</p>
+<p>But, these values existing by itself isn't the problem.
+I can declare any values I want, <code>nullptr</code>, <code>NaN</code>, <code>-Inf</code> or whatever and if it's just sitting there not interacting with anything, it's by definition is doing nothing except maybe take up stack space.</p>
+<p>However, applying functions to values have consequences.</p>
+<p>The problem arises when we interact with these values using functions.
+When we write a function, we are attempting to express some idea of computation.
+The arguments type indicate what possible values the function can take and the result type indicate what possible values it will spit out.</p>
+<p>Let's consider an addition function,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-typescript" data-lang="typescript"><span style="color:#b48ead;">const </span><span style="color:#8fa1b3;">addition </span><span style="color:#c0c5ce;">= (</span><span style="color:#bf616a;">a</span><span style="color:#c0c5ce;">: number, </span><span style="color:#bf616a;">b</span><span style="color:#c0c5ce;">: number): number </span><span style="color:#b48ead;">=&gt; </span><span style="color:#c0c5ce;">{
+  </span><span style="color:#b48ead;">return </span><span style="color:#bf616a;">a </span><span style="color:#c0c5ce;">+ </span><span style="color:#bf616a;">b</span><span style="color:#c0c5ce;">;
+};
+</span></code></pre>
+<p>But we have a problem here.
+We are interacting with the whole set of possible values of <code>number</code>.
+And some of them are not as nice to work as we have discovered.
+What does <code>NaN + 3</code> means? What about <code>3 + -Inf</code>?
+All of these are values that we <em>really</em> don't care.</p>
+<p>I mean sure, someone will come up and say they know every possible interactions by hand.
+But it's still silly to worry about that every single time I want to do anything meaningful.
+I am just trying to write an addition function here!</p>
+<p>One easy way to go around this is to,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-typescript" data-lang="typescript"><span style="color:#b48ead;">const </span><span style="color:#8fa1b3;">addition </span><span style="color:#c0c5ce;">= (</span><span style="color:#bf616a;">a</span><span style="color:#c0c5ce;">: number, </span><span style="color:#bf616a;">b</span><span style="color:#c0c5ce;">: number): number | undefined </span><span style="color:#b48ead;">=&gt; </span><span style="color:#c0c5ce;">{
+  </span><span style="color:#b48ead;">if </span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">a </span><span style="color:#c0c5ce;">=== </span><span style="color:#d08770;">NaN </span><span style="color:#c0c5ce;">|| </span><span style="color:#bf616a;">a </span><span style="color:#c0c5ce;">=== </span><span style="color:#d08770;">Infinity </span><span style="color:#c0c5ce;">|| </span><span style="color:#bf616a;">a </span><span style="color:#c0c5ce;">=== -</span><span style="color:#d08770;">Infinity </span><span style="color:#65737e;">/* and the rest */</span><span style="color:#c0c5ce;">) {
+    </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">undefined</span><span style="color:#c0c5ce;">;
+  } </span><span style="color:#b48ead;">else </span><span style="color:#c0c5ce;">{
+    </span><span style="color:#b48ead;">return </span><span style="color:#bf616a;">a </span><span style="color:#c0c5ce;">+ </span><span style="color:#bf616a;">b</span><span style="color:#c0c5ce;">;
+  }
+};
+</span></code></pre>
+<p>At this point, you are pretty happy about the safety of this function.
+You are sure that any time I call this function, if the result is <em>not</em> undefined, we are confident that we are performing what we consider as &quot;addition&quot;.</p>
+<p>But then, a new requirement comes in and we need to implement a substraction function.
+Fine, we can just copy and paste the implementation before and replace <code>+</code> with <code>-</code>.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-typescript" data-lang="typescript"><span style="color:#b48ead;">const </span><span style="color:#8fa1b3;">substraction </span><span style="color:#c0c5ce;">= (</span><span style="color:#bf616a;">a</span><span style="color:#c0c5ce;">: number, </span><span style="color:#bf616a;">b</span><span style="color:#c0c5ce;">: number): number | undefined </span><span style="color:#b48ead;">=&gt; </span><span style="color:#c0c5ce;">{
+  </span><span style="color:#b48ead;">if </span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">a </span><span style="color:#c0c5ce;">=== </span><span style="color:#d08770;">NaN </span><span style="color:#c0c5ce;">|| </span><span style="color:#bf616a;">a </span><span style="color:#c0c5ce;">=== </span><span style="color:#d08770;">Infinity </span><span style="color:#c0c5ce;">|| </span><span style="color:#bf616a;">a </span><span style="color:#c0c5ce;">=== -</span><span style="color:#d08770;">Infinity </span><span style="color:#65737e;">/* and the rest */</span><span style="color:#c0c5ce;">) {
+    </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">undefined</span><span style="color:#c0c5ce;">;
+  } </span><span style="color:#b48ead;">else </span><span style="color:#c0c5ce;">{
+    </span><span style="color:#b48ead;">return </span><span style="color:#bf616a;">a </span><span style="color:#c0c5ce;">- </span><span style="color:#bf616a;">b</span><span style="color:#c0c5ce;">;
+  }
+};
+</span></code></pre>
+<p>Then multiple new requirement comes in, multiplication, division, factorial...
+We will need to do this <em>every</em> single time.</p>
+<p>Surely there's some way to abstract/pull out these common checks into a class.</p>
+<h2 id="don-t-repeat-yourself">Don't Repeat Yourself</h2>
+<p>Let's digress a bit and talk about function that accepts pointers as its argument.
+A pointer can take on many values, so the function itself has to deal with the states.
+From the function's point of view, the pointer could take on any values so it has to check if its <code>NULL</code> or not.
+This is bad because:</p>
+<ol>
+<li>We need to always do it.</li>
+<li>We need to always do it right.</li>
+<li>We need to pinky promise that we will do it all the time.</li>
+</ol>
+<p>It is simply nigh impossible to know when/where any given pointers are valid throughout its existence.
+From my experience, what ended up happening is that people create macros that will check for null pointers and panic otherwise.
+This macros would then be plastered around everywhere at the beginning of every function that uses pointers.
+Some of them are manually removed if the author is convinced enough that its not needed.</p>
+<p>Can we do better? Aren't we taugh to pull out common abstraction into a function and reuse that instead?</p>
+<h2 id="hide-behind-the-container">Hide Behind the Container</h2>
+<p>It turns that there is a way to deal with all this repetitiveness.
+The strategy is that we hide the values behind a container and the only way you can interact with the contained value is by passing it a function.
+Let's call it a <code>MaybeNumber</code>.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-typescript" data-lang="typescript"><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">MaybeNumber </span><span style="color:#eff1f5;">{
+  </span><span style="color:#bf616a;">value</span><span style="color:#c0c5ce;">: </span><span style="color:#eff1f5;">number;
+  </span><span style="color:#b48ead;">constructor</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">v</span><span style="color:#c0c5ce;">: </span><span style="color:#eff1f5;">number</span><span style="color:#c0c5ce;">) </span><span style="color:#eff1f5;">{
+    </span><span style="color:#bf616a;">this</span><span style="color:#eff1f5;">.value </span><span style="color:#c0c5ce;">= </span><span style="color:#bf616a;">v</span><span style="color:#eff1f5;">;
+  }
+  </span><span style="color:#8fa1b3;">bind</span><span style="color:#c0c5ce;">(</span><span style="color:#8fa1b3;">f</span><span style="color:#c0c5ce;">: (</span><span style="color:#bf616a;">t</span><span style="color:#c0c5ce;">: </span><span style="color:#eff1f5;">number</span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">=&gt; </span><span style="color:#eff1f5;">MaybeNumber</span><span style="color:#c0c5ce;">): </span><span style="color:#eff1f5;">MaybeNumber {
+    </span><span style="color:#b48ead;">if </span><span style="color:#eff1f5;">(
+      </span><span style="color:#bf616a;">this</span><span style="color:#eff1f5;">.value </span><span style="color:#c0c5ce;">=== </span><span style="color:#d08770;">NaN </span><span style="color:#c0c5ce;">||
+      </span><span style="color:#bf616a;">this</span><span style="color:#eff1f5;">.value </span><span style="color:#c0c5ce;">=== </span><span style="color:#d08770;">Infinity </span><span style="color:#c0c5ce;">||
+      </span><span style="color:#bf616a;">this</span><span style="color:#eff1f5;">.value </span><span style="color:#c0c5ce;">=== -</span><span style="color:#d08770;">Infinity </span><span style="color:#65737e;">/* and the rest */
+    </span><span style="color:#eff1f5;">) {
+      </span><span style="color:#b48ead;">return </span><span style="color:#bf616a;">this</span><span style="color:#eff1f5;">;
+    } </span><span style="color:#b48ead;">else </span><span style="color:#eff1f5;">{
+      </span><span style="color:#b48ead;">return </span><span style="color:#8fa1b3;">f</span><span style="color:#eff1f5;">(</span><span style="color:#bf616a;">this</span><span style="color:#eff1f5;">.value);
+    }
+  }
+}
+</span></code></pre>
+<p>Let's go through the class slowly.
+First, we note that the class contains 1 member variable, <code>value</code> which contains the <code>number</code> that we want to hide.
+Then we have a simply constructor to create this container from a pure <code>number</code>.
+Lastly, we have the <code>bind</code> function that takes a <code>number</code> and returns the <code>MaybeNumber</code>.
+You might be thinking, why does it return a <code>MaybeNumber</code> and not a I<code>number</code>?</p>
+<p>This is a deliberate choice because we want to force the user of this value to always deal with this class and it enables nice composition ala <code>Promise</code>s.</p>
+<p>First, lets deal with the fact that the signature requires us to return a <code>MaybeNumber</code>.
+Does this mean that we need to reimplement all the functions that didn't use <code>MaybeNumber</code> into one?
+Fear not, for we can lift these functions.</p>
+<p>We can simply &quot;lift&quot; any given function using the unit function.
+<code>lift</code> takes any function from <code>T -&gt; number</code> into <code>T -&gt; MaybeNumber</code></p>
+<pre style="background-color:#2b303b;">
+<code class="language-typescript" data-lang="typescript"><span style="color:#b48ead;">type </span><span style="color:#c0c5ce;">BindArg = (</span><span style="color:#bf616a;">a</span><span style="color:#c0c5ce;">: number) </span><span style="color:#b48ead;">=&gt; </span><span style="color:#c0c5ce;">number;
+</span><span style="color:#b48ead;">type </span><span style="color:#c0c5ce;">BindResult = (</span><span style="color:#bf616a;">a</span><span style="color:#c0c5ce;">: number) </span><span style="color:#b48ead;">=&gt; </span><span style="color:#c0c5ce;">MaybeNumber;
+</span><span style="color:#b48ead;">function </span><span style="color:#8fa1b3;">lift</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">f</span><span style="color:#c0c5ce;">: BindArg): BindResult {
+  </span><span style="color:#b48ead;">return </span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">a</span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">=&gt; </span><span style="color:#8fa1b3;">unit</span><span style="color:#c0c5ce;">(</span><span style="color:#8fa1b3;">f</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">a</span><span style="color:#c0c5ce;">));
+}
+</span></code></pre>
+<p>And so if we have functions like,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-typescript" data-lang="typescript"><span style="color:#b48ead;">const </span><span style="color:#8fa1b3;">times2 </span><span style="color:#c0c5ce;">= (</span><span style="color:#bf616a;">v</span><span style="color:#c0c5ce;">: number) </span><span style="color:#b48ead;">=&gt; </span><span style="color:#bf616a;">v </span><span style="color:#c0c5ce;">* </span><span style="color:#d08770;">2</span><span style="color:#c0c5ce;">;
+</span><span style="color:#b48ead;">const </span><span style="color:#8fa1b3;">adds2 </span><span style="color:#c0c5ce;">= (</span><span style="color:#bf616a;">v</span><span style="color:#c0c5ce;">: number) </span><span style="color:#b48ead;">=&gt; </span><span style="color:#bf616a;">v </span><span style="color:#c0c5ce;">+ </span><span style="color:#d08770;">2</span><span style="color:#c0c5ce;">;
+</span></code></pre>
+<p>We can simply lifts them and use them like so,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-typescript" data-lang="typescript"><span style="color:#b48ead;">const </span><span style="color:#bf616a;">times2M </span><span style="color:#c0c5ce;">= </span><span style="color:#8fa1b3;">lift</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">times2</span><span style="color:#c0c5ce;">);
+</span><span style="color:#b48ead;">const </span><span style="color:#bf616a;">adds2M </span><span style="color:#c0c5ce;">= </span><span style="color:#8fa1b3;">lift</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">adds2</span><span style="color:#c0c5ce;">);
+
+</span><span style="color:#b48ead;">const </span><span style="color:#bf616a;">b </span><span style="color:#c0c5ce;">= </span><span style="color:#8fa1b3;">unit</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">10</span><span style="color:#c0c5ce;">);
+</span><span style="color:#b48ead;">const </span><span style="color:#bf616a;">b2 </span><span style="color:#c0c5ce;">= </span><span style="color:#bf616a;">b</span><span style="color:#c0c5ce;">.</span><span style="color:#8fa1b3;">bind</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">times2M</span><span style="color:#c0c5ce;">);
+</span><span style="color:#b48ead;">const </span><span style="color:#bf616a;">b2M </span><span style="color:#c0c5ce;">= </span><span style="color:#bf616a;">b2</span><span style="color:#c0c5ce;">.</span><span style="color:#8fa1b3;">bind</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">times2M</span><span style="color:#c0c5ce;">).</span><span style="color:#8fa1b3;">bind</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">adds2M</span><span style="color:#c0c5ce;">).</span><span style="color:#8fa1b3;">bind</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">times2M</span><span style="color:#c0c5ce;">).</span><span style="color:#8fa1b3;">bind</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">adds2M</span><span style="color:#c0c5ce;">);
+</span></code></pre><h2 id="enter-monads">Enter Monads</h2>
+<p>In my (humble) opinion, monads is just a way to express computations as types.
+Computations produces result and instead of actually using the result, we just provide a function <code>f</code> to the type that performs the computation itself.</p>
+<p>A monad is not any specific type, it is more like an instance.
+In <code>Haskell</code>, <code>Monad</code> is a typeclass defined as,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-haskell" data-lang="haskell"><span style="color:#b48ead;">class  </span><span style="color:#ebcb8b;">Monad </span><span style="color:#bf616a;">m  </span><span style="color:#b48ead;">where
+    </span><span style="color:#65737e;">-- The () indicates that this is an infix operator, so it closely resembles a class having a method.
+    </span><span style="color:#8fa1b3;">(&gt;&gt;=)  </span><span style="color:#b48ead;">:: </span><span style="color:#bf616a;">m a </span><span style="color:#b48ead;">-&gt;</span><span style="color:#c0c5ce;"> (</span><span style="color:#bf616a;">a </span><span style="color:#b48ead;">-&gt; </span><span style="color:#bf616a;">m b</span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">-&gt; </span><span style="color:#bf616a;">m b
+    </span><span style="color:#8fa1b3;">return </span><span style="color:#b48ead;">:: </span><span style="color:#bf616a;">a </span><span style="color:#b48ead;">-&gt; </span><span style="color:#bf616a;">m a
+</span></code></pre>
+<p>TypeScript cannot express this concept but let's pretend we have one that can.
+In this hypothetical TypeScript, it could be written like this,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-typescript" data-lang="typescript"><span style="color:#b48ead;">export interface </span><span style="color:#c0c5ce;">Monad&lt;T&gt; {
+  </span><span style="color:#65737e;">// also called unit
+  </span><span style="color:#b48ead;">static </span><span style="color:#8fa1b3;">return</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">t</span><span style="color:#c0c5ce;">: T): Monad&lt;T&gt;;
+  </span><span style="color:#65737e;">// The monad&#39;s &gt;== function is also called bind
+  </span><span style="color:#8fa1b3;">bind</span><span style="color:#c0c5ce;">(</span><span style="color:#8fa1b3;">f</span><span style="color:#c0c5ce;">: (</span><span style="color:#bf616a;">t</span><span style="color:#c0c5ce;">: T) </span><span style="color:#b48ead;">=&gt; </span><span style="color:#c0c5ce;">Monad&lt;R&gt;): Monad&lt;R&gt;;
+}
+</span></code></pre>
+<p>And any class <code>M&lt;T&gt;</code> that implements <code>Monad&lt;T&gt;</code> (satisfying the monadic laws which we will not cover here) is a monad.
+What is so powerful about this?
+Well, it enables you to abstract one computation from another.</p>
+<p>Let's look at some example.</p>
+<h3 id="maybe-monad">Maybe Monad</h3>
+<p>The maybe monad is used to represent a &quot;computation&quot; or &quot;behavior&quot; where a value may or may not exist.
+Let's implement it in our imaginary TypeScript,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-typescript" data-lang="typescript"><span style="color:#65737e;">// An enum to express existence of a value
+
+</span><span style="color:#b48ead;">type </span><span style="color:#c0c5ce;">Option&lt;T&gt; =
+  | {
+      </span><span style="color:#8fa1b3;">kind</span><span style="color:#c0c5ce;">: &quot;</span><span style="color:#a3be8c;">Some</span><span style="color:#c0c5ce;">&quot;;
+      </span><span style="color:#8fa1b3;">value</span><span style="color:#c0c5ce;">: T;
+    }
+  | {
+      </span><span style="color:#8fa1b3;">kind</span><span style="color:#c0c5ce;">: &quot;</span><span style="color:#a3be8c;">Nothing</span><span style="color:#c0c5ce;">&quot;;
+    };
+
+</span><span style="color:#65737e;">// Helper functions
+
+</span><span style="color:#b48ead;">const </span><span style="color:#8fa1b3;">createSome </span><span style="color:#c0c5ce;">= &lt;T&gt;(</span><span style="color:#bf616a;">t</span><span style="color:#c0c5ce;">: T) </span><span style="color:#b48ead;">=&gt; </span><span style="color:#c0c5ce;">{
+    kind : &quot;</span><span style="color:#a3be8c;">Some</span><span style="color:#c0c5ce;">&quot;,
+    value : </span><span style="color:#bf616a;">t
+</span><span style="color:#c0c5ce;">}
+
+</span><span style="color:#b48ead;">const </span><span style="color:#8fa1b3;">createNone </span><span style="color:#c0c5ce;">= &lt;T&gt;() </span><span style="color:#b48ead;">=&gt; </span><span style="color:#c0c5ce;">{
+    kind : &quot;</span><span style="color:#a3be8c;">Nothing</span><span style="color:#c0c5ce;">&quot;,
+}
+
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">Maybe</span><span style="color:#eff1f5;">&lt;Option&lt;T&gt;&gt; </span><span style="color:#b48ead;">implements </span><span style="color:#a3be8c;">Monad</span><span style="color:#eff1f5;">&lt;Option&lt;T&gt;&gt; {
+    </span><span style="color:#bf616a;">t </span><span style="color:#c0c5ce;">: </span><span style="color:#eff1f5;">Option&lt;T&gt;
+    </span><span style="color:#b48ead;">static </span><span style="color:#8fa1b3;">return</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">t</span><span style="color:#c0c5ce;">: </span><span style="color:#eff1f5;">Option&lt;T&gt;</span><span style="color:#c0c5ce;">)</span><span style="color:#eff1f5;"> =&gt; new </span><span style="color:#8fa1b3;">Maybe</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">t</span><span style="color:#c0c5ce;">)
+    </span><span style="color:#8fa1b3;">bind</span><span style="color:#c0c5ce;">(</span><span style="color:#8fa1b3;">f</span><span style="color:#c0c5ce;">: (</span><span style="color:#bf616a;">t</span><span style="color:#c0c5ce;">: </span><span style="color:#eff1f5;">T</span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">=&gt; </span><span style="color:#eff1f5;">Maybe&lt;Option&lt;R&gt;&gt;</span><span style="color:#c0c5ce;">): </span><span style="color:#eff1f5;">Maybe&lt;Option&lt;R&gt;&gt; {
+        </span><span style="color:#b48ead;">if </span><span style="color:#eff1f5;">(</span><span style="color:#bf616a;">this</span><span style="color:#eff1f5;">.</span><span style="color:#bf616a;">t</span><span style="color:#eff1f5;">.</span><span style="color:#bf616a;">kind </span><span style="color:#c0c5ce;">=== &quot;</span><span style="color:#a3be8c;">Nothing</span><span style="color:#c0c5ce;">&quot;</span><span style="color:#eff1f5;">) {
+            </span><span style="color:#b48ead;">return </span><span style="color:#8fa1b3;">createNone</span><span style="color:#eff1f5;">();
+        } </span><span style="color:#b48ead;">else </span><span style="color:#eff1f5;">{
+            </span><span style="color:#b48ead;">return </span><span style="color:#8fa1b3;">f</span><span style="color:#eff1f5;">(</span><span style="color:#bf616a;">this</span><span style="color:#eff1f5;">.</span><span style="color:#bf616a;">t</span><span style="color:#eff1f5;">.value);
+        }
+    }
+}
+</span></code></pre>
+<p>And using it looks like,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-typescript" data-lang="typescript"><span style="color:#65737e;">// Here we implement the behavior that division by 0 is bad.
+</span><span style="color:#b48ead;">const </span><span style="color:#8fa1b3;">safeAddition </span><span style="color:#c0c5ce;">= (</span><span style="color:#bf616a;">a</span><span style="color:#c0c5ce;">: PositiveInteger, </span><span style="color:#bf616a;">b</span><span style="color:#c0c5ce;">: PositiveInteger) </span><span style="color:#b48ead;">=&gt; </span><span style="color:#c0c5ce;">{
+  </span><span style="color:#b48ead;">if </span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">MAX_POSITIVE_INT </span><span style="color:#c0c5ce;">- </span><span style="color:#bf616a;">b </span><span style="color:#c0c5ce;">&gt; </span><span style="color:#bf616a;">a</span><span style="color:#c0c5ce;">) {
+      </span><span style="color:#65737e;">// Overflow, returns none
+      </span><span style="color:#b48ead;">return </span><span style="color:#c0c5ce;">Maybe::</span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;">(</span><span style="color:#8fa1b3;">createNone</span><span style="color:#c0c5ce;">());
+  } </span><span style="color:#b48ead;">else </span><span style="color:#c0c5ce;">{
+      </span><span style="color:#65737e;">// Addition does not overflow
+      </span><span style="color:#b48ead;">return </span><span style="color:#c0c5ce;">Maybe::</span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;">(</span><span style="color:#8fa1b3;">createSome</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">a </span><span style="color:#c0c5ce;">/ </span><span style="color:#bf616a;">b</span><span style="color:#c0c5ce;">));
+  }
+}
+</span></code></pre><pre style="background-color:#2b303b;">
+<code class="language-typescript" data-lang="typescript"><span style="color:#65737e;">// Here we implement a funct
+</span><span style="color:#b48ead;">const </span><span style="color:#8fa1b3;">multiplication </span><span style="color:#c0c5ce;">= (
+  </span><span style="color:#bf616a;">a</span><span style="color:#c0c5ce;">: Maybe&lt;Option&lt;T&gt;&gt;,
+  </span><span style="color:#bf616a;">b</span><span style="color:#c0c5ce;">: Maybe&lt;Option&lt;T&gt;&gt;
+): Maybe&lt;Option&lt;T&gt;&gt; </span><span style="color:#b48ead;">=&gt; </span><span style="color:#c0c5ce;">{
+  </span><span style="color:#b48ead;">return </span><span style="color:#bf616a;">a</span><span style="color:#c0c5ce;">.</span><span style="color:#8fa1b3;">bind</span><span style="color:#c0c5ce;">((</span><span style="color:#bf616a;">l</span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">=&gt;
+    </span><span style="color:#bf616a;">b</span><span style="color:#c0c5ce;">.</span><span style="color:#8fa1b3;">bind</span><span style="color:#c0c5ce;">((</span><span style="color:#bf616a;">r</span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">=&gt; </span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">l </span><span style="color:#c0c5ce;">=== </span><span style="color:#d08770;">1 </span><span style="color:#c0c5ce;">?
+      </span><span style="color:#bf616a;">r </span><span style="color:#c0c5ce;">: </span><span style="color:#bf616a;">r </span><span style="color:#c0c5ce;">=== </span><span style="color:#d08770;">1 </span><span style="color:#c0c5ce;">? </span><span style="color:#bf616a;">l </span><span style="color:#c0c5ce;">: </span><span style="color:#8fa1b3;">safeAddition</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">l</span><span style="color:#c0c5ce;">, </span><span style="color:#bf616a;">l</span><span style="color:#c0c5ce;">).</span><span style="color:#8fa1b3;">bind</span><span style="color:#c0c5ce;">((</span><span style="color:#bf616a;">v</span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">=&gt;
+        </span><span style="color:#8fa1b3;">multiplication</span><span style="color:#c0c5ce;">(
+          </span><span style="color:#bf616a;">Maybe</span><span style="color:#c0c5ce;">::</span><span style="color:#8fa1b3;">return</span><span style="color:#c0c5ce;">(</span><span style="color:#8fa1b3;">createSome</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">v</span><span style="color:#c0c5ce;">)),
+          </span><span style="color:#bf616a;">Maybe</span><span style="color:#c0c5ce;">::</span><span style="color:#8fa1b3;">return</span><span style="color:#c0c5ce;">(</span><span style="color:#8fa1b3;">createSome</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">r </span><span style="color:#c0c5ce;">- </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">)))))
+    ));
+};
+</span></code></pre>
+<p>I am going to be honest, it doesn't look as great.
+This is mostly because you need to jump through lot of syntax to do anything meaningful.
+This is why Haskell does away with almost all syntax to function application (the only thing that matters really is the position).
+This makes Haskell's implementation of this concept a lot more compact.</p>
+<p>One thing to notice is that we didn't have to perform any check on the behavior that &quot;division by 0 is bad&quot; anywhere in <code>multiplication</code>.
+The error handling is done automatically and we only concern ourselves with the details to implement multiplication.</p>
+<h3 id="implement-allcombinations">Implement allCombinations</h3>
+<h2 id="list-monad">List Monad</h2>
+<h2 id="state-monad">State Monad</h2>
+
+<p>[<a href="/blogs/">Articles</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

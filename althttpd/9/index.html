@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>StrAppend</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">StrAppend</h1>
+<p class="subtitle"><strong>2021-06-17</strong></p>
+<p>This function basically takes 3 C-string and concatenates them.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#b48ead;">static char </span><span style="color:#c0c5ce;">*</span><span style="color:#8fa1b3;">StrAppend</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zPrior</span><span style="color:#c0c5ce;">, </span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zSep</span><span style="color:#c0c5ce;">, </span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zSrc</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#b48ead;">char </span><span style="color:#c0c5ce;">*zDest;
+  size_t size;
+  size_t n0, n1, n2;
+
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zSrc==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">;
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zPrior==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">return </span><span style="color:#bf616a;">StrDup</span><span style="color:#c0c5ce;">(zSrc);
+  n0 = </span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zPrior);
+  n1 = </span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zSep);
+  n2 = </span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zSrc);
+  size = n0+n1+n2+</span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">;
+  zDest = (</span><span style="color:#b48ead;">char</span><span style="color:#c0c5ce;">*)</span><span style="color:#bf616a;">SafeMalloc</span><span style="color:#c0c5ce;">( size );
+  </span><span style="color:#96b5b4;">memcpy</span><span style="color:#c0c5ce;">(zDest, zPrior, n0);
+  </span><span style="color:#96b5b4;">free</span><span style="color:#c0c5ce;">(zPrior);
+  </span><span style="color:#96b5b4;">memcpy</span><span style="color:#c0c5ce;">(&amp;zDest[n0],zSep,n1);
+  </span><span style="color:#96b5b4;">memcpy</span><span style="color:#c0c5ce;">(&amp;zDest[n0+n1],zSrc,n2+</span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">);
+  </span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;"> zDest;
+}
+</span></code></pre><h1 id="visualization">Visualization</h1>
+<p>Take 3 C-strings:</p>
+<ol>
+<li><code>zPrior</code> as <code>hello</code>.</li>
+<li><code>zSep</code> as <code>my</code>.</li>
+<li><code>zSrc</code> as <code>world</code>.</li>
+</ol>
+<p>After this function, we will get something like,</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">h | e | l | l | o |  | m | y | | w | o | r | l | d | \0 |
+|-----------------|------------|-------------------------...
+&lt;     zPrior      &gt;&lt;    zSep   &gt;&lt;         zSrc          &gt;
+</span></code></pre>
+<p>And the original <code>zPrior</code> is freed, for whatever reason.</p>
+<h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/strlen.3.html">strlen</a>.</li>
+<li><a href="https://man7.org/linux/man-pages/man3/memcpy.3.html">memcpy</a>.</li>
+<li><a href="https://man7.org/linux/man-pages/man3/free.3p.html">free</a>.</li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

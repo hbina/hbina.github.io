@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>Rfc822Date</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">Rfc822Date</h1>
+<p class="subtitle"><strong>2021-06-19</strong></p>
+<p>This function converts a <code>time_t</code> into its RFC822 representation.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/* Render seconds since 1970 as an RFC822 date string.  Return
+** a pointer to that string in a static buffer.
+*/
+</span><span style="color:#b48ead;">static char </span><span style="color:#c0c5ce;">*</span><span style="color:#8fa1b3;">Rfc822Date</span><span style="color:#c0c5ce;">(time_t </span><span style="color:#bf616a;">t</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#b48ead;">struct</span><span style="color:#c0c5ce;"> tm *tm;
+  </span><span style="color:#b48ead;">static char</span><span style="color:#c0c5ce;"> zDate[</span><span style="color:#d08770;">100</span><span style="color:#c0c5ce;">];
+  tm = </span><span style="color:#96b5b4;">gmtime</span><span style="color:#c0c5ce;">(&amp;t);
+  </span><span style="color:#96b5b4;">strftime</span><span style="color:#c0c5ce;">(zDate, sizeof(zDate), &quot;</span><span style="color:#d08770;">%a</span><span style="color:#a3be8c;">, </span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;"> %b %Y %H:%M:</span><span style="color:#d08770;">%S</span><span style="color:#a3be8c;"> %Z</span><span style="color:#c0c5ce;">&quot;, tm);
+  </span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;"> zDate;
+}
+</span></code></pre>
+<p>The interesting (in a bad way) is that it returns a pointer to a statically allocated memory.
+So any time you make 2 calls to this bad boy, just remember that the first pointer returned is now invalid :).</p>
+<p>One way to solve this is to make the caller of this function provides the bytes to write to.
+This makes this function free from being responsible for memory; which it shouldn't.</p>
+<h1 id="testing">Testing</h1>
+<p>Let's try to use this function and see what we get.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#b48ead;">#include </span><span style="color:#c0c5ce;">&lt;</span><span style="color:#a3be8c;">stdio.h</span><span style="color:#c0c5ce;">&gt;
+</span><span style="color:#b48ead;">#include </span><span style="color:#c0c5ce;">&lt;</span><span style="color:#a3be8c;">time.h</span><span style="color:#c0c5ce;">&gt;
+
+</span><span style="color:#b48ead;">static char </span><span style="color:#c0c5ce;">*</span><span style="color:#8fa1b3;">Rfc822Date</span><span style="color:#c0c5ce;">(time_t </span><span style="color:#bf616a;">t</span><span style="color:#c0c5ce;">)
+{
+    </span><span style="color:#b48ead;">struct</span><span style="color:#c0c5ce;"> tm *tm;
+    </span><span style="color:#b48ead;">static char</span><span style="color:#c0c5ce;"> zDate[</span><span style="color:#d08770;">100</span><span style="color:#c0c5ce;">];
+    tm = </span><span style="color:#96b5b4;">gmtime</span><span style="color:#c0c5ce;">(&amp;t);
+    </span><span style="color:#96b5b4;">strftime</span><span style="color:#c0c5ce;">(zDate, sizeof(zDate), &quot;</span><span style="color:#d08770;">%a</span><span style="color:#a3be8c;">, </span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;"> %b %Y %H:%M:</span><span style="color:#d08770;">%S</span><span style="color:#a3be8c;"> %Z</span><span style="color:#c0c5ce;">&quot;, tm);
+    </span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;"> zDate;
+}
+
+</span><span style="color:#b48ead;">int </span><span style="color:#8fa1b3;">main</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">void</span><span style="color:#c0c5ce;">)
+{
+    time_t t = </span><span style="color:#96b5b4;">time</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">NULL</span><span style="color:#c0c5ce;">);
+    </span><span style="color:#b48ead;">char </span><span style="color:#c0c5ce;">*zDate = </span><span style="color:#bf616a;">Rfc822Date</span><span style="color:#c0c5ce;">(t);
+    </span><span style="color:#b48ead;">const int</span><span style="color:#c0c5ce;"> r = </span><span style="color:#96b5b4;">printf</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#d08770;">%s</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;, zDate);
+    </span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;"> r &lt; </span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">? -</span><span style="color:#d08770;">1 </span><span style="color:#c0c5ce;">: </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">;
+}
+</span></code></pre>
+<p>Compiling and running this small program yields,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">Sat,</span><span style="color:#c0c5ce;"> 12 Jun 2021 16:24:15 GMT
+</span></code></pre><h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/strftime.3.html">strftime</a></li>
+<li><a href="https://man7.org/linux/man-pages/man3/gmtime.3p.html">gmtime</a></li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

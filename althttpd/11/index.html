@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>RemoveNewline</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">RemoveNewline</h1>
+<p class="subtitle"><strong>2021-06-19</strong></p>
+<p>This function replaces newline (<code>\n</code> or <code>\r</code>) with <code>\0</code>.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Break a line at the first \n or \r character seen.
+*/
+</span><span style="color:#b48ead;">static void </span><span style="color:#8fa1b3;">RemoveNewline</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">z</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( z==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;">;
+  </span><span style="color:#b48ead;">while</span><span style="color:#c0c5ce;">( *z &amp;&amp; *z!=&#39;</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&#39; &amp;&amp; *z!=&#39;</span><span style="color:#96b5b4;">\r</span><span style="color:#c0c5ce;">&#39; ){ z++; }
+  *z = </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">;
+}
+</span></code></pre>
+<p>This is probably done so that C-string appears as if it ends there.
+But this is highly problematic because it does not return the <code>z</code>.
+The caller have no way of knowing where that <code>\0</code> was assigned.
+Even if they loop through again and find that <code>\0</code>, how do they know that this is the one that we assigned or this is actually the end of the string?</p>
+<p>We have pretty much leaked the rest of the string.</p>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

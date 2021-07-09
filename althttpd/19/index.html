@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>NotAuthorized</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">NotAuthorized</h1>
+<p class="subtitle"><strong>2021-06-25</strong></p>
+<p>Yet another HTTP response template.
+This time its to indicate that the request is unauthorised to access that resource.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Tell the client that authorization is required to access the
+** document.
+*/
+</span><span style="color:#b48ead;">static void </span><span style="color:#8fa1b3;">NotAuthorized</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zRealm</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#bf616a;">StartResponse</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">401 Authorization Required</span><span style="color:#c0c5ce;">&quot;);
+  nOut += </span><span style="color:#96b5b4;">printf</span><span style="color:#c0c5ce;">(
+    &quot;</span><span style="color:#a3be8c;">WWW-Authenticate: Basic realm=</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">%s</span><span style="color:#96b5b4;">\&quot;\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">Content-type: text/html; charset=utf-8</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">&lt;head&gt;&lt;title&gt;Not Authorized&lt;/title&gt;&lt;/head&gt;</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">&lt;body&gt;&lt;h1&gt;401 Not Authorized&lt;/h1&gt;</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">A login and password are required for this document</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">&lt;/body&gt;</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;, zRealm);
+  </span><span style="color:#bf616a;">MakeLogEntry</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">, </span><span style="color:#d08770;">110</span><span style="color:#c0c5ce;">);  </span><span style="color:#65737e;">/* LOG: Not authorized */
+</span><span style="color:#c0c5ce;">}
+</span></code></pre>
+<p>There's nothing much to be said about this function.
+So let's take a look at its usage.
+There's only 1 of them.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">hbina.github.io</span><span style="color:#c0c5ce;"> on  master </span><span style="color:#b48ead;">[</span><span style="color:#c0c5ce;">?</span><span style="color:#b48ead;">]
+</span><span style="color:#bf616a;">❯</span><span style="color:#c0c5ce;"> cat ./static/althttpd/althttpd.c | </span><span style="color:#bf616a;">rg --line-number </span><span style="color:#c0c5ce;">&#39;</span><span style="color:#a3be8c;">NotAuthorized</span><span style="color:#c0c5ce;">&#39;
+</span><span style="color:#bf616a;">731:static</span><span style="color:#c0c5ce;"> void NotAuthorized(const char *zRealm){
+</span><span style="color:#bf616a;">964:</span><span style="color:#c0c5ce;">  NotAuthorized(zRealm);
+</span></code></pre><h2 id="configuring-authorization">Configuring Authorization</h2>
+<p>The function that made the call is <code>CheckBasicAuthorization</code>.
+This function parses an authorization file that may or may not exist in the directory that the resources is in.
+One of the parameters that can be added in this configuration file is <code>realm</code>.
+The documentation says,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#c0c5ce;">**    *  &quot;</span><span style="color:#a3be8c;">realm TEXT</span><span style="color:#c0c5ce;">&quot; sets the realm to TEXT.
+</span></code></pre>
+<p>So while parsing this configuration file, we assign the &quot;<code>TEXT</code>&quot; above to <code>zRealm</code> here,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#c0c5ce;">    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( </span><span style="color:#96b5b4;">strcmp</span><span style="color:#c0c5ce;">(zFieldName, &quot;</span><span style="color:#a3be8c;">realm</span><span style="color:#c0c5ce;">&quot;)==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">){
+      zRealm = </span><span style="color:#bf616a;">StrDup</span><span style="color:#c0c5ce;">(zVal);
+</span></code></pre>
+<p>But <code>zRealm</code> is never used!</p>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">hbina.github.io</span><span style="color:#c0c5ce;"> on  master </span><span style="color:#b48ead;">[</span><span style="color:#c0c5ce;">?</span><span style="color:#b48ead;">]
+</span><span style="color:#bf616a;">❯</span><span style="color:#c0c5ce;"> cat ./static/althttpd/althttpd.c | </span><span style="color:#bf616a;">rg --line-number </span><span style="color:#c0c5ce;">&#39;</span><span style="color:#a3be8c;">zRealm</span><span style="color:#c0c5ce;">&#39;
+</span><span style="color:#bf616a;">731:static</span><span style="color:#c0c5ce;"> void NotAuthorized(const char *zRealm){
+</span><span style="color:#bf616a;">740:    </span><span style="color:#c0c5ce;">&quot;</span><span style="color:#a3be8c;">&lt;/body&gt;\n</span><span style="color:#c0c5ce;">&quot;, zRealm);
+</span><span style="color:#bf616a;">910:</span><span style="color:#c0c5ce;">  char *zRealm = &quot;</span><span style="color:#a3be8c;">unknown realm</span><span style="color:#c0c5ce;">&quot;;
+</span><span style="color:#bf616a;">930:</span><span style="color:#c0c5ce;">      zRealm = StrDup(zVal);
+</span><span style="color:#bf616a;">964:</span><span style="color:#c0c5ce;">  NotAuthorized(zRealm);
+</span></code></pre>
+<p>So I assume its just a way for the author to determine what kind of files were being requested.</p>
+<p>According to the actual <a href="https://datatracker.ietf.org/doc/html/rfc1945#section-11">HTTP/1.0 specification for authentication</a>, we can see that realms are basically used to tell the requester that the same realm should require the same kind of authentication.
+Probably for caching purposes?</p>
+<p>So it kinda makes sense that this value is not being used anywhere.
+It's more like a guideline, not a strict spec.
+It depends entirely if the resources are properly configured.</p>
+<h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/printf.3.html">printf</a>.</li>
+<li><a href="https://man7.org/linux/man-pages/man3/exit.3.html">exit</a>.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referer">HTTP Header Referer</a>.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Host">HTTP Header Host</a>.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent">HTTP Header User-Agent</a>.</li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

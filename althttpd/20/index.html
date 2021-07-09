@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>CgiError</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">CgiError</h1>
+<p class="subtitle"><strong>2021-06-26</strong></p>
+<p>Another simple template to indicate CGI error.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Tell the client that there is an error in the script.
+*/
+</span><span style="color:#b48ead;">static void </span><span style="color:#8fa1b3;">CgiError</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">void</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#bf616a;">StartResponse</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">500 Error</span><span style="color:#c0c5ce;">&quot;);
+  nOut += </span><span style="color:#96b5b4;">printf</span><span style="color:#c0c5ce;">(
+    &quot;</span><span style="color:#a3be8c;">Content-type: text/html; charset=utf-8</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">&lt;head&gt;&lt;title&gt;CGI Program Error&lt;/title&gt;&lt;/head&gt;</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">&lt;body&gt;&lt;h1&gt;CGI Program Error&lt;/h1&gt;</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">The CGI program </span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;"> generated an error</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">&lt;/body&gt;</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;, zScript);
+  </span><span style="color:#bf616a;">MakeLogEntry</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">, </span><span style="color:#d08770;">120</span><span style="color:#c0c5ce;">);  </span><span style="color:#65737e;">/* LOG: CGI Error */
+  </span><span style="color:#96b5b4;">exit</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">);
+}
+</span></code></pre>
+<p>Its only being used once,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">hbina.github.io</span><span style="color:#c0c5ce;"> on  master </span><span style="color:#b48ead;">[</span><span style="color:#c0c5ce;">!?</span><span style="color:#b48ead;">]
+</span><span style="color:#bf616a;">❯</span><span style="color:#c0c5ce;"> cat static/althttpd/althttpd.c | </span><span style="color:#bf616a;">rg --line-number </span><span style="color:#c0c5ce;">&#39;</span><span style="color:#a3be8c;">CgiError</span><span style="color:#c0c5ce;">&#39;
+</span><span style="color:#bf616a;">747:static</span><span style="color:#c0c5ce;"> void CgiError(void){
+</span><span style="color:#bf616a;">2197:</span><span style="color:#c0c5ce;">      CgiError();
+</span></code></pre>
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

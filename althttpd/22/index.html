@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>CgiScriptWritable</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">CgiScriptWritable</h1>
+<p class="subtitle"><strong>2021-06-28</strong></p>
+<p>Just another HTTP response template for CGI errors.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Tell the client that there is an error in the script.
+*/
+</span><span style="color:#b48ead;">static void </span><span style="color:#8fa1b3;">CgiScriptWritable</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">void</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#bf616a;">StartResponse</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">500 CGI Configuration Error</span><span style="color:#c0c5ce;">&quot;);
+  nOut += </span><span style="color:#96b5b4;">printf</span><span style="color:#c0c5ce;">(
+    &quot;</span><span style="color:#a3be8c;">Content-type: text/plain; charset=utf-8</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">The CGI program </span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;"> is writable by users other than its owner.</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;,
+    zRealScript);
+  </span><span style="color:#bf616a;">MakeLogEntry</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">, </span><span style="color:#d08770;">140</span><span style="color:#c0c5ce;">);  </span><span style="color:#65737e;">/* LOG: CGI script is writable */
+  </span><span style="color:#96b5b4;">exit</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">);
+}
+</span></code></pre>
+<p>As the function name implies, it's being used whenever a script is writable by group and other have write permission to the file.
+See &quot;The file type and mode&quot; section in the inode manual below.</p>
+<h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man7/inode.7.html">inode</a>.</li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>ParseRfc822Date</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">ParseRfc822Date</h1>
+<p class="subtitle"><strong>2021-06-20</strong></p>
+<p>This function is quite complicated.
+I don't pretend to know half of how it works.
+However, as the comment said, its supposed to parse an RFC822 formatted strings.
+It just appends the <code>zTag</code> and the <code>Rfc822Date</code> of the given time.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Parse an RFC822-formatted timestamp as we&#39;d expect from HTTP and return
+** a Unix epoch time. &lt;= zero is returned on failure.
+*/
+</span><span style="color:#c0c5ce;">time_t </span><span style="color:#8fa1b3;">ParseRfc822Date</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zDate</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#b48ead;">int</span><span style="color:#c0c5ce;"> mday, mon, year, yday, hour, min, sec;
+  </span><span style="color:#b48ead;">char</span><span style="color:#c0c5ce;"> zIgnore[</span><span style="color:#d08770;">4</span><span style="color:#c0c5ce;">];
+  </span><span style="color:#b48ead;">char</span><span style="color:#c0c5ce;"> zMonth[</span><span style="color:#d08770;">4</span><span style="color:#c0c5ce;">];
+  </span><span style="color:#b48ead;">static const char </span><span style="color:#c0c5ce;">*</span><span style="color:#b48ead;">const</span><span style="color:#c0c5ce;"> azMonths[] =
+    {&quot;</span><span style="color:#a3be8c;">Jan</span><span style="color:#c0c5ce;">&quot;, &quot;</span><span style="color:#a3be8c;">Feb</span><span style="color:#c0c5ce;">&quot;, &quot;</span><span style="color:#a3be8c;">Mar</span><span style="color:#c0c5ce;">&quot;, &quot;</span><span style="color:#a3be8c;">Apr</span><span style="color:#c0c5ce;">&quot;, &quot;</span><span style="color:#a3be8c;">May</span><span style="color:#c0c5ce;">&quot;, &quot;</span><span style="color:#a3be8c;">Jun</span><span style="color:#c0c5ce;">&quot;,
+     &quot;</span><span style="color:#a3be8c;">Jul</span><span style="color:#c0c5ce;">&quot;, &quot;</span><span style="color:#a3be8c;">Aug</span><span style="color:#c0c5ce;">&quot;, &quot;</span><span style="color:#a3be8c;">Sep</span><span style="color:#c0c5ce;">&quot;, &quot;</span><span style="color:#a3be8c;">Oct</span><span style="color:#c0c5ce;">&quot;, &quot;</span><span style="color:#a3be8c;">Nov</span><span style="color:#c0c5ce;">&quot;, &quot;</span><span style="color:#a3be8c;">Dec</span><span style="color:#c0c5ce;">&quot;};
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( </span><span style="color:#d08770;">7</span><span style="color:#c0c5ce;">==</span><span style="color:#96b5b4;">sscanf</span><span style="color:#c0c5ce;">(zDate, &quot;</span><span style="color:#d08770;">%3[A-Za-z]</span><span style="color:#a3be8c;">, </span><span style="color:#d08770;">%d %3[A-Za-z] %d %d</span><span style="color:#a3be8c;">:</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;">:</span><span style="color:#d08770;">%d</span><span style="color:#c0c5ce;">&quot;, zIgnore,
+                       &amp;mday, zMonth, &amp;year, &amp;hour, &amp;min, &amp;sec)){
+    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( year &gt; </span><span style="color:#d08770;">1900 </span><span style="color:#c0c5ce;">) year -= </span><span style="color:#d08770;">1900</span><span style="color:#c0c5ce;">;
+    </span><span style="color:#b48ead;">for</span><span style="color:#c0c5ce;">(mon=</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">; mon&lt;</span><span style="color:#d08770;">12</span><span style="color:#c0c5ce;">; mon++){
+      </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( !</span><span style="color:#96b5b4;">strncmp</span><span style="color:#c0c5ce;">( azMonths[mon], zMonth, </span><span style="color:#d08770;">3 </span><span style="color:#c0c5ce;">)){
+        </span><span style="color:#b48ead;">int</span><span style="color:#c0c5ce;"> nDay;
+        </span><span style="color:#b48ead;">int</span><span style="color:#c0c5ce;"> isLeapYr;
+        </span><span style="color:#b48ead;">static int</span><span style="color:#c0c5ce;"> priorDays[] =
+         {  </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">, </span><span style="color:#d08770;">31</span><span style="color:#c0c5ce;">, </span><span style="color:#d08770;">59</span><span style="color:#c0c5ce;">, </span><span style="color:#d08770;">90</span><span style="color:#c0c5ce;">,</span><span style="color:#d08770;">120</span><span style="color:#c0c5ce;">,</span><span style="color:#d08770;">151</span><span style="color:#c0c5ce;">,</span><span style="color:#d08770;">181</span><span style="color:#c0c5ce;">,</span><span style="color:#d08770;">212</span><span style="color:#c0c5ce;">,</span><span style="color:#d08770;">243</span><span style="color:#c0c5ce;">,</span><span style="color:#d08770;">273</span><span style="color:#c0c5ce;">,</span><span style="color:#d08770;">304</span><span style="color:#c0c5ce;">,</span><span style="color:#d08770;">334 </span><span style="color:#c0c5ce;">};
+        isLeapYr = year%</span><span style="color:#d08770;">4</span><span style="color:#c0c5ce;">==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">&amp;&amp; (year%</span><span style="color:#d08770;">100</span><span style="color:#c0c5ce;">!=</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">|| (year+</span><span style="color:#d08770;">300</span><span style="color:#c0c5ce;">)%</span><span style="color:#d08770;">400</span><span style="color:#c0c5ce;">==</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">);
+        yday = priorDays[mon] + mday - </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">;
+        </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( isLeapYr &amp;&amp; mon&gt;</span><span style="color:#d08770;">1 </span><span style="color:#c0c5ce;">) yday++;
+        nDay = (year-</span><span style="color:#d08770;">70</span><span style="color:#c0c5ce;">)*</span><span style="color:#d08770;">365 </span><span style="color:#c0c5ce;">+ (year-</span><span style="color:#d08770;">69</span><span style="color:#c0c5ce;">)/</span><span style="color:#d08770;">4 </span><span style="color:#c0c5ce;">- year/</span><span style="color:#d08770;">100 </span><span style="color:#c0c5ce;">+ (year+</span><span style="color:#d08770;">300</span><span style="color:#c0c5ce;">)/</span><span style="color:#d08770;">400 </span><span style="color:#c0c5ce;">+ yday;
+        </span><span style="color:#b48ead;">return </span><span style="color:#c0c5ce;">((time_t)(nDay*</span><span style="color:#d08770;">24 </span><span style="color:#c0c5ce;">+ hour)*</span><span style="color:#d08770;">60 </span><span style="color:#c0c5ce;">+ min)*</span><span style="color:#d08770;">60 </span><span style="color:#c0c5ce;">+ sec;
+      }
+    }
+  }
+  </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">;
+}
+</span></code></pre>
+<p>Given how complex the notion of timezones and time itself, I bet this function is broken.
+Its much easier to just rely on the standard libc function --- and likely more reliable.
+See the <a href="../c_time_back_and_forth.c">C code below</a> to see parsing dates back and forth,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#b48ead;">#define </span><span style="color:#c0c5ce;">_XOPEN_SOURCE
+</span><span style="color:#b48ead;">#define </span><span style="color:#c0c5ce;">_DEFAULT_SOURCE
+</span><span style="color:#b48ead;">#include </span><span style="color:#c0c5ce;">&lt;</span><span style="color:#a3be8c;">stdio.h</span><span style="color:#c0c5ce;">&gt;
+</span><span style="color:#b48ead;">#include </span><span style="color:#c0c5ce;">&lt;</span><span style="color:#a3be8c;">stdlib.h</span><span style="color:#c0c5ce;">&gt;
+</span><span style="color:#b48ead;">#include </span><span style="color:#c0c5ce;">&lt;</span><span style="color:#a3be8c;">string.h</span><span style="color:#c0c5ce;">&gt;
+</span><span style="color:#b48ead;">#include </span><span style="color:#c0c5ce;">&lt;</span><span style="color:#a3be8c;">time.h</span><span style="color:#c0c5ce;">&gt;
+</span><span style="color:#b48ead;">#include </span><span style="color:#c0c5ce;">&lt;</span><span style="color:#a3be8c;">assert.h</span><span style="color:#c0c5ce;">&gt;
+
+typedef </span><span style="color:#b48ead;">struct</span><span style="color:#c0c5ce;"> tm tm;
+
+</span><span style="color:#b48ead;">static const char </span><span style="color:#c0c5ce;">*FORMAT = &quot;</span><span style="color:#d08770;">%a</span><span style="color:#a3be8c;">, </span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;"> %b %Y %H:%M:</span><span style="color:#d08770;">%S</span><span style="color:#a3be8c;"> %Z</span><span style="color:#c0c5ce;">&quot;;
+
+</span><span style="color:#b48ead;">static char </span><span style="color:#c0c5ce;">*</span><span style="color:#8fa1b3;">generateDateString</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">bytes</span><span style="color:#c0c5ce;">, </span><span style="color:#b48ead;">const int </span><span style="color:#bf616a;">byteLen</span><span style="color:#c0c5ce;">, </span><span style="color:#b48ead;">const </span><span style="color:#c0c5ce;">time_t </span><span style="color:#bf616a;">t</span><span style="color:#c0c5ce;">)
+{
+    </span><span style="color:#b48ead;">struct</span><span style="color:#c0c5ce;"> tm *tm = </span><span style="color:#96b5b4;">gmtime</span><span style="color:#c0c5ce;">(&amp;t);
+    </span><span style="color:#96b5b4;">strftime</span><span style="color:#c0c5ce;">(bytes, byteLen, FORMAT, tm);
+    </span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;"> bytes;
+}
+
+</span><span style="color:#b48ead;">static</span><span style="color:#c0c5ce;"> tm </span><span style="color:#8fa1b3;">parseDateString</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zDate</span><span style="color:#c0c5ce;">)
+{
+    tm result = {</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">};
+    </span><span style="color:#96b5b4;">assert</span><span style="color:#c0c5ce;">(*</span><span style="color:#bf616a;">strptime</span><span style="color:#c0c5ce;">(zDate, FORMAT, &amp;result) == &#39;</span><span style="color:#96b5b4;">\0</span><span style="color:#c0c5ce;">&#39;);
+    </span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;"> result;
+}
+
+</span><span style="color:#b48ead;">int </span><span style="color:#8fa1b3;">main</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">void</span><span style="color:#c0c5ce;">)
+{
+    time_t currentValue = </span><span style="color:#96b5b4;">time</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">NULL</span><span style="color:#c0c5ce;">);
+    </span><span style="color:#b48ead;">char</span><span style="color:#c0c5ce;"> date1[</span><span style="color:#d08770;">500</span><span style="color:#c0c5ce;">];
+    </span><span style="color:#b48ead;">char</span><span style="color:#c0c5ce;"> date2[</span><span style="color:#d08770;">500</span><span style="color:#c0c5ce;">];
+    </span><span style="color:#96b5b4;">memset</span><span style="color:#c0c5ce;">(date1, </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">, sizeof(date1));
+    tm timeStruct = </span><span style="color:#bf616a;">parseDateString</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">generateDateString</span><span style="color:#c0c5ce;">(date1, sizeof(date1), currentValue));
+    </span><span style="color:#96b5b4;">puts</span><span style="color:#c0c5ce;">(date1);
+    </span><span style="color:#96b5b4;">memset</span><span style="color:#c0c5ce;">(date2, </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">, sizeof(date2));
+    </span><span style="color:#bf616a;">parseDateString</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">generateDateString</span><span style="color:#c0c5ce;">(date2, sizeof(date2), </span><span style="color:#bf616a;">timegm</span><span style="color:#c0c5ce;">(&amp;timeStruct)));
+    </span><span style="color:#96b5b4;">puts</span><span style="color:#c0c5ce;">(date2);
+    </span><span style="color:#96b5b4;">assert</span><span style="color:#c0c5ce;">(</span><span style="color:#96b5b4;">memcmp</span><span style="color:#c0c5ce;">(date1, date2, sizeof(date1)) == </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">);
+    </span><span style="color:#b48ead;">return </span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">);
+}
+</span></code></pre><h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/gmtime.3p.html">gmtime</a></li>
+<li><a href="https://man7.org/linux/man-pages/man3/strftime.3.html">strftime</a></li>
+<li><a href="https://man7.org/linux/man-pages/man3/strptime.3.html">strptime</a></li>
+<li><a href="https://man7.org/linux/man-pages/man3/time.3p.html">time</a></li>
+<li><a href="https://man7.org/linux/man-pages/man3/memset.3.html">memset</a></li>
+<li><a href="https://man7.org/linux/man-pages/man3/memcmp.3p.html">memcmp</a></li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

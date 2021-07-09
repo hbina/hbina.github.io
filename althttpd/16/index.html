@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>StartResponse</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">StartResponse</h1>
+<p class="subtitle"><strong>2021-06-22</strong></p>
+<p>The way this program generates the response to HTTP requests is by printing to <code>stdout</code>.
+This function will setup the HTTP request header with the protocol and the status.
+It will also do some additional stuff based on the status response.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Print the first line of a response followed by the server type.
+*/
+</span><span style="color:#b48ead;">static void </span><span style="color:#8fa1b3;">StartResponse</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zResultCode</span><span style="color:#c0c5ce;">){
+  time_t now;
+  </span><span style="color:#96b5b4;">time</span><span style="color:#c0c5ce;">(&amp;now);
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( statusSent ) </span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;">;
+  nOut += </span><span style="color:#96b5b4;">printf</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#d08770;">%s %s</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;, zProtocol, zResultCode);
+  </span><span style="color:#96b5b4;">strncpy</span><span style="color:#c0c5ce;">(zReplyStatus, zResultCode, </span><span style="color:#d08770;">3</span><span style="color:#c0c5ce;">);
+  zReplyStatus[</span><span style="color:#d08770;">3</span><span style="color:#c0c5ce;">] = </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">;
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zReplyStatus[</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">]&gt;=&#39;</span><span style="color:#a3be8c;">4</span><span style="color:#c0c5ce;">&#39; ){
+    closeConnection = </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">;
+  }
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( closeConnection ){
+    nOut += </span><span style="color:#96b5b4;">printf</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">Connection: close</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;);
+  }</span><span style="color:#b48ead;">else</span><span style="color:#c0c5ce;">{
+    nOut += </span><span style="color:#96b5b4;">printf</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">Connection: keep-alive</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;);
+  }
+  nOut += </span><span style="color:#bf616a;">DateTag</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">Date</span><span style="color:#c0c5ce;">&quot;, now);
+  statusSent = </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">;
+}
+</span></code></pre>
+<p>One thing to notice that is that if the first digit in the reply status is <code>&gt;=4</code>, it will append the HTTP header with <code>Connection: close</code>. It probably means that if there's <em>any</em> issue with the request, the server will just close connection.</p>
+<p>Let's see how its being used,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">hbina.github.io</span><span style="color:#c0c5ce;"> on  master </span><span style="color:#b48ead;">[</span><span style="color:#c0c5ce;">!?⇡</span><span style="color:#b48ead;">]
+</span><span style="color:#bf616a;">❯</span><span style="color:#c0c5ce;"> cat ./static/althttpd/althttpd.c | </span><span style="color:#bf616a;">rg --line-number </span><span style="color:#c0c5ce;">&#39;</span><span style="color:#a3be8c;">StartResponse</span><span style="color:#c0c5ce;">&#39;
+</span><span style="color:#bf616a;">677:static</span><span style="color:#c0c5ce;"> void StartResponse(const char *zResultCode){
+</span><span style="color:#bf616a;">700:</span><span style="color:#c0c5ce;">  StartResponse(&quot;</span><span style="color:#a3be8c;">404 Not Found</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">716:</span><span style="color:#c0c5ce;">  StartResponse(&quot;</span><span style="color:#a3be8c;">403 Forbidden</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">732:</span><span style="color:#c0c5ce;">  StartResponse(&quot;</span><span style="color:#a3be8c;">401 Authorization Required</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">748:</span><span style="color:#c0c5ce;">  StartResponse(&quot;</span><span style="color:#a3be8c;">500 Error</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">783:</span><span style="color:#c0c5ce;">  StartResponse(&quot;</span><span style="color:#a3be8c;">500 CGI Configuration Error</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">799:</span><span style="color:#c0c5ce;">  StartResponse(&quot;</span><span style="color:#a3be8c;">500 Server Malfunction</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">821:</span><span style="color:#c0c5ce;">      StartResponse(&quot;</span><span style="color:#a3be8c;">301 Permanent Redirect</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">824:</span><span style="color:#c0c5ce;">      StartResponse(&quot;</span><span style="color:#a3be8c;">308 Permanent Redirect</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">827:</span><span style="color:#c0c5ce;">      StartResponse(&quot;</span><span style="color:#a3be8c;">302 Temporary Redirect</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1317:</span><span style="color:#c0c5ce;">    StartResponse(&quot;</span><span style="color:#a3be8c;">304 Not Modified</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1329:</span><span style="color:#c0c5ce;">    StartResponse(&quot;</span><span style="color:#a3be8c;">206 Partial Content</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1337:</span><span style="color:#c0c5ce;">    StartResponse(&quot;</span><span style="color:#a3be8c;">200 OK</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1389:</span><span style="color:#c0c5ce;">      StartResponse(&quot;</span><span style="color:#a3be8c;">302 Redirect</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1424:</span><span style="color:#c0c5ce;">    StartResponse(&quot;</span><span style="color:#a3be8c;">206 Partial Content</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1432:</span><span style="color:#c0c5ce;">    StartResponse(&quot;</span><span style="color:#a3be8c;">200 OK</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1678:</span><span style="color:#c0c5ce;">    StartResponse(&quot;</span><span style="color:#a3be8c;">400 Bad Request</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1703:</span><span style="color:#c0c5ce;">    StartResponse(&quot;</span><span style="color:#a3be8c;">501 Not Implemented</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1902:</span><span style="color:#c0c5ce;">      StartResponse(&quot;</span><span style="color:#a3be8c;">500 Request too large</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#bf616a;">1920:</span><span style="color:#c0c5ce;">      StartResponse(&quot;</span><span style="color:#a3be8c;">500 Cannot create /tmp file</span><span style="color:#c0c5ce;">&quot;);
+</span></code></pre>
+<p>As you can see, these are all HTTP headers.
+All of them are also statically allocated, I think its worth creating a list of possible HTTP headers and use that.
+Some extra safety!</p>
+<p>Another interesting to note is that if the browser uses <code>HTTP/2</code>, this response header can/should be considered malformed according to the <a href="https://datatracker.ietf.org/doc/html/rfc7540#section-8.1.2.2">spec</a>.</p>
+<h1 id="references">References</h1>
+<ol>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Messages#http_responses">HTTP Response Header</a></li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

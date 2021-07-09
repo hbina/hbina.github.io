@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>NotFound</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">NotFound</h1>
+<p class="subtitle"><strong>2021-06-23</strong></p>
+<p>This is just a generic &quot;404 NOT FOUND&quot; template.
+The only 2 values that it need to complete the document is:</p>
+<ol>
+<li><code>lineno</code> which depends on the caller of this function.
+As I said in previous entries, I think every compiler have a C macro for this already.</li>
+<li><code>zScript</code> which is the document that the user is attempting to retrieve.
+This is probably the string after the domain in the URL.</li>
+</ol>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Tell the client that there is no such document
+*/
+</span><span style="color:#b48ead;">static void </span><span style="color:#8fa1b3;">NotFound</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">lineno</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#bf616a;">StartResponse</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">404 Not Found</span><span style="color:#c0c5ce;">&quot;);
+  nOut += </span><span style="color:#96b5b4;">printf</span><span style="color:#c0c5ce;">(
+    &quot;</span><span style="color:#a3be8c;">Content-type: text/html; charset=utf-8</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#96b5b4;">\r\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">&lt;head&gt;&lt;title lineno=</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#d08770;">%d</span><span style="color:#96b5b4;">\&quot;</span><span style="color:#a3be8c;">&gt;Not Found&lt;/title&gt;&lt;/head&gt;</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">&lt;body&gt;&lt;h1&gt;Document Not Found&lt;/h1&gt;</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">The document </span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;"> is not available on this server</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;
+    &quot;</span><span style="color:#a3be8c;">&lt;/body&gt;</span><span style="color:#96b5b4;">\n</span><span style="color:#c0c5ce;">&quot;, lineno, zScript);
+  </span><span style="color:#bf616a;">MakeLogEntry</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">, lineno);
+  </span><span style="color:#96b5b4;">exit</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">);
+}
+</span></code></pre>
+<p>Note that before ending the process, it will create a log entry.
+It's used in quite a few places,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">hbina.github.io</span><span style="color:#c0c5ce;"> on  master </span><span style="color:#b48ead;">[</span><span style="color:#c0c5ce;">!?</span><span style="color:#b48ead;">]
+</span><span style="color:#bf616a;">❯</span><span style="color:#c0c5ce;"> cat static/althttpd/althttpd.c | </span><span style="color:#bf616a;">rg --line-number </span><span style="color:#c0c5ce;">&#39;</span><span style="color:#a3be8c;">NotFound</span><span style="color:#c0c5ce;">&#39;
+</span><span style="color:#bf616a;">699:static</span><span style="color:#c0c5ce;"> void NotFound(int lineno){
+</span><span style="color:#bf616a;">917:</span><span style="color:#c0c5ce;">    NotFound(150);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Cannot open</span><span style="color:#bf616a;"> -auth</span><span style="color:#c0c5ce;"> file */
+</span><span style="color:#bf616a;">943:</span><span style="color:#c0c5ce;">        NotFound(160);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG:  http request on https-only page */
+</span><span style="color:#bf616a;">958:</span><span style="color:#c0c5ce;">      NotFound(180);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG:  malformed entry in</span><span style="color:#bf616a;"> -auth</span><span style="color:#c0c5ce;"> file */
+</span><span style="color:#bf616a;">1327:</span><span style="color:#c0c5ce;">  if( in==0 ) </span><span style="color:#bf616a;">NotFound</span><span style="color:#c0c5ce;">(480); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: fopen() </span><span style="color:#bf616a;">failed</span><span style="color:#c0c5ce;"> for static content */
+</span><span style="color:#bf616a;">1687:</span><span style="color:#c0c5ce;">  if( zScript</span><span style="color:#b48ead;">[</span><span style="color:#c0c5ce;">0</span><span style="color:#b48ead;">]</span><span style="color:#c0c5ce;">!=&#39;</span><span style="color:#a3be8c;">/</span><span style="color:#c0c5ce;">&#39; ) </span><span style="color:#bf616a;">NotFound</span><span style="color:#c0c5ce;">(210); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Empty request URI */
+</span><span style="color:#bf616a;">1860:</span><span style="color:#c0c5ce;">        NotFound(260);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Disallowed referrer */
+</span><span style="color:#bf616a;">1962:</span><span style="color:#c0c5ce;">      NotFound(300); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Path element begins with &quot;</span><span style="color:#a3be8c;">.</span><span style="color:#c0c5ce;">&quot; or &quot;</span><span style="color:#a3be8c;">-</span><span style="color:#c0c5ce;">&quot; */
+</span><span style="color:#bf616a;">1974:</span><span style="color:#c0c5ce;">    NotFound(310); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: URI does not start with &quot;</span><span style="color:#a3be8c;">/</span><span style="color:#c0c5ce;">&quot; */
+</span><span style="color:#bf616a;">1977:</span><span style="color:#c0c5ce;">    NotFound(320); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: URI too long */
+</span><span style="color:#bf616a;">1980:</span><span style="color:#c0c5ce;">    NotFound(330);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Missing HOST: parameter */
+</span><span style="color:#bf616a;">1982:</span><span style="color:#c0c5ce;">    NotFound(340);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: HOST parameter too long */
+</span><span style="color:#bf616a;">2007:</span><span style="color:#c0c5ce;">        NotFound(350);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: *.website permissions */
+</span><span style="color:#bf616a;">2049:</span><span style="color:#c0c5ce;">      if( stillSearching ) </span><span style="color:#bf616a;">NotFound</span><span style="color:#c0c5ce;">(380); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: URI not found */
+</span><span style="color:#bf616a;">2054:</span><span style="color:#c0c5ce;">        NotFound(390);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: File not readable */
+</span><span style="color:#bf616a;">2071:</span><span style="color:#c0c5ce;">        NotFound(400); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: URI is a directory w/o index.html */
+</span><span style="color:#bf616a;">2211:</span><span style="color:#c0c5ce;">    NotFound(460); </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Excess URI content past static file name */
+</span></code></pre><h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/printf.3.html">printf</a></li>
+<li><a href="https://man7.org/linux/man-pages/man3/exit.3.html">exit</a></li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

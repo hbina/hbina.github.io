@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>CompareEtags</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">CompareEtags</h1>
+<p class="subtitle"><strong>2021-06-18</strong></p>
+<p>This function compares 2 C-strings and returns 0 if they differ and non-zero otherwise.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Compare two ETag values. Return 0 if they match and non-zero if they differ.
+**
+** The one on the left might be a NULL pointer and it might be quoted.
+*/
+</span><span style="color:#b48ead;">static int </span><span style="color:#8fa1b3;">CompareEtags</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zA</span><span style="color:#c0c5ce;">, </span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zB</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zA==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">;
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zA[</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">]==&#39;</span><span style="color:#a3be8c;">&quot;</span><span style="color:#c0c5ce;">&#39; ){
+    </span><span style="color:#b48ead;">int</span><span style="color:#c0c5ce;"> lenB = (</span><span style="color:#b48ead;">int</span><span style="color:#c0c5ce;">)</span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zB);
+    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( </span><span style="color:#96b5b4;">strncmp</span><span style="color:#c0c5ce;">(zA+</span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">, zB, lenB)==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">&amp;&amp; zA[lenB+</span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">]==&#39;</span><span style="color:#a3be8c;">&quot;</span><span style="color:#c0c5ce;">&#39; ) </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">;
+  }
+  </span><span style="color:#b48ead;">return </span><span style="color:#96b5b4;">strcmp</span><span style="color:#c0c5ce;">(zA, zB);
+}
+</span></code></pre><h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/strlen.3.html">strlen</a>.</li>
+<li><a href="https://man7.org/linux/man-pages/man3/strncmp.3p.html">strncmp</a>.</li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

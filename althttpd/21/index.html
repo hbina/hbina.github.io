@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>Timeout</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">Timeout</h1>
+<p class="subtitle"><strong>2021-06-27</strong></p>
+<p>A function that will be called to handle timeouts.
+AFAIK, the server is set up such that each request must be handled in a set amount of time.
+Beyond that, the server will just timeout.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** This is called if we timeout or catch some other kind of signal.
+** Log an error code which is 900+iSig and then quit.
+*/
+</span><span style="color:#b48ead;">static void </span><span style="color:#8fa1b3;">Timeout</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">iSig</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( !debugFlag ){
+    </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zScript &amp;&amp; zScript[</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">] ){
+      </span><span style="color:#b48ead;">char</span><span style="color:#c0c5ce;"> zBuf[</span><span style="color:#d08770;">10</span><span style="color:#c0c5ce;">];
+      zBuf[</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">] = &#39;</span><span style="color:#a3be8c;">9</span><span style="color:#c0c5ce;">&#39;;
+      zBuf[</span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">] = &#39;</span><span style="color:#a3be8c;">0</span><span style="color:#c0c5ce;">&#39; + (iSig/</span><span style="color:#d08770;">10</span><span style="color:#c0c5ce;">)%</span><span style="color:#d08770;">10</span><span style="color:#c0c5ce;">;
+      zBuf[</span><span style="color:#d08770;">2</span><span style="color:#c0c5ce;">] = &#39;</span><span style="color:#a3be8c;">0</span><span style="color:#c0c5ce;">&#39; + iSig%</span><span style="color:#d08770;">10</span><span style="color:#c0c5ce;">;
+      zBuf[</span><span style="color:#d08770;">3</span><span style="color:#c0c5ce;">] = </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">;
+      </span><span style="color:#96b5b4;">strcpy</span><span style="color:#c0c5ce;">(zReplyStatus, zBuf);
+      </span><span style="color:#bf616a;">MakeLogEntry</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">, </span><span style="color:#d08770;">130</span><span style="color:#c0c5ce;">);  </span><span style="color:#65737e;">/* LOG: Timeout */
+    </span><span style="color:#c0c5ce;">}
+    </span><span style="color:#96b5b4;">exit</span><span style="color:#c0c5ce;">(</span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">);
+  }
+}
+</span></code></pre>
+<p>There's 2 things that I am unsure here.</p>
+<ol>
+<li>Why do we need 10 bytes when we only use 4 of them?</li>
+<li>Why is the the error code here <code>9XX</code> when there's already a HTTP request code for this.
+It appears to be for logging purposes only, which is weird because its only enabled when <code>debugFlag</code> is false.</li>
+</ol>
+<p>Let's see how it's bein used,</p>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">hbina.github.io</span><span style="color:#c0c5ce;"> on  master </span><span style="color:#b48ead;">[</span><span style="color:#c0c5ce;">!?</span><span style="color:#b48ead;">]
+</span><span style="color:#bf616a;">❯</span><span style="color:#c0c5ce;"> cat static/althttpd/althttpd.c | </span><span style="color:#bf616a;">rg --line-number </span><span style="color:#c0c5ce;">&#39;</span><span style="color:#a3be8c;">Timeout</span><span style="color:#c0c5ce;">&#39;
+</span><span style="color:#bf616a;">333:static</span><span style="color:#c0c5ce;"> int useTimeout = 1;       </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> True to use times */
+</span><span style="color:#bf616a;">764:static</span><span style="color:#c0c5ce;"> void Timeout(int iSig){
+</span><span style="color:#bf616a;">773:</span><span style="color:#c0c5ce;">      MakeLogEntry(0, 130);  </span><span style="color:#bf616a;">/*</span><span style="color:#c0c5ce;"> LOG: Timeout */
+</span><span style="color:#bf616a;">1352:</span><span style="color:#c0c5ce;">  if( useTimeout ) </span><span style="color:#bf616a;">alarm</span><span style="color:#c0c5ce;">(30 + pStat-&gt;st_size/1000);
+</span><span style="color:#bf616a;">1381:</span><span style="color:#c0c5ce;">  if( useTimeout ){
+</span><span style="color:#bf616a;">1657:</span><span style="color:#c0c5ce;">  signal(SIGALRM, Timeout);
+</span><span style="color:#bf616a;">1658:</span><span style="color:#c0c5ce;">  signal(SIGSEGV, Timeout);
+</span><span style="color:#bf616a;">1659:</span><span style="color:#c0c5ce;">  signal(SIGPIPE, Timeout);
+</span><span style="color:#bf616a;">1660:</span><span style="color:#c0c5ce;">  signal(SIGXCPU, Timeout);
+</span><span style="color:#bf616a;">1661:</span><span style="color:#c0c5ce;">  if( useTimeout ) </span><span style="color:#bf616a;">alarm</span><span style="color:#c0c5ce;">(15);
+</span><span style="color:#bf616a;">1930:</span><span style="color:#c0c5ce;">    if( useTimeout ) </span><span style="color:#bf616a;">alarm</span><span style="color:#c0c5ce;">(15 + len/2000);
+</span><span style="color:#bf616a;">1939:</span><span style="color:#c0c5ce;">  if( useTimeout ) </span><span style="color:#bf616a;">alarm</span><span style="color:#c0c5ce;">(10);
+</span><span style="color:#bf616a;">2224:</span><span style="color:#c0c5ce;">  if( useTimeout ) </span><span style="color:#bf616a;">alarm</span><span style="color:#c0c5ce;">(30);
+</span><span style="color:#bf616a;">2417:</span><span style="color:#c0c5ce;">        useTimeout = 0;
+</span><span style="color:#bf616a;">2540:INSERT</span><span style="color:#c0c5ce;"> INTO xref VALUES(130,&#39;</span><span style="color:#a3be8c;">Timeout</span><span style="color:#c0c5ce;">&#39;);
+</span></code></pre>
+<p>So it seems to register itself to a bunch of signals and that's pretty much it.</p>
+<h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/signal.3p.html">signal</a>.</li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/408">HTTP Status Request Timeout</a>.</li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

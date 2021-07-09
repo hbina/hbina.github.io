@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>SetEnv</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">SetEnv</h1>
+<p class="subtitle"><strong>2021-06-14</strong></p>
+<p>This function sets the environment variables.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Set the value of environment variable zVar to zValue.
+*/
+</span><span style="color:#b48ead;">static void </span><span style="color:#8fa1b3;">SetEnv</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zVar</span><span style="color:#c0c5ce;">, </span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zValue</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#b48ead;">char </span><span style="color:#c0c5ce;">*z;
+  size_t len;
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zValue==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zValue=&quot;&quot;;
+  </span><span style="color:#65737e;">/* Disable an attempted bashdoor attack */
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( </span><span style="color:#96b5b4;">strncmp</span><span style="color:#c0c5ce;">(zValue,&quot;</span><span style="color:#a3be8c;">() {</span><span style="color:#c0c5ce;">&quot;,</span><span style="color:#d08770;">4</span><span style="color:#c0c5ce;">)==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) zValue = &quot;&quot;;
+  len = </span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zVar) + </span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zValue) + </span><span style="color:#d08770;">2</span><span style="color:#c0c5ce;">;
+  z = </span><span style="color:#bf616a;">SafeMalloc</span><span style="color:#c0c5ce;">(len);
+  </span><span style="color:#96b5b4;">sprintf</span><span style="color:#c0c5ce;">(z,&quot;</span><span style="color:#d08770;">%s</span><span style="color:#a3be8c;">=</span><span style="color:#d08770;">%s</span><span style="color:#c0c5ce;">&quot;,zVar,zValue);
+  </span><span style="color:#bf616a;">putenv</span><span style="color:#c0c5ce;">(z);
+}
+</span></code></pre>
+<p>There's some issues with this function.</p>
+<ol>
+<li>It does not free the memory held by <code>z</code>.</li>
+<li>I think their implementation to prevent bashdoor attack is somewhat naive?
+I am pretty sure one can bypass this check by simply prepending whitespaces.</li>
+<li>It does not check if <code>zVar</code> is a <code>NULL</code>.
+Granted, if you grep for its usage, you will find that it only uses statically allocated memory.</li>
+</ol>
+<pre style="background-color:#2b303b;">
+<code class="language-bash" data-lang="bash"><span style="color:#bf616a;">bash-3.2$</span><span style="color:#c0c5ce;"> rg &#39;</span><span style="color:#a3be8c;">SetEnv</span><span style="color:#c0c5ce;">&#39; ./static/althttpd/althttpd.c
+</span><span style="color:#bf616a;">523:static</span><span style="color:#c0c5ce;"> void SetEnv(const char *zVar, const char *zValue){
+</span><span style="color:#bf616a;">2136:</span><span style="color:#c0c5ce;">        SetEnv(cgienv</span><span style="color:#b48ead;">[</span><span style="color:#c0c5ce;">i</span><span style="color:#b48ead;">]</span><span style="color:#c0c5ce;">.zEnvName,*cgienv</span><span style="color:#b48ead;">[</span><span style="color:#c0c5ce;">i</span><span style="color:#b48ead;">]</span><span style="color:#c0c5ce;">.pzEnvValue);
+</span></code></pre>
+<p>The <code>cgienv</code> here is an array of CGI environment variables defined at the top of the file.
+These are all statically allocated, so no problem here.
+However, the performance could have been improved in this case by passing the length of the arrays into the function.
+I am not sure if compilers are smart enough (or allowed to) optimized the call to <code>strlen</code> by evaluating the size at compile time.</p>
+<h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/setenv.3.html">setenv</a></li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>

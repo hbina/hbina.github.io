@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+<title>StrDup</title>
+
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+<h1 class="title">StrDup</h1>
+<p class="subtitle"><strong>2021-06-16</strong></p>
+<p>This function basically copies a C-string.
+Nothing special.</p>
+<pre style="background-color:#2b303b;">
+<code class="language-c" data-lang="c"><span style="color:#65737e;">/*
+** Make a copy of a string into memory obtained from malloc.
+*/
+</span><span style="color:#b48ead;">static char </span><span style="color:#c0c5ce;">*</span><span style="color:#8fa1b3;">StrDup</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">const char </span><span style="color:#c0c5ce;">*</span><span style="color:#bf616a;">zSrc</span><span style="color:#c0c5ce;">){
+  </span><span style="color:#b48ead;">char </span><span style="color:#c0c5ce;">*zDest;
+  size_t size;
+
+  </span><span style="color:#b48ead;">if</span><span style="color:#c0c5ce;">( zSrc==</span><span style="color:#d08770;">0 </span><span style="color:#c0c5ce;">) </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">;
+  size = </span><span style="color:#96b5b4;">strlen</span><span style="color:#c0c5ce;">(zSrc) + </span><span style="color:#d08770;">1</span><span style="color:#c0c5ce;">;
+  zDest = (</span><span style="color:#b48ead;">char</span><span style="color:#c0c5ce;">*)</span><span style="color:#bf616a;">SafeMalloc</span><span style="color:#c0c5ce;">( size );
+  </span><span style="color:#96b5b4;">strcpy</span><span style="color:#c0c5ce;">(zDest,zSrc);
+  </span><span style="color:#b48ead;">return</span><span style="color:#c0c5ce;"> zDest;
+}
+</span></code></pre>
+<p>However, I personally think that using <code>memcpy</code> is better here because we already calculated the string length here.</p>
+<h1 id="references">References</h1>
+<ol>
+<li><a href="https://man7.org/linux/man-pages/man3/strlen.3.html">strlen</a></li>
+<li><a href="https://man7.org/linux/man-pages/man3/strcpy.3.html">strcpy</a></li>
+<li><a href="https://man7.org/linux/man-pages/man3/memcpy.3.html">memcpy</a></li>
+</ol>
+
+<p>[<a href="/althttpd">Chapters</a>]</p>
+<p>
+  If you see any errors please raise one
+  <a href="https://github.com/hbina/hbina.github.io/issues/new">here</a>
+</p>
+</div>
+      <p>[<a href="/">Home</a>]</p>
+    </section>
+  </body>
+</html>
