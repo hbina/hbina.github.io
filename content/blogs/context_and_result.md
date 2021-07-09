@@ -31,6 +31,8 @@ coreutils on  hbina-tr-return-err-when-extra-args [$!?] is 📦 v0.0.6 via �
 esgesg
 ```
 
+So why is it better? Because it supports syntax highlighting :) but I can't really show it here either.
+
 ### Print specific lines of text in file
 
 I am sure you can do this with `cat --number` and `grep` for specific line or whatever. But this is a lot simpler,
