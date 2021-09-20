@@ -22,7 +22,7 @@ Sometimes there will be backtracking and jumping ahead of the source code as I s
 
 Please read about the design philosophy [here](https://sqlite.org/althttpd/doc/trunk/althttpd.md).
 
-Check out the source code [here](./../althttpd.c).
+Check out the source code [here](../althttpd/althttpd.c).
 
 # Escape
 
@@ -699,50 +699,7 @@ time_t ParseRfc822Date(const char *zDate){
 
 Given how complex the notion of timezones and time itself, I bet this function is broken.
 Its much easier to just rely on the standard libc function --- and likely more reliable.
-See the [C code below](../c_time_back_and_forth.c) to see parsing dates back and forth,
-
-```c
-#define _XOPEN_SOURCE
-#define _DEFAULT_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <assert.h>
-
-typedef struct tm tm;
-
-static const char *FORMAT = "%a, %d %b %Y %H:%M:%S %Z";
-
-static char *generateDateString(char *bytes, const int byteLen, const time_t t)
-{
-    struct tm *tm = gmtime(&t);
-    strftime(bytes, byteLen, FORMAT, tm);
-    return bytes;
-}
-
-static tm parseDateString(const char *zDate)
-{
-    tm result = {0};
-    assert(*strptime(zDate, FORMAT, &result) == '\0');
-    return result;
-}
-
-int main(void)
-{
-    time_t currentValue = time(NULL);
-    char date1[500];
-    char date2[500];
-    memset(date1, 0, sizeof(date1));
-    tm timeStruct = parseDateString(generateDateString(date1, sizeof(date1), currentValue));
-    puts(date1);
-    memset(date2, 0, sizeof(date2));
-    parseDateString(generateDateString(date2, sizeof(date2), timegm(&timeStruct)));
-    puts(date2);
-    assert(memcmp(date1, date2, sizeof(date1)) == 0);
-    return (0);
-}
-```
+See the [C code here](../althttpd/c_time_back_and_forth.c) to see parsing dates back and forth,
 
 ### References
 
