@@ -6,7 +6,7 @@ date = 2021-07-10
 ## Introduction
 
 `bat` is `cat`-like utility.
-See [Github repository](https://github.com/sharkdp/bat).
+See its [Github repository](https://github.com/sharkdp/bat).
 This is some features of `bat` that I use.
 
 ### Prettier cat
