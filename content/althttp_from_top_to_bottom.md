@@ -255,7 +255,7 @@ bash-3.2$ rg 'zTmpNam' ./content/althttpd/althttpd.c
 ```
 
 So `zTmpNam` is basically a temporary file created from `mkstemp`.
-Then, if `zLogFile` is provided and `omitLog` is false, we start some logging procedure.s
+Then, if `zLogFile` is provided and `omitLog` is false, we start some logging procedures.
 This block of statements here:
 
 ```c
@@ -376,7 +376,7 @@ static void SetEnv(const char *zVar, const char *zValue){
 There's some issues with this function.
 
 1. It does not free the memory held by `z`.
-2. I think their implementation to prevent bashdoor attack is somewhat naive?
+2. I think their implementation to prevent [bashdoor](<https://en.wikipedia.org/wiki/Shellshock_(software_bug)>) (Whatever that is) attack is somewhat naive?
    I am pretty sure one can bypass this check by simply prepending whitespaces.
 3. It does not check if `zVar` is a `NULL`.
    Granted, if you grep for its usage, you will find that it only uses statically allocated memory.
@@ -434,7 +434,7 @@ static char *GetFirstElement(char *zInput, char **zLeftOver){
 ### Visualization
 
 ```
-h | e | l | l | o | \0 | | | | w | o | r | l | d |
+h | e | l | l | o | NULL | | | | w | o | r | l | d |
 |--------------------|---------|------------------...
 a                    b         c
 ```
@@ -445,9 +445,10 @@ It then loop again until it encounters non-whitespace and mark this as `c`.
 Assign `c` to the `zLeftOver` pointer and returns `a` as the result.
 To get the next token, pass `zLeftOver` token in `zInput`.
 
-Note that this function does overwrite the provided string and make the entire string unusable to most C functions because `strlen` is now broken.
+Note that because this function will litter the original C-string with `NULL`s, it will become unusable by `strlen`.
+You can audit whether or not the author ever uses `strlen` on the C-strings that have been passed into this function.
 
-Obviously the above algorithm needs to take into consideration the `\0` value that marks the end of a C-string.
+Obviously the above algorithm needs to take into consideration the `NULL` value that marks the end of a C-string.
 
 ### References
 
@@ -518,7 +519,7 @@ Take 3 C-strings:
 After this function, we will get something like,
 
 ```
-h | e | l | l | o |  | m | y | | w | o | r | l | d | \0 |
+h | e | l | l | o |  | m | y | | w | o | r | l | d | NULL |
 |-----------------|------------|-------------------------...
 <     zPrior      ><    zSep   ><         zSrc          >
 ```
@@ -551,6 +552,15 @@ static int CompareEtags(const char *zA, const char *zB){
 }
 ```
 
+Notice that the function never checks the length of `lenB`, so it might seem problematic that we perform an arbitrary index `zA[lenB + 1]` here.
+I think this is totally safe because the check is implicitly done by the fact that:
+
+1. All C-strings ends with a `NULL`.
+   This is kind of hard to verify.
+2. In the `if` logic, we will only evaluate the right-hand side iff the call to `strncmp`here succeed.
+   This means that `zA` is at least as long as `lenB`.
+   Coupled with the fact that its a C-string, we can be sure that there's at least _another_ character beyond that, namely the `NULL` character.
+
 ### References
 
 1. [strlen](https://man7.org/linux/man-pages/man3/strlen.3.html).
@@ -558,7 +568,7 @@ static int CompareEtags(const char *zA, const char *zB){
 
 # RemoveNewline
 
-This function replaces newline (`\n` or `\r`) with `\0`.
+This function replaces newline (`\n` or `\r`) with `NULL`.
 
 ```c
 /*
@@ -573,10 +583,10 @@ static void RemoveNewline(char *z){
 
 This is probably done so that C-string appears as if it ends there.
 But this is highly problematic because it does not return the `z`.
-The caller have no way of knowing where that `\0` was assigned.
-Even if they loop through again and find that `\0`, how do they know that this is the one that we assigned or this is actually the end of the string?
+The caller have no way of knowing where that `NULL` was assigned.
+Even if they loop through again and find that `NULL`, how do they know that this `NULL` is the one that we assigned or this is the _actual_ the end of the C-string?
 
-We have pretty much leaked the rest of the string.
+In my opinion, it should return the pointer to the next character if its part of the C-string.
 
 # Rfc822Date
 
@@ -771,7 +781,7 @@ static void StartResponse(const char *zResultCode){
 }
 ```
 
-One thing to notice that is that if the first digit in the reply status is `>=4`, it will append the HTTP header with `Connection: close`. It probably means that if there's _any_ issue with the request, the server will just close connection.
+One thing to notice that is that if the first digit in the reply status is `>=4`, it will append the HTTP header with `Connection: close`. It probably means that if there's _any_ issue with the request, the server will just close the connection.
 
 Let's see how its being used,
 
@@ -1261,3 +1271,39 @@ hbina.github.io on  master [!?]
 ### References
 
 1. [exit](https://man7.org/linux/man-pages/man3/exit.3.html)
+
+# Redirect
+
+```c
+/*
+** Do a server redirect to the document specified.  The document
+** name not contain scheme or network location or the query string.
+** It will be just the path.
+*/
+static void Redirect(const char *zPath, int iStatus, int finish, int lineno){
+  switch( iStatus ){
+    case 301:
+      StartResponse("301 Permanent Redirect");
+      break;
+    case 308:
+      StartResponse("308 Permanent Redirect");
+      break;
+    default:
+      StartResponse("302 Temporary Redirect");
+      break;
+  }
+  if( zServerPort==0 || zServerPort[0]==0 || strcmp(zServerPort,"80")==0 ){
+    nOut += printf("Location: %s://%s%s%s\r\n",
+                   zHttp, zServerName, zPath, zQuerySuffix);
+  }else{
+    nOut += printf("Location: %s://%s:%s%s%s\r\n",
+                   zHttp, zServerName, zServerPort, zPath, zQuerySuffix);
+  }
+  if( finish ){
+    nOut += printf("Content-length: 0\r\n");
+    nOut += printf("\r\n");
+    MakeLogEntry(0, lineno);
+  }
+  fflush(stdout);
+}
+```
