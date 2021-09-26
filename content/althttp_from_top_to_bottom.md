@@ -1400,7 +1400,7 @@ This function decodes [`base64`](https://en.wikipedia.org/wiki/Base64) C-string 
 Interestingly, this function does not perform any allocation.
 The decoding is done in-place in the original buffer.
 
-Here's a test program to see the result of decoding some data.
+Here's a [test program](../althttpd/decode_base64_test.c) to see the result of decoding some data.
 
 ```shell
 hbina@akarin:~/git/hbina.github.io$ clang ./static/althttpd/decode_base64_test.c  && ./a.out
