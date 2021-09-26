@@ -435,8 +435,8 @@ static char *GetFirstElement(char *zInput, char **zLeftOver){
 
 ```
 h | e | l | l | o | NULL | | | | w | o | r | l | d |
-|--------------------|---------|------------------...
-a                    b         c
+|--------------------|-----------|------------------...
+a                    b           c
 ```
 
 Mark the beginning of the pointer as `a`.
@@ -520,7 +520,7 @@ After this function, we will get something like,
 
 ```
 h | e | l | l | o |  | m | y | | w | o | r | l | d | NULL |
-|-----------------|------------|-------------------------...
+|-----------------|------------|---------------------------...
 <     zPrior      ><    zSep   ><         zSrc          >
 ```
 
@@ -1307,3 +1307,107 @@ static void Redirect(const char *zPath, int iStatus, int finish, int lineno){
   fflush(stdout);
 }
 ```
+
+This function simply redirects using the [StartResponse](#startresponse) that we have previously seen.
+
+### The Different Kinds of HTTP Status Code for Redirection
+
+The first it does is to map the integer given in `iStatus` to their complete HTTP status code.
+I would like to not however that the first and the last statuses in use here are incorrect.
+
+Using [IANA](https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml) itself as reference, we can see that we should change:
+
+1. "301 Permanent Redirect" => "301 Moved Permanently"
+
+2. "302 Temporary Redirect" => "302 Found"
+
+If the intention is to used indicate "temporary redirect", then the correct status code for that is "307 Temporary Indirect".
+As far as I know, the standard says that only the first 3 letters (the numeric part of the status code) actually matters.
+I have already raised a ticket for this [here](https://sqlite.org/althttpd/tktview?name=2ac5f38c13).
+
+### Where to Redirect
+
+The way a client determine where it should retry is provided in the `Location` header.
+This is what the second part of this function is doing.
+
+If a port is provided (and it is not port 80 which is already used by the HTTP server), then it will append the port to the domain.
+
+If there are no additional data to be included into this response, then it will add the header "Content-Length" with the value 0 to indicate an empty body.
+However, if we grep for the usage of this function, we can see that we will _always_ finish here.
+
+```shell
+hbina@akarin:~/git/hbina.github.io$ rg 'Redirect\(' ./static/althttpd/althttpd.c
+819:static void Redirect(const char *zPath, int iStatus, int finish, int lineno){
+951:        Redirect(zScript, 301, 1, 170); /* LOG: -auth redirect */
+2044:          Redirect(zRealScript, 302, 1, 370); /* LOG: redirect to not-found */
+2080:        Redirect(zRealScript,301,1,410); /* LOG: redirect to add trailing / */
+```
+
+Finally, we will flush the buffer to stdout.
+However, I am not particularly sure why we explicitly do it here and not before we finally want to exit from this fork.
+
+# Decode64
+
+```c
+/*
+** This function treats its input as a base-64 string and returns the
+** decoded value of that string.  Characters of input that are not
+** valid base-64 characters (such as spaces and newlines) are ignored.
+*/
+void Decode64(char *z64){
+  char *zData;
+  int n64;
+  int i, j;
+  int a, b, c, d;
+  static int isInit = 0;
+  static int trans[128];
+  static unsigned char zBase[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+  if( !isInit ){
+    for(i=0; i<128; i++){ trans[i] = 0; }
+    for(i=0; zBase[i]; i++){ trans[zBase[i] & 0x7f] = i; }
+    isInit = 1;
+  }
+  n64 = strlen(z64);
+  while( n64>0 && z64[n64-1]=='=' ) n64--;
+  zData = z64;
+  for(i=j=0; i+3<n64; i+=4){
+    a = trans[z64[i] & 0x7f];
+    b = trans[z64[i+1] & 0x7f];
+    c = trans[z64[i+2] & 0x7f];
+    d = trans[z64[i+3] & 0x7f];
+    zData[j++] = ((a<<2) & 0xfc) | ((b>>4) & 0x03);
+    zData[j++] = ((b<<4) & 0xf0) | ((c>>2) & 0x0f);
+    zData[j++] = ((c<<6) & 0xc0) | (d & 0x3f);
+  }
+  if( i+2<n64 ){
+    a = trans[z64[i] & 0x7f];
+    b = trans[z64[i+1] & 0x7f];
+    c = trans[z64[i+2] & 0x7f];
+    zData[j++] = ((a<<2) & 0xfc) | ((b>>4) & 0x03);
+    zData[j++] = ((b<<4) & 0xf0) | ((c>>2) & 0x0f);
+  }else if( i+1<n64 ){
+    a = trans[z64[i] & 0x7f];
+    b = trans[z64[i+1] & 0x7f];
+    zData[j++] = ((a<<2) & 0xfc) | ((b>>4) & 0x03);
+  }
+  zData[j] = 0;
+}
+```
+
+This function decodes [`base64`](https://en.wikipedia.org/wiki/Base64) C-string input into its binary data.
+Interestingly, this function does not perform any allocation.
+The decoding is done in-place in the original buffer.
+
+Here's a test program to see the result of decoding some data.
+
+```shell
+hbina@akarin:~/git/hbina.github.io$ clang ./static/althttpd/decode_base64_test.c  && ./a.out
+Encoded:'TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcmsu==============='
+Decoded:'Many hands make light work.'
+```
+
+Note that this is for illustrative purpose only.
+The `base64` encoding is used to encode binary data which may contain a bunch of `O`s and/or non-printable characters.
+Thefore, the result of decoded data cannot be trivially printed.
