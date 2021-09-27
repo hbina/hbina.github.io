@@ -1,6 +1,6 @@
 +++
-title = "althttpd: From Top To Bottom"
-date = 2021-06-09
+title = "althttpd: From Top to Bottom"
+weight = 3
 +++
 
 # Introduction
@@ -1396,7 +1396,7 @@ void Decode64(char *z64){
 }
 ```
 
-This function decodes [`base64`](https://en.wikipedia.org/wiki/Base64) C-string input into its binary data.
+This function decodes [base64](https://en.wikipedia.org/wiki/Base64) C-string input into its binary data.
 Interestingly, this function does not perform any allocation.
 The decoding is done in-place in the original buffer.
 

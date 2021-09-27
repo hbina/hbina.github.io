@@ -1,13 +1,14 @@
 +++
-title = "Programming With Context"
-date = 2021-07-03
+title = "Programming with Context"
+weight = 2
 +++
 
 ## Disclaimer
 
-This is just my opinion on the matter.
-I am still learning it myself (when does one ever stop?).
-If you have any objection, comments, or corrections, please raise an issue in the the Github source for this page :).
+This is just my understanding of the subject.
+It is by no mean correct or even "educated" per se.
+It's just the things that caught my mind as I read about monads.
+Feel free to correct me whenever and wherever I am wrong.
 
 Furthermore, I will mostly be using `TypeScript` to show a version of monad in its imperative form.
 So this is just a note that it will not be as powerful and as elegant as its "equivalence" or superior form in `Haskell`.
@@ -15,41 +16,101 @@ So this is just a note that it will not be as powerful and as elegant as its "eq
 ## Introduction
 
 In programming, we have to deal with a lot of complexities.
-There some tools to help us narrow down the set of possible issues/states that we have to deal with.
-Types is possibly the most reliable and most used static analysis tool.
+In my experience, there are 2 different kinds of complexities:
+
+1. Business complexity.
+   This is the complexity of the requirement that have been tasked to us developers.
+
+2. Programming complexity.
+   This is the complexity that comes from the implementation of said requirements.
+   For example, take pointers.
+   Requirements usually make no mention of performance/implementation.
 
 One thing about complexity is that they will always exist.
-The only thing that we can do is to abstract it away and pray that the abstraction doesn't break in really bad ways down the line.
-Bsically, _someone_ gotta pay for the complexity.
+We may be able to eliminate the second complexity; which we will attempt to later.
+However, the first part will always be there --- it is literally why we are here in the first place.
+
+I think one of the biggest cause of complexity is the states.
+Our monkey brain is extremely bad at managing them (Or is it just me?).
+There some tools to help us narrow down the set of possible issues/states that we have to deal with.
+Types is one such tool and it is possibly the most popular and reliable static analysis tool.
+
+The only thing that we can do is to abstract it away the complexity.
+Then we just pray that the abstraction doesn't break in a really awful manner down the line.
+At the end of the day, _someone_ gotta pay for the complexity.
 
 ## We Begin with Dynamic Types
 
 Dynamic languages will "allow" us to write anything we like.
 I say in quotes because this is actually not true.
-It's more like letting you make silly mistakes and make you pay for it later.
+The reason is that we most definitely do no want to write "anything we like".
+As I have said before, it is very hard for us human to keep a consistent flow of thought.
+
+My gripe with untyped languge is that it allows you to do even the stupidest mistake.
+For example, consider the following JavaScript code,
+
+```javascript
+let a = "a";
+let b = false;
+let c = a + b;
+```
+
+Does this make any sense?
+I find it to be extremely infuriating when my computer cannot tell me what it _already_ knows.
+Another example is `C`'s [printf](https://en.cppreference.com/w/c/io/fprintf).
+
+```c
+const char *pointer = "hello world";
+printf("%%p => %p\n", pointer);
+printf("%%s => %s\n", pointer);
+printf("%%d => %d\n", pointer);
+```
+
+Compiling and executing the binary gets us,
+
+```shell
+hbina@akarin:~/git/hbina.github.io$ clang ./static/programming_with_context/example_printf_program.c && ./a.out
+./static/programming_with_context/example_printf_program.c:8:27: warning: format specifies type 'int' but the argument has type 'const char *' [-Wformat]
+    printf("%%d => %d\n", pointer);
+                   ~~     ^~~~~~~
+                   %s
+1 warning generated.
+%p => 0x402004
+%s => hello world
+%d => 4202500
+```
+
+Only the first 2 makes sense...but the 3rd one?
+Not so much --- but fortunately clang does warn us about this.
+Regardless, it still pains me that a computer is allowing me to make such mistakes.
+These examples are just for illustrative purpose, but imagine dealing with `C`'s [tagged union](https://en.cppreference.com/w/c/language/union).
 
 I think dynamic languages is the perfect tool for writing small scripts.
-However, the moment you want the program to span for more than 2 files or when you want to refactor/enhance the functionality; you will start having issues.
+However, the moment you want the program to span for more than 2 files or when you want to refactor/enhance the functionality; you will start having issues or implicit conversions?
 
 In my experience, what ended up happening is some sort of ad-hoc type-checking anyways.
 
-First, you perform a manual check on the functions.
-You do this by going through all the possible states of the program to convince yourself that the function does what you think it does.
+1. Perform a manual check/verification.
+   You do this by going through all the possible states of the program to convince yourself that the function does what you think it does.
+   Needless to say this is insanely hard to do.
+   Most of the time, its just _assumed_ that something works and hope for the best.
+   When something does go bad, _then_ we go take a look and fix it.
+   This is obviously not ideal.
 
-Then, in languages like JavaScript you can do a type-guard to check that the values given to you are what you think it is.
+2. Another way you can narrow down the states (and to verify your assumptions) is to perform some kind of check.
+   For example, we can do a type-guard IN JavaScript.
+   This way we check that any given value is what you think it is.
 
 ```javascript
-...
 if (typeof value === "string") {
-    // Okay...its a string
+  // Great! It's a string
 } else {
-    // What the hell is this?
+  // Do something else...
 }
 ```
 
-Another one is to just run the program or write a bunch of tests to simulate most situations.
-This is very cumbersome.
-Sometimes, you even need to asinine tests just to make sure.
+3. Write lots of test cases.
+   Loads of them.
 
 ## Enter Types
 
