@@ -165,6 +165,10 @@ I mean sure, someone will come up and say they know every possible interactions 
 But it's still silly to worry about that every single time I want to do anything meaningful.
 I am just trying to write an addition function here!
 
+This is where the second kind of complexity that I mentioned before comes sneaking in.
+Most requirements most definitely do not include a specification for how to deal with `NaN` or floating point errors.
+Yet it is something that we have to consider.
+
 One easy way to go around this is to,
 
 ```typescript
@@ -178,7 +182,8 @@ const addition = (a: number, b: number): number | undefined => {
 ```
 
 At this point, you are pretty happy about the safety of this function.
-You are sure that any time I call this function, if the result is _not_ undefined, we are confident that we are performing what we consider as "addition".
+We are sure that any time we call this function, the result is a _number_.
+We are confident that the computation we are performing here are what we consider as "addition".
 
 But then, a new requirement comes in and we need to implement a substraction function.
 Fine, we can just copy and paste the implementation before and replace `+` with `-`.
@@ -195,6 +200,9 @@ const substraction = (a: number, b: number): number | undefined => {
 
 Then multiple new requirement comes in, multiplication, division, factorial...
 We will need to do this _every_ single time.
+Even worse than that, we can clearly see that they are all awfully similar.
+Notice that the only thing that "matters" here is the binary operator.
+Just that 1 character.
 
 Surely there's some way to abstract/pull out these common checks into a class.
 
@@ -219,8 +227,9 @@ Can we do better? Aren't we taugh to pull out common abstraction into a function
 ## Hide Behind the Container
 
 It turns that there is a way to deal with all this repetitiveness.
+If you have ever taken a class in computer science or programming, you will most definitely have come across classes (or containers).
 The strategy is that we hide the values behind a container and the only way you can interact with the contained value is by passing it a function.
-Let's call it a `MaybeNumber`.
+Let's call this a `MaybeNumber`.
 
 ```typescript
 class MaybeNumber {
