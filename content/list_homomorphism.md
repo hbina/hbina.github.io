@@ -1,6 +1,6 @@
 +++
 title = "Some Examples of List Homomorphism"
-weight = 1
+weight = 4
 +++
 
 ```typescript
