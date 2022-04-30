@@ -1335,7 +1335,7 @@ If a port is provided (and it is not port 80 which is already used by the HTTP s
 If there are no additional data to be included into this response, then it will add the header "Content-Length" with the value 0 to indicate an empty body.
 However, if we grep for the usage of this function, we can see that we will _always_ finish here.
 
-```shell
+```bash
 hbina@akarin:~/git/hbina.github.io$ rg 'Redirect\(' ./static/althttpd/althttpd.c
 819:static void Redirect(const char *zPath, int iStatus, int finish, int lineno){
 951:        Redirect(zScript, 301, 1, 170); /* LOG: -auth redirect */
@@ -1402,7 +1402,7 @@ The decoding is done in-place in the original buffer.
 
 Here's a [test program](../althttpd/decode_base64_test.c) to see the result of decoding some data.
 
-```shell
+```bash
 hbina@akarin:~/git/hbina.github.io$ clang ./static/althttpd/decode_base64_test.c  && ./a.out
 Encoded:'TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcmsu==============='
 Decoded:'Many hands make light work.'

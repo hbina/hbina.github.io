@@ -68,7 +68,7 @@ printf("%%d => %d\n", pointer);
 
 Compiling and executing the binary gets us,
 
-```shell
+```bash
 hbina@akarin:~/git/hbina.github.io$ clang ./static/programming_with_context/example_printf_program.c && ./a.out
 ./static/programming_with_context/example_printf_program.c:8:27: warning: format specifies type 'int' but the argument has type 'const char *' [-Wformat]
     printf("%%d => %d\n", pointer);
