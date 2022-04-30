@@ -1,6 +1,6 @@
 +++
 title = "Programming with Context"
-weight = 2
+weight = 3
 +++
 
 ## Disclaimer
