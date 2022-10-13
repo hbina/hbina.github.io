@@ -1,0 +1,52 @@
+<!doctype html><html lang=en><meta charset=utf-8><head><title>Some Examples of List Homomorphism</title><body><section class=section><div class=container><div><h1 class=title>Some Examples of List Homomorphism</h1><p class=subtitle><strong></strong><hr><pre class=language-typescript data-lang=typescript style=background-color:#2b303b;color:#c0c5ce;><code class=language-typescript data-lang=typescript><span style=color:#65737e;>// Basically need to satisfy this constraint
+</span><span style=color:#65737e;>// f(list_one + list_two) === homo_list(f(list_one), f(list_two));
+</span><span style=color:#65737e;>// The function 'f' is a list homomorphism if there exists a function `homo_list` that satisfy the above equation
+</span><span>
+</span><span style=color:#b48ead;>type </span><span>IntermediateState = {
+</span><span>  </span><span style=color:#bf616a;>mss</span><span>: number; </span><span style=color:#65737e;>// the actual MSS of a given array
+</span><span>  </span><span style=color:#bf616a;>mss_from_left</span><span>: number; </span><span style=color:#65737e;>// the MSS if we force subarray to include the first element
+</span><span>  </span><span style=color:#bf616a;>mss_from_right</span><span>: number; </span><span style=color:#65737e;>// the MSS if we force the subarray to include the last element
+</span><span>  </span><span style=color:#bf616a;>total_sum</span><span>: number; </span><span style=color:#65737e;>// simply the total sum of the array
+</span><span>};
+</span><span>
+</span><span style=color:#65737e;>// Transforming a single element into intermediate state is trivial
+</span><span style=color:#b48ead;>const </span><span style=color:#8fa1b3;>f </span><span>= (</span><span style=color:#bf616a;>input</span><span>: number): IntermediateState </span><span style=color:#b48ead;>=> </span><span>{
+</span><span>  </span><span style=color:#b48ead;>return </span><span>{
+</span><span>    mss: </span><span style=color:#bf616a;>input</span><span>,
+</span><span>    mss_from_left: </span><span style=color:#bf616a;>input</span><span>,
+</span><span>    mss_from_right: </span><span style=color:#bf616a;>input</span><span>,
+</span><span>    total_sum: </span><span style=color:#bf616a;>input</span><span>,
+</span><span>  };
+</span><span>};
+</span><span>
+</span><span style=color:#b48ead;>const </span><span style=color:#8fa1b3;>dot </span><span>= (
+</span><span>  </span><span style=color:#bf616a;>lhs</span><span>: IntermediateState,
+</span><span>  </span><span style=color:#bf616a;>rhs</span><span>: IntermediateState
+</span><span>): IntermediateState </span><span style=color:#b48ead;>=> </span><span>{
+</span><span>  </span><span style=color:#b48ead;>return </span><span>{
+</span><span>    mss: Math.</span><span style=color:#96b5b4;>max</span><span>(</span><span style=color:#bf616a;>lhs</span><span>.</span><span style=color:#bf616a;>mss</span><span>, </span><span style=color:#bf616a;>rhs</span><span>.</span><span style=color:#bf616a;>mss</span><span>, </span><span style=color:#bf616a;>lhs</span><span>.</span><span style=color:#bf616a;>mss_from_right </span><span>+ </span><span style=color:#bf616a;>rhs</span><span>.</span><span style=color:#bf616a;>mss_from_left</span><span>),
+</span><span>    mss_from_left: Math.</span><span style=color:#96b5b4;>max</span><span>(
+</span><span>      </span><span style=color:#bf616a;>lhs</span><span>.</span><span style=color:#bf616a;>mss_from_left</span><span>,
+</span><span>      </span><span style=color:#bf616a;>lhs</span><span>.</span><span style=color:#bf616a;>total_sum </span><span>+ </span><span style=color:#bf616a;>rhs</span><span>.</span><span style=color:#bf616a;>mss_from_left
+</span><span>    ),
+</span><span>    mss_from_right: Math.</span><span style=color:#96b5b4;>max</span><span>(
+</span><span>      </span><span style=color:#bf616a;>rhs</span><span>.</span><span style=color:#bf616a;>mss_from_right</span><span>,
+</span><span>      </span><span style=color:#bf616a;>lhs</span><span>.</span><span style=color:#bf616a;>mss_from_right </span><span>+ </span><span style=color:#bf616a;>rhs</span><span>.</span><span style=color:#bf616a;>total_sum
+</span><span>    ),
+</span><span>    total_sum: </span><span style=color:#bf616a;>lhs</span><span>.</span><span style=color:#bf616a;>total_sum </span><span>+ </span><span style=color:#bf616a;>rhs</span><span>.</span><span style=color:#bf616a;>total_sum</span><span>,
+</span><span>  };
+</span><span>};
+</span><span>
+</span><span style=color:#b48ead;>const </span><span style=color:#8fa1b3;>h </span><span>= (</span><span style=color:#bf616a;>input</span><span>: Array&LTnumber>): IntermediateState </span><span style=color:#b48ead;>=> </span><span>{
+</span><span>  </span><span style=color:#b48ead;>if </span><span>(</span><span style=color:#bf616a;>input</span><span>.length === </span><span style=color:#d08770;>0</span><span>) {
+</span><span>    </span><span style=color:#b48ead;>return </span><span>{
+</span><span>      mss: </span><span style=color:#d08770;>0</span><span>,
+</span><span>      mss_from_left: </span><span style=color:#d08770;>0</span><span>,
+</span><span>      mss_from_right: </span><span style=color:#d08770;>0</span><span>,
+</span><span>      total_sum: </span><span style=color:#d08770;>0</span><span>,
+</span><span>    };
+</span><span>  } </span><span style=color:#b48ead;>else </span><span>{
+</span><span>    </span><span style=color:#b48ead;>return </span><span style=color:#bf616a;>input</span><span>.</span><span style=color:#8fa1b3;>map</span><span>((</span><span style=color:#bf616a;>x</span><span>) </span><span style=color:#b48ead;>=> </span><span style=color:#8fa1b3;>f</span><span>(</span><span style=color:#bf616a;>x</span><span>)).</span><span style=color:#8fa1b3;>reduce</span><span>((</span><span style=color:#bf616a;>acc</span><span>, </span><span style=color:#bf616a;>curr</span><span>) </span><span style=color:#b48ead;>=> </span><span style=color:#8fa1b3;>dot</span><span>(</span><span style=color:#bf616a;>acc</span><span>, </span><span style=color:#bf616a;>curr</span><span>));
+</span><span>  }
+</span><span>};
+</span></code></pre></div><section><hr><p>[<a href=/>Home</a>]<p>My resume <a href=/resume.html>here</a>.<p>Source code available <a href=https://github.com/hbina/hbina.github.io>here</a>. You can raise an issue if ... you have an issue with it.
