@@ -1,0 +1,147 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json",
+  "basics": {
+    "name": "Hanif Bin Ariffin",
+    "label": "Programmer",
+    "email": "hanif.ariffin.4326@gmail.com",
+    "phone": "+60 175930487",
+    "url": "https://hbina.github.io",
+    "summary": "Highly experienced and independent problem solver.",
+    "location": {
+      "address": "Lot 633, Kampung Tok Dokang, Banggol",
+      "postalCode": "15350",
+      "city": "Kota Bharu",
+      "countryCode": "MY",
+      "region": "Kelantan"
+    },
+    "profiles": [
+      {
+        "network": "Github",
+        "username": "hbina",
+        "url": "https://github.com/hbina"
+      },
+      {
+        "network": "LinkedIn",
+        "username": "Hanif Bin Ariffin",
+        "url": "https://www.linkedin.com/in/hanif-bin-ariffin-73057a8b/"
+      }
+    ]
+  },
+  "work": [
+    {
+      "name": "Setel",
+      "location": "Malaysia",
+      "position": "Fullstack developer",
+      "url": "https://www.setel.com/",
+      "startDate": "2020-12-01",
+      "endDate": "2022-02-01",
+      "summary": "Responsible for implementing and maintaining the loyalty system for self-checkout, the inventory and the store ordering system.",
+      "highlights": [
+        "Uses TypeScript for backend.",
+        "Uses React + TypeScript for frontend."
+      ]
+    },
+    {
+      "name": "Globelise",
+      "location": "Singapore",
+      "description": "Awesome compression company",
+      "position": "Senior Fullstack Developer",
+      "url": "https://www.globelise.com/",
+      "startDate": "2022-02-01",
+      "endDate": "2022-07-01",
+      "summary": "Recruit diverse talent, hire from anywhere, onboard compliantly, and worry no more about global payroll.",
+      "highlights": [
+        "Uses Rust + Actix for backend.",
+        "Uses React + JavaScript for frontend.",
+        "Implemented various 3rd party integrations."
+      ]
+    }
+  ],
+  "volunteer": [
+    {
+      "organization": "Godot",
+      "position": "Contributor",
+      "url": "https://github.com/godotengine/godot",
+      "summary": "Multi-platform 2D and 3D game engine written in C/C++14.",
+      "highlights": [
+        "Debugged various memory issues and crashes.",
+        "General UI fixes."
+      ]
+    },
+    {
+      "organization": "Rust Coreutils",
+      "position": "Contributor",
+      "url": "https://github.com/uutils/coreutils",
+      "summary": "Cross-platform Rust rewrite of the GNU coreutils.",
+      "highlights": [
+        "Reimplemented tr to be fully compatible with GNU tr (passes all tests) using no unsafe code.",
+        "Various improvement to ls.",
+        "Top 50 contributor of the project."
+      ]
+    },
+    {
+      "organization": "Lapce",
+      "position": "Contributor",
+      "url": "https://github.com/lapce/lapce",
+      "summary": "Open source. Quick from launch to every keystroke, and batteries included. Compatible alternative to Microsoft's VSCode.",
+      "highlights": []
+    }
+  ],
+  "education": [
+    {
+      "institution": "University of Ottawa",
+      "url": "https://www2.uottawa.ca/en",
+      "area": "Computer Engineering",
+      "studyType": "BSc",
+      "startDate": "2015-08",
+      "endDate": "2020-08",
+      "score": "7",
+      "courses": []
+    }
+  ],
+  "awards": [],
+  "publications": [],
+  "skills": [],
+  "languages": [],
+  "interests": [],
+  "references": [],
+  "projects": [
+    {
+      "name": "iso_14977",
+      "description": "Fully compatible ISO 14977 EBNF parser",
+      "highlights": [
+        "Code almost maps directly to the specification using the nom parsing library"
+      ],
+      "keywords": ["Rust", "EBNF"],
+      "url": "https://github.com/hbina/iso_14977",
+      "roles": [],
+      "type": "library"
+    },
+    {
+      "name": "Pinky Pie",
+      "description": "Cross platform GUI for MongoDB. Open source alternative to Mongo Compass.",
+      "highlights": ["Able to perform aggregation from the GUI"],
+      "keywords": ["Rust", "Tauri", "React", "TypeScript"],
+      "url": "https://github.com/hbina/pinky-pie",
+      "roles": [],
+      "type": "application"
+    },
+    {
+      "name": "Fatuous",
+      "description": "Basic 3D renderer",
+      "highlights": [
+        "Able to load simple 3D models and skyboxes",
+        "Able to render shadows"
+      ],
+      "keywords": ["C++", "OpenGL"],
+      "url": "https://github.com/hbina/fatuous",
+      "roles": [],
+      "type": "application"
+    }
+  ],
+  "meta": {
+    "canonical": "https://raw.githubusercontent.com/jsonresume/resume-schema/master/resume.json",
+    "version": "v1.0.0",
+    "lastModified": "2017-12-24T15:53:00"
+  }
+}
