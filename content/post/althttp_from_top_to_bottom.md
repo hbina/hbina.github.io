@@ -1,15 +1,8 @@
-+++
-title = "althttpd: From Top to Bottom"
-weight = 2
-+++
-
-# Introduction
-
-I am not knowledgeable in this.
-Some of the information in these articles might be outright false.
-Don't trust anything I say.
-I just thought it might be interesting to document how I would go through this codebase.
-Might be useful to new programmers to learn the tools of the trade (which I am learning how to use too!).
+---
+title: "althttpd: From Top to Bottom"
+author: "Hanif Bin Ariffin"
+draft: true
+---
 
 ## Before Venturing Further...
 
@@ -22,7 +15,7 @@ Sometimes there will be backtracking and jumping ahead of the source code as I s
 
 Please read about the design philosophy [here](https://sqlite.org/althttpd/doc/trunk/althttpd.md).
 
-Check out the source code [here](../althttpd/althttpd.c).
+Check out the source code [here](/althttpd/althttpd.c).
 
 # Escape
 

@@ -1,7 +1,14 @@
-+++
-title = "Some Examples of List Homomorphism"
-weight = 4
-+++
+---
+title: "Some Examples of List Homomorphism"
+author: "Hanif Bin Ariffin"
+draft: true
+---
+
+## Introduction
+
+List homomorphism is a powerful concept that allows us to turn a computation into an embarrasingly parallel problem.
+
+## Code
 
 ```typescript
 // Basically need to satisfy this constraint

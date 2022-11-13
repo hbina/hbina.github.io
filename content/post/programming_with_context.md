@@ -1,17 +1,12 @@
-+++
-title = "Programming with Context"
-weight = 3
-+++
+---
+title: "Programming with Context"
+author: "Hanif Bin Ariffin"
+draft: true
+---
 
 ## Disclaimer
 
-This is just my understanding of the subject.
-It is by no mean correct or even "educated" per se.
-It's just the things that caught my mind as I read about monads.
-Feel free to correct me whenever and wherever I am wrong.
-
-Furthermore, I will mostly be using `TypeScript` to show a version of monad in its imperative form.
-So this is just a note that it will not be as powerful and as elegant as its "equivalence" or superior form in `Haskell`.
+I have no formal traning in functional programming so if I have any mistakes here please feel free to correct and educate me!
 
 ## Introduction
 
@@ -19,19 +14,19 @@ In programming, we have to deal with a lot of complexities.
 In my experience, there are 2 different kinds of complexities:
 
 1. Business complexity.
-   This is the complexity of the requirement that have been tasked to us developers.
+   This is the complexity of the requirement that have been tasked to us developers. For example, a requirement that says "User can go to our website to browse our catalogue".
+   This is inherent.
 
 2. Programming complexity.
    This is the complexity that comes from the implementation of said requirements.
-   For example, take pointers.
-   Requirements usually make no mention of performance/implementation.
+   For example, a requirement to develop a website makes no mention of HTTP but as implementators we have to be aware of it.
 
 One thing about complexity is that they will always exist.
-We may be able to eliminate the second complexity; which we will attempt to later.
-However, the first part will always be there --- it is literally why we are here in the first place.
+We may be able to reduce the latter kind of complexity (which is why certain abstraction fails and some do not).
+However, the former kind of complexity will always be there --- it literally has to do that thing that is required of it.
 
-I think one of the biggest cause of complexity is the states.
-Our monkey brain is extremely bad at managing them (Or is it just me?).
+I think one of the biggest cause of complexity is states.
+The problem is that our monkey brain is extremely bad at managing them (Or maybe it's just me).
 There some tools to help us narrow down the set of possible issues/states that we have to deal with.
 Types is one such tool and it is possibly the most popular and reliable static analysis tool.
 
@@ -41,12 +36,16 @@ At the end of the day, _someone_ gotta pay for the complexity.
 
 ## We Begin with Dynamic Types
 
-Dynamic languages will "allow" us to write anything we like.
+Dynamic languages will "allow" us to make our computers do "anything we like".
 I say in quotes because this is actually not true.
-The reason is that we most definitely do no want to write "anything we like".
-As I have said before, it is very hard for us human to keep a consistent flow of thought.
+The reason is that we most definitely do not want our computers to do "anything we like".
+It is very hard for us human to keep a consistent flow of thought.
+So if a machine is willing to do anything I tell it to, well, most of time, its going to be doing the wrong thing.
+It's very hard for us human to be precise with our desires and even worse to communicate it.
+We make a lot of assumptions that things work the way we think it does, not the way it actually does work.
 
 My gripe with untyped languge is that it allows you to do even the stupidest mistake.
+It causes the set of possible programs (mostly wrong programs) to be extremely large.
 For example, consider the following JavaScript code,
 
 ```javascript
@@ -56,7 +55,8 @@ let c = a + b;
 ```
 
 Does this make any sense?
-I find it to be extremely infuriating when my computer cannot tell me what it _already_ knows.
+This piece of code is most definitely meaningless.
+
 Another example is `C`'s [printf](https://en.cppreference.com/w/c/io/fprintf).
 
 ```c
@@ -80,10 +80,13 @@ hbina@akarin:~/git/hbina.github.io$ clang ./static/programming_with_context/exam
 %d => 4202500
 ```
 
-Only the first 2 makes sense...but the 3rd one?
-Not so much --- but fortunately clang does warn us about this.
+The third usage of `printf` is most definitely wrong and meaningless.
+Fortunately `clang` does warn us about this.
 Regardless, it still pains me that a computer is allowing me to make such mistakes.
-These examples are just for illustrative purpose, but imagine dealing with `C`'s [tagged union](https://en.cppreference.com/w/c/language/union).
+The compiler is telling me "This is literally nonsense, it will not do what you think it does" and yet it still happily compiles it for me.
+Why?
+`printf` is mostly stateless, so it's "not hard" to get it right by looking at individual uses.
+However, imagine dealing with `C`'s [tagged union](https://en.cppreference.com/w/c/language/union).
 
 I think dynamic languages is the perfect tool for writing small scripts.
 However, the moment you want the program to span for more than 2 files or when you want to refactor/enhance the functionality; you will start having issues or implicit conversions?

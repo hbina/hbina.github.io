@@ -1,7 +1,8 @@
-+++
-title = "Kaomoji (顔文字)"
-weight = 1
-+++
+---
+title: "Kaomoji (顔文字)"
+author: "Hanif Bin Ariffin"
+draft: true
+---
 
 <style>
   table {
