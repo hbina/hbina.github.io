@@ -1,0 +1,867 @@
+<!doctype html><html lang=en-us><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge,chrome=1"><title>althttpd: From Top to Bottom | hbina page</title><meta name=viewport content="width=device-width,minimum-scale=1"><meta name=description content="Before Venturing Further&mldr; It&rsquo;s nice to have the codebase open as reference. Each chapters will cover mostly 1 function and I wouldn&rsquo;t go through every single bit. Just the parts that I find interesting. I will cover the global variables as we go through.
+Sometimes there will be backtracking and jumping ahead of the source code as I see necessary.
+Please read about the design philosophy here.
+Check out the source code here."><meta name=generator content="Hugo 0.108.0"><meta name=robots content="noindex, nofollow"><link rel=stylesheet href=/ananke/css/main.min.css><meta property="og:title" content="althttpd: From Top to Bottom"><meta property="og:description" content="Before Venturing Further&mldr; It&rsquo;s nice to have the codebase open as reference. Each chapters will cover mostly 1 function and I wouldn&rsquo;t go through every single bit. Just the parts that I find interesting. I will cover the global variables as we go through.
+Sometimes there will be backtracking and jumping ahead of the source code as I see necessary.
+Please read about the design philosophy here.
+Check out the source code here."><meta property="og:type" content="article"><meta property="og:url" content="https://hbina.github.io/post/althttp_from_top_to_bottom/"><meta property="article:section" content="post"><meta itemprop=name content="althttpd: From Top to Bottom"><meta itemprop=description content="Before Venturing Further&mldr; It&rsquo;s nice to have the codebase open as reference. Each chapters will cover mostly 1 function and I wouldn&rsquo;t go through every single bit. Just the parts that I find interesting. I will cover the global variables as we go through.
+Sometimes there will be backtracking and jumping ahead of the source code as I see necessary.
+Please read about the design philosophy here.
+Check out the source code here."><meta itemprop=wordCount content="5856"><meta itemprop=keywords content><meta name=twitter:card content="summary"><meta name=twitter:title content="althttpd: From Top to Bottom"><meta name=twitter:description content="Before Venturing Further&mldr; It&rsquo;s nice to have the codebase open as reference. Each chapters will cover mostly 1 function and I wouldn&rsquo;t go through every single bit. Just the parts that I find interesting. I will cover the global variables as we go through.
+Sometimes there will be backtracking and jumping ahead of the source code as I see necessary.
+Please read about the design philosophy here.
+Check out the source code here."></head><body class="ma0 avenir bg-near-white"><header><div class=bg-black><nav class="pv3 ph3 ph4-ns" role=navigation><div class="flex-l justify-between items-center center"><a href=/ class="f3 fw2 hover-white no-underline white-90 dib">hbina page</a><div class="flex-l items-center"><ul class="pl0 mr3"><li class="list f5 f4-ns fw4 dib pr3"><a class="hover-white no-underline white-90" href=/post/ title>Posts</a></li></ul><div class=ananke-socials></div></div></div></nav></div></header><main class=pb7 role=main><article class="flex-l flex-wrap justify-between mw8 center ph3"><header class="mt4 w-100"><aside class="instapaper_ignoref b helvetica tracked">POSTS</aside><div id=sharing class="mt3 ananke-socials"></div><h1 class="f1 athelas mt3 mb1">althttpd: From Top to Bottom</h1><p class=tracked><strong>Hanif Bin Ariffin</strong></p></header><div class="nested-copy-line-height lh-copy serif f4 nested-links mid-gray pr4-l w-two-thirds-l"><h1 id=before-venturing-further>Before Venturing Further&mldr;</h1><p>It&rsquo;s nice to have the codebase open as reference.
+Each chapters will cover mostly 1 function and I wouldn&rsquo;t go through every single bit.
+Just the parts that I find interesting.
+I will cover the global variables as we go through.</p><p>Sometimes there will be backtracking and jumping ahead of the source code as I see necessary.</p><p>Please read about the design philosophy <a href=https://sqlite.org/althttpd/doc/trunk/althttpd.md>here</a>.</p><p>Check out the source code <a href=/althttpd/althttpd.c>here</a>.</p><p>With that out of the way&mldr;Let&rsquo;s go!</p><h1 id=functions>Functions</h1><h2 id=escape>Escape</h2><p>This function accepts a C-string and returns another C-string with every double-quote doubled.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Double any double-quote characters in a string.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>Escape</span>(<span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>z){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>size_t</span> i, j;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>size_t</span> n;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>char</span> c;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zOut;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>for</span>(i<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; (c<span style=color:#f92672>=</span>z[i])<span style=color:#f92672>!=</span><span style=color:#ae81ff>0</span> <span style=color:#f92672>&amp;&amp;</span> c<span style=color:#f92672>!=</span><span style=color:#e6db74>&#39;&#34;&#39;</span>; i<span style=color:#f92672>++</span>){}
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( c<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) <span style=color:#66d9ef>return</span> z;
+</span></span><span style=display:flex><span>  n <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>for</span>(i<span style=color:#f92672>++</span>; (c<span style=color:#f92672>=</span>z[i])<span style=color:#f92672>!=</span><span style=color:#ae81ff>0</span>; i<span style=color:#f92672>++</span>){ <span style=color:#66d9ef>if</span>( c<span style=color:#f92672>==</span><span style=color:#e6db74>&#39;&#34;&#39;</span> ) n<span style=color:#f92672>++</span>; }
+</span></span><span style=display:flex><span>  zOut <span style=color:#f92672>=</span> <span style=color:#a6e22e>malloc</span>( i<span style=color:#f92672>+</span>n<span style=color:#f92672>+</span><span style=color:#ae81ff>1</span> );
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zOut<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) <span style=color:#66d9ef>return</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>for</span>(i<span style=color:#f92672>=</span>j<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; (c<span style=color:#f92672>=</span>z[i])<span style=color:#f92672>!=</span><span style=color:#ae81ff>0</span>; i<span style=color:#f92672>++</span>){
+</span></span><span style=display:flex><span>    zOut[j<span style=color:#f92672>++</span>] <span style=color:#f92672>=</span> c;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( c<span style=color:#f92672>==</span><span style=color:#e6db74>&#39;&#34;&#39;</span> ) zOut[j<span style=color:#f92672>++</span>] <span style=color:#f92672>=</span> c;
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  zOut[j] <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> zOut;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>First we have the variable declarations at the top of the function&mldr;
+So its one of those code. <em>sigh</em>.
+Second, we can see that there is 0 calls to <code>strlen</code>.
+We perform a single pass on the original strings and a second one on the output string.
+Pretty cool.</p><p>Notice that the caller of this function have no real way to know if allocations have been made.
+However, from the design philosophy,</p><pre tabindex=0><code>Because each althttpd process only needs to service a single connection, althttpd is single threaded.
+Furthermore, each process only lives for the duration of a single connection, which means that althttpd does not need to worry too much about memory leaks.
+These design factors help keep the althttpd source code simple, which facilitates security auditing and analysis.
+</code></pre><p>So this seems like a conscious desicion.
+If you grep for this function, its only being used in one place.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>bash-3.2$ rg <span style=color:#e6db74>&#39;Escape&#39;</span> ./content/althttpd.c
+</span></span><span style=display:flex><span>387:static char *Escape<span style=color:#f92672>(</span>char *z<span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>481:        zDate, zRemoteAddr, zHttp, Escape<span style=color:#f92672>(</span>zHttpHost<span style=color:#f92672>)</span>, Escape<span style=color:#f92672>(</span>zScript<span style=color:#f92672>)</span>,
+</span></span><span style=display:flex><span>482:        Escape<span style=color:#f92672>(</span>zReferer<span style=color:#f92672>)</span>, zReplyStatus, nIn, nOut,
+</span></span><span style=display:flex><span>488:        nRequest, Escape<span style=color:#f92672>(</span>zAgent<span style=color:#f92672>)</span>, Escape<span style=color:#f92672>(</span>zRM<span style=color:#f92672>)</span>,
+</span></span></code></pre></div><p>Notice that they don&rsquo;t even assign the pointer returned by this function!
+I will let you judge whether this is good idea or not.</p><h2 id=tvms>tvms</h2><p>This function is pretty much self explanatory.
+It is what is&mldr;
+I guess I can start reading about the time utility in libc.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Convert a struct timeval into an integer number of microseconds
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>long</span> <span style=color:#66d9ef>long</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>tvms</span>(<span style=color:#66d9ef>struct</span> timeval <span style=color:#f92672>*</span>p){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> ((<span style=color:#66d9ef>long</span> <span style=color:#66d9ef>long</span> <span style=color:#66d9ef>int</span>)p<span style=color:#f92672>-&gt;</span>tv_sec)<span style=color:#f92672>*</span><span style=color:#ae81ff>1000000</span> <span style=color:#f92672>+</span> (<span style=color:#66d9ef>long</span> <span style=color:#66d9ef>long</span> <span style=color:#66d9ef>int</span>)p<span style=color:#f92672>-&gt;</span>tv_usec;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=references>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/gettimeofday.3p.html>gettimeofday</a></li></ol><h2 id=makelogentry>MakeLogEntry</h2><p>This function is quite big.
+Lets dig in.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Make an entry in the log file.  If the HTTP connection should be
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** closed, then terminate this process.  Otherwise return.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>MakeLogEntry</span>(<span style=color:#66d9ef>int</span> exitCode, <span style=color:#66d9ef>int</span> lineNum){
+</span></span><span style=display:flex><span>  FILE <span style=color:#f92672>*</span>log;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zTmpNam ){
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>unlink</span>(zTmpNam);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zLogFile <span style=color:#f92672>&amp;&amp;</span> <span style=color:#f92672>!</span>omitLog ){
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>struct</span> timeval now;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>struct</span> tm <span style=color:#f92672>*</span>pTm;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>struct</span> rusage self, children;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>int</span> waitStatus;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zRM <span style=color:#f92672>=</span> zRemoteUser <span style=color:#f92672>?</span> zRemoteUser : <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zFilename;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>size_t</span> sz;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>char</span> zDate[<span style=color:#ae81ff>200</span>];
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>char</span> zExpLogFile[<span style=color:#ae81ff>500</span>];
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( zScript<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zScript <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( zRealScript<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zRealScript <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( zRemoteAddr<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zRemoteAddr <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( zHttpHost<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zHttpHost <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( zReferer<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zReferer <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( zAgent<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zAgent <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>gettimeofday</span>(<span style=color:#f92672>&amp;</span>now, <span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>    pTm <span style=color:#f92672>=</span> <span style=color:#a6e22e>localtime</span>(<span style=color:#f92672>&amp;</span>now.tv_sec);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>strftime</span>(zDate, <span style=color:#66d9ef>sizeof</span>(zDate), <span style=color:#e6db74>&#34;%Y-%m-%d %H:%M:%S&#34;</span>, pTm);
+</span></span><span style=display:flex><span>    sz <span style=color:#f92672>=</span> <span style=color:#a6e22e>strftime</span>(zExpLogFile, <span style=color:#66d9ef>sizeof</span>(zExpLogFile), zLogFile, pTm);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( sz<span style=color:#f92672>&gt;</span><span style=color:#ae81ff>0</span> <span style=color:#f92672>&amp;&amp;</span> sz<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>sizeof</span>(zExpLogFile)<span style=color:#f92672>-</span><span style=color:#ae81ff>2</span> ){
+</span></span><span style=display:flex><span>      zFilename <span style=color:#f92672>=</span> zExpLogFile;
+</span></span><span style=display:flex><span>    }<span style=color:#66d9ef>else</span>{
+</span></span><span style=display:flex><span>      zFilename <span style=color:#f92672>=</span> zLogFile;
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>waitpid</span>(<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#f92672>&amp;</span>waitStatus, WNOHANG);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>getrusage</span>(RUSAGE_SELF, <span style=color:#f92672>&amp;</span>self);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>getrusage</span>(RUSAGE_CHILDREN, <span style=color:#f92672>&amp;</span>children);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( (log <span style=color:#f92672>=</span> <span style=color:#a6e22e>fopen</span>(zFilename,<span style=color:#e6db74>&#34;a&#34;</span>))<span style=color:#f92672>!=</span><span style=color:#ae81ff>0</span> ){
+</span></span><span style=display:flex><span><span style=color:#75715e>#ifdef COMBINED_LOG_FORMAT
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>      <span style=color:#a6e22e>strftime</span>(zDate, <span style=color:#66d9ef>sizeof</span>(zDate), <span style=color:#e6db74>&#34;%d/%b/%Y:%H:%M:%S %Z&#34;</span>, pTm);
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>fprintf</span>(log, <span style=color:#e6db74>&#34;%s - - [%s] </span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%s %s %s</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74> %s %d </span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%s</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74> </span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%s</span><span style=color:#ae81ff>\&#34;\n</span><span style=color:#e6db74>&#34;</span>,
+</span></span><span style=display:flex><span>              zRemoteAddr, zDate, zMethod, zScript, zProtocol,
+</span></span><span style=display:flex><span>              zReplyStatus, nOut, zReferer, zAgent);
+</span></span><span style=display:flex><span><span style=color:#75715e>#else
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>      <span style=color:#a6e22e>strftime</span>(zDate, <span style=color:#66d9ef>sizeof</span>(zDate), <span style=color:#e6db74>&#34;%Y-%m-%d %H:%M:%S&#34;</span>, pTm);
+</span></span><span style=display:flex><span>      <span style=color:#75715e>/* Log record files:
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      **  (1) Date and time
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      **  (2) IP address
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      **  (3) URL being accessed
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      **  (4) Referer
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      **  (5) Reply status
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      **  (6) Bytes received
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      **  (7) Bytes sent
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      **  (8) Self user time
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      **  (9) Self system time
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      ** (10) Children user time
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      ** (11) Children system time
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      ** (12) Total wall-clock time
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      ** (13) Request number for same TCP/IP connection
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      ** (14) User agent
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      ** (15) Remote user
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      ** (16) Bytes of URL that correspond to the SCRIPT_NAME
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      ** (17) Line number in source file
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      */</span>
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>fprintf</span>(log,
+</span></span><span style=display:flex><span>        <span style=color:#e6db74>&#34;%s,%s,</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%s://%s%s</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>,</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%s</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>,&#34;</span>
+</span></span><span style=display:flex><span>           <span style=color:#e6db74>&#34;%s,%d,%d,%lld,%lld,%lld,%lld,%lld,%d,</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%s</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>,</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%s</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>,%d,%d</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>,
+</span></span><span style=display:flex><span>        zDate, zRemoteAddr, zHttp, <span style=color:#a6e22e>Escape</span>(zHttpHost), <span style=color:#a6e22e>Escape</span>(zScript),
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>Escape</span>(zReferer), zReplyStatus, nIn, nOut,
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>self.ru_utime) <span style=color:#f92672>-</span> <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>priorSelf.ru_utime),
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>self.ru_stime) <span style=color:#f92672>-</span> <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>priorSelf.ru_stime),
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>children.ru_utime) <span style=color:#f92672>-</span> <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>priorChild.ru_utime),
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>children.ru_stime) <span style=color:#f92672>-</span> <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>priorChild.ru_stime),
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>now) <span style=color:#f92672>-</span> <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>beginTime),
+</span></span><span style=display:flex><span>        nRequest, <span style=color:#a6e22e>Escape</span>(zAgent), <span style=color:#a6e22e>Escape</span>(zRM),
+</span></span><span style=display:flex><span>        (<span style=color:#66d9ef>int</span>)(<span style=color:#a6e22e>strlen</span>(zHttp)<span style=color:#f92672>+</span><span style=color:#a6e22e>strlen</span>(zHttpHost)<span style=color:#f92672>+</span><span style=color:#a6e22e>strlen</span>(zRealScript)<span style=color:#f92672>+</span><span style=color:#ae81ff>3</span>),
+</span></span><span style=display:flex><span>        lineNum
+</span></span><span style=display:flex><span>      );
+</span></span><span style=display:flex><span>      priorSelf <span style=color:#f92672>=</span> self;
+</span></span><span style=display:flex><span>      priorChild <span style=color:#f92672>=</span> children;
+</span></span><span style=display:flex><span><span style=color:#75715e>#endif
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>      <span style=color:#a6e22e>fclose</span>(log);
+</span></span><span style=display:flex><span>      nIn <span style=color:#f92672>=</span> nOut <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( closeConnection ){
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>exit</span>(exitCode);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  statusSent <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Grepping for the usage of this function, we get:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>bash-3.2$ rg <span style=color:#e6db74>&#39;MakeLogEntry&#39;</span> ./content/althttpd/althttpd.c
+</span></span><span style=display:flex><span>417:static void MakeLogEntry<span style=color:#f92672>(</span>int exitCode, int lineNum<span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>514:    MakeLogEntry<span style=color:#f92672>(</span>1,100<span style=color:#f92672>)</span>;  /* LOG: Malloc<span style=color:#f92672>()</span> failed */
+</span></span><span style=display:flex><span>708:  MakeLogEntry<span style=color:#f92672>(</span>0, lineno<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>723:  MakeLogEntry<span style=color:#f92672>(</span>0, lineno<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>741:  MakeLogEntry<span style=color:#f92672>(</span>0, 110<span style=color:#f92672>)</span>;  /* LOG: Not authorized */
+</span></span><span style=display:flex><span>756:  MakeLogEntry<span style=color:#f92672>(</span>0, 120<span style=color:#f92672>)</span>;  /* LOG: CGI Error */
+</span></span><span style=display:flex><span>773:      MakeLogEntry<span style=color:#f92672>(</span>0, 130<span style=color:#f92672>)</span>;  /* LOG: Timeout */
+</span></span><span style=display:flex><span>789:  MakeLogEntry<span style=color:#f92672>(</span>0, 140<span style=color:#f92672>)</span>;  /* LOG: CGI script is writable */
+</span></span><span style=display:flex><span>809:  MakeLogEntry<span style=color:#f92672>(</span>0, linenum<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>840:    MakeLogEntry<span style=color:#f92672>(</span>0, lineno<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1323:    MakeLogEntry<span style=color:#f92672>(</span>0, 470<span style=color:#f92672>)</span>;  /* LOG: ETag Cache Hit */
+</span></span><span style=display:flex><span>1347:    MakeLogEntry<span style=color:#f92672>(</span>0, 2<span style=color:#f92672>)</span>; /* LOG: Normal HEAD reply */
+</span></span><span style=display:flex><span>1684:    MakeLogEntry<span style=color:#f92672>(</span>0, 200<span style=color:#f92672>)</span>; /* LOG: bad protocol in HTTP header */
+</span></span><span style=display:flex><span>1709:    MakeLogEntry<span style=color:#f92672>(</span>0, 220<span style=color:#f92672>)</span>; /* LOG: Unknown request method */
+</span></span><span style=display:flex><span>1908:      MakeLogEntry<span style=color:#f92672>(</span>0, 270<span style=color:#f92672>)</span>; /* LOG: Request too large */
+</span></span><span style=display:flex><span>1926:      MakeLogEntry<span style=color:#f92672>(</span>0, 290<span style=color:#f92672>)</span>; /* LOG: cannot create temp file <span style=color:#66d9ef>for</span> POST */
+</span></span><span style=display:flex><span>2219:  MakeLogEntry<span style=color:#f92672>(</span>0, 0<span style=color:#f92672>)</span>;  /* LOG: Normal reply */
+</span></span></code></pre></div><p>It seems that most (if not all) of these usages are related to logging before killing the connection process.
+It accepts the <code>exitCode</code> that the process should return, and a <code>lineNum</code>.</p><p>The second parameter is supposed to indicate the approximate line number this function is called.
+Probably for debugging purposes.</p><p>The first thing we do in the function is to unlink a file.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#66d9ef>if</span>( zTmpNam ){
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>unlink</span>(zTmpNam);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Grepping for <code>zTmpNam</code> yields,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>bash-3.2$ rg <span style=color:#e6db74>&#39;zTmpNam&#39;</span> ./content/althttpd/althttpd.c
+</span></span><span style=display:flex><span>290:static char *zTmpNam <span style=color:#f92672>=</span> 0;        /* Name of a temporary file */
+</span></span><span style=display:flex><span>291:static char zTmpNamBuf<span style=color:#f92672>[</span>500<span style=color:#f92672>]</span>;     /* Space to hold the temporary filename */
+</span></span><span style=display:flex><span>419:  <span style=color:#66d9ef>if</span><span style=color:#f92672>(</span> zTmpNam <span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>420:    unlink<span style=color:#f92672>(</span>zTmpNam<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1310:  <span style=color:#66d9ef>if</span><span style=color:#f92672>(</span> zTmpNam <span style=color:#f92672>)</span> unlink<span style=color:#f92672>(</span>zTmpNam<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1610:   <span style=color:#f92672>&amp;&amp;</span> <span style=color:#f92672>(</span>in <span style=color:#f92672>=</span> fopen<span style=color:#f92672>(</span>zTmpNam,<span style=color:#e6db74>&#34;r&#34;</span><span style=color:#f92672>))</span>!<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span> <span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>1912:    sprintf<span style=color:#f92672>(</span>zTmpNamBuf, <span style=color:#e6db74>&#34;/tmp/-post-data-XXXXXX&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1913:    zTmpNam <span style=color:#f92672>=</span> zTmpNamBuf;
+</span></span><span style=display:flex><span>1914:    <span style=color:#66d9ef>if</span><span style=color:#f92672>(</span> mkstemp<span style=color:#f92672>(</span>zTmpNam<span style=color:#f92672>)</span>&lt;<span style=color:#ae81ff>0</span> <span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>1918:    out <span style=color:#f92672>=</span> fopen<span style=color:#f92672>(</span>zTmpNam,<span style=color:#e6db74>&#34;wb&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1924:        <span style=color:#e6db74>&#34;Could not open \&#34;%s\&#34; for writing\n&#34;</span>, zTmpNam
+</span></span><span style=display:flex><span>2155:      open<span style=color:#f92672>(</span>zTmpNam, O_RDONLY<span style=color:#f92672>)</span>;
+</span></span></code></pre></div><p>So <code>zTmpNam</code> is basically a temporary file created from <code>mkstemp</code>.
+Then, if <code>zLogFile</code> is provided and <code>omitLog</code> is false, we start some logging procedures.
+This block of statements here:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#66d9ef>if</span>( zScript<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zScript <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span>( zRealScript<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zRealScript <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span>( zRemoteAddr<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zRemoteAddr <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span>( zHttpHost<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zHttpHost <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span>( zReferer<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zReferer <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span>( zAgent<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zAgent <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span><span style=color:#a6e22e>gettimeofday</span>(<span style=color:#f92672>&amp;</span>now, <span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>pTm <span style=color:#f92672>=</span> <span style=color:#a6e22e>localtime</span>(<span style=color:#f92672>&amp;</span>now.tv_sec);
+</span></span><span style=display:flex><span><span style=color:#a6e22e>strftime</span>(zDate, <span style=color:#66d9ef>sizeof</span>(zDate), <span style=color:#e6db74>&#34;%Y-%m-%d %H:%M:%S&#34;</span>, pTm);
+</span></span><span style=display:flex><span>sz <span style=color:#f92672>=</span> <span style=color:#a6e22e>strftime</span>(zExpLogFile, <span style=color:#66d9ef>sizeof</span>(zExpLogFile), zLogFile, pTm);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span>( sz<span style=color:#f92672>&gt;</span><span style=color:#ae81ff>0</span> <span style=color:#f92672>&amp;&amp;</span> sz<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>sizeof</span>(zExpLogFile)<span style=color:#f92672>-</span><span style=color:#ae81ff>2</span> ){
+</span></span><span style=display:flex><span>  zFilename <span style=color:#f92672>=</span> zExpLogFile;
+</span></span><span style=display:flex><span>}<span style=color:#66d9ef>else</span>{
+</span></span><span style=display:flex><span>  zFilename <span style=color:#f92672>=</span> zLogFile;
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span><span style=color:#a6e22e>waitpid</span>(<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>, <span style=color:#f92672>&amp;</span>waitStatus, WNOHANG);
+</span></span><span style=display:flex><span><span style=color:#a6e22e>getrusage</span>(RUSAGE_SELF, <span style=color:#f92672>&amp;</span>self);
+</span></span><span style=display:flex><span><span style=color:#a6e22e>getrusage</span>(RUSAGE_CHILDREN, <span style=color:#f92672>&amp;</span>children);
+</span></span></code></pre></div><p>Is basically to get the current state of the process that will be logged.
+The other interesting part of the program is in the logging itself.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#a6e22e>fprintf</span>(log,
+</span></span><span style=display:flex><span>  <span style=color:#e6db74>&#34;%s,%s,</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%s://%s%s</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>,</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%s</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>,&#34;</span>
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;%s,%d,%d,%lld,%lld,%lld,%lld,%lld,%d,</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%s</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>,</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%s</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>,%d,%d</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>,
+</span></span><span style=display:flex><span>  zDate, zRemoteAddr, zHttp, <span style=color:#a6e22e>Escape</span>(zHttpHost), <span style=color:#a6e22e>Escape</span>(zScript),
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>Escape</span>(zReferer), zReplyStatus, nIn, nOut,
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>self.ru_utime) <span style=color:#f92672>-</span> <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>priorSelf.ru_utime),
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>self.ru_stime) <span style=color:#f92672>-</span> <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>priorSelf.ru_stime),
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>children.ru_utime) <span style=color:#f92672>-</span> <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>priorChild.ru_utime),
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>children.ru_stime) <span style=color:#f92672>-</span> <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>priorChild.ru_stime),
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>now) <span style=color:#f92672>-</span> <span style=color:#a6e22e>tvms</span>(<span style=color:#f92672>&amp;</span>beginTime),
+</span></span><span style=display:flex><span>  nRequest, <span style=color:#a6e22e>Escape</span>(zAgent), <span style=color:#a6e22e>Escape</span>(zRM),
+</span></span><span style=display:flex><span>  (<span style=color:#66d9ef>int</span>)(<span style=color:#a6e22e>strlen</span>(zHttp)<span style=color:#f92672>+</span><span style=color:#a6e22e>strlen</span>(zHttpHost)<span style=color:#f92672>+</span><span style=color:#a6e22e>strlen</span>(zRealScript)<span style=color:#f92672>+</span><span style=color:#ae81ff>3</span>),
+</span></span><span style=display:flex><span>  lineNum
+</span></span><span style=display:flex><span>);
+</span></span></code></pre></div><p>Remember the function <code>Escape</code>?
+This is the ony place where its being used and the pointer returned isn&rsquo;t assigned to anything.
+So we can&rsquo;t possibly free any of the allocations made.</p><p>However, just after this, we have:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#66d9ef>if</span>( closeConnection ){
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>exit</span>(exitCode);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Additionally based on the grepped usage of this function above.
+We saw that most of the time, they immediately exit process.
+So all those &ldquo;memory leaks&rdquo; previously (AFAIK) will be inconsequential.</p><h3 id=references-1>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/mkstemp.3.html>mkstemp</a></li><li><a href=https://man7.org/linux/man-pages/man2/unlink.2.html>unlink</a></li><li><a href=https://man7.org/linux/man-pages/man2/gettimeofday.2.html>gettimeofday</a></li><li><a href=https://man7.org/linux/man-pages/man3/localtime.3p.html>localtime</a></li><li><a href=https://man7.org/linux/man-pages/man3/strftime.3.html>strftime</a></li><li><a href=https://man7.org/linux/man-pages/man3/exit.3.html>exit</a></li></ol><h2 id=safemalloc>SafeMalloc</h2><p>This function is a wrapper for malloc where it will exit the process if it fails.
+I think the function itself is self-explanatory.
+Nothing really interesting is happening here.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Allocate memory safely
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>SafeMalloc</span>( <span style=color:#66d9ef>size_t</span> size ){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>p;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  p <span style=color:#f92672>=</span> (<span style=color:#66d9ef>char</span><span style=color:#f92672>*</span>)<span style=color:#a6e22e>malloc</span>(size);
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( p<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ){
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>strcpy</span>(zReplyStatus, <span style=color:#e6db74>&#34;998&#34;</span>);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>MakeLogEntry</span>(<span style=color:#ae81ff>1</span>,<span style=color:#ae81ff>100</span>);  <span style=color:#75715e>/* LOG: Malloc() failed */</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>exit</span>(<span style=color:#ae81ff>1</span>);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> p;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=references-2>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/strcpy.3.html>strcpy</a></li><li><a href=https://man7.org/linux/man-pages/man3/exit.3.html>exit</a></li></ol><h2 id=setenv>SetEnv</h2><p>This function sets the environment variables.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Set the value of environment variable zVar to zValue.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>SetEnv</span>(<span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zVar, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zValue){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>z;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>size_t</span> len;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zValue<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zValue<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span>  <span style=color:#75715e>/* Disable an attempted bashdoor attack */</span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( <span style=color:#a6e22e>strncmp</span>(zValue,<span style=color:#e6db74>&#34;() {&#34;</span>,<span style=color:#ae81ff>4</span>)<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) zValue <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;&#34;</span>;
+</span></span><span style=display:flex><span>  len <span style=color:#f92672>=</span> <span style=color:#a6e22e>strlen</span>(zVar) <span style=color:#f92672>+</span> <span style=color:#a6e22e>strlen</span>(zValue) <span style=color:#f92672>+</span> <span style=color:#ae81ff>2</span>;
+</span></span><span style=display:flex><span>  z <span style=color:#f92672>=</span> <span style=color:#a6e22e>SafeMalloc</span>(len);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>sprintf</span>(z,<span style=color:#e6db74>&#34;%s=%s&#34;</span>,zVar,zValue);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>putenv</span>(z);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>There&rsquo;s some issues with this function.</p><ol><li>It does not free the memory held by <code>z</code>.</li><li>I think their implementation to prevent <a href=https://en.wikipedia.org/wiki/Shellshock_(software_bug)>bashdoor</a> (Whatever that is) attack is somewhat naive?
+I am pretty sure one can bypass this check by simply prepending whitespaces.</li><li>It does not check if <code>zVar</code> is a <code>NULL</code>.
+Granted, if you grep for its usage, you will find that it only uses statically allocated memory.</li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>bash-3.2$ rg <span style=color:#e6db74>&#39;SetEnv&#39;</span> ./static/althttpd/althttpd.c
+</span></span><span style=display:flex><span>523:static void SetEnv<span style=color:#f92672>(</span>const char *zVar, const char *zValue<span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>2136:        SetEnv<span style=color:#f92672>(</span>cgienv<span style=color:#f92672>[</span>i<span style=color:#f92672>]</span>.zEnvName,*cgienv<span style=color:#f92672>[</span>i<span style=color:#f92672>]</span>.pzEnvValue<span style=color:#f92672>)</span>;
+</span></span></code></pre></div><p>The <code>cgienv</code> here is an array of CGI environment variables defined at the top of the file.
+These are all statically allocated, so no problem here.
+However, the performance could have been improved in this case by passing the length of the arrays into the function.
+I am not sure if compilers are smart enough (or allowed to) optimized the call to <code>strlen</code> by evaluating the size at compile time.</p><h3 id=references-3>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/setenv.3.html>setenv</a></li></ol><h2 id=getfirstelement>GetFirstElement</h2><p>This function is basically <code>strtok</code> with a slightly different interface.
+It accepts:</p><ol><li><code>zInput</code>, the C-string to be tokenized.</li><li><code>zLeftOver</code>, an output pointer that points to to the leftover C-string.</li></ol><p>And returns the parsed token.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Remove the first space-delimited token from a string and return
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** a pointer to it.  Add a NULL to the string to terminate the token.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Make *zLeftOver point to the start of the next token.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>GetFirstElement</span>(<span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zInput, <span style=color:#66d9ef>char</span> <span style=color:#f92672>**</span>zLeftOver){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zResult <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zInput<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ){
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( zLeftOver ) <span style=color:#f92672>*</span>zLeftOver <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>while</span>( <span style=color:#a6e22e>isspace</span>(<span style=color:#f92672>*</span>(<span style=color:#66d9ef>unsigned</span> <span style=color:#66d9ef>char</span><span style=color:#f92672>*</span>)zInput) ){ zInput<span style=color:#f92672>++</span>; }
+</span></span><span style=display:flex><span>  zResult <span style=color:#f92672>=</span> zInput;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>while</span>( <span style=color:#f92672>*</span>zInput <span style=color:#f92672>&amp;&amp;</span> <span style=color:#f92672>!</span><span style=color:#a6e22e>isspace</span>(<span style=color:#f92672>*</span>(<span style=color:#66d9ef>unsigned</span> <span style=color:#66d9ef>char</span><span style=color:#f92672>*</span>)zInput) ){ zInput<span style=color:#f92672>++</span>; }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( <span style=color:#f92672>*</span>zInput ){
+</span></span><span style=display:flex><span>    <span style=color:#f92672>*</span>zInput <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>    zInput<span style=color:#f92672>++</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>while</span>( <span style=color:#a6e22e>isspace</span>(<span style=color:#f92672>*</span>(<span style=color:#66d9ef>unsigned</span> <span style=color:#66d9ef>char</span><span style=color:#f92672>*</span>)zInput) ){ zInput<span style=color:#f92672>++</span>; }
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zLeftOver ){ <span style=color:#f92672>*</span>zLeftOver <span style=color:#f92672>=</span> zInput; }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> zResult;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=visualization>Visualization</h3><pre tabindex=0><code>h | e | l | l | o | NULL | | | | w | o | r | l | d |
+|--------------------|-----------|------------------...
+a                    b           c
+</code></pre><p>Mark the beginning of the pointer as <code>a</code>.
+The implementation is similar to <code>strtok</code>, it loops through the string until it encounters a whitespace.
+It then loop again until it encounters non-whitespace and mark this as <code>c</code>.
+Assign <code>c</code> to the <code>zLeftOver</code> pointer and returns <code>a</code> as the result.
+To get the next token, pass <code>zLeftOver</code> token in <code>zInput</code>.</p><p>Note that because this function will litter the original C-string with <code>NULL</code>s, it will become unusable by <code>strlen</code>.
+You can audit whether or not the author ever uses <code>strlen</code> on the C-strings that have been passed into this function.</p><p>Obviously the above algorithm needs to take into consideration the <code>NULL</code> value that marks the end of a C-string.</p><h3 id=references-4>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/strtok.3.html>strtok</a></li></ol><h2 id=strdup>StrDup</h2><p>This function basically copies a C-string.
+Nothing special.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Make a copy of a string into memory obtained from malloc.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>StrDup</span>(<span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zSrc){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zDest;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>size_t</span> size;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zSrc<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>  size <span style=color:#f92672>=</span> <span style=color:#a6e22e>strlen</span>(zSrc) <span style=color:#f92672>+</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>  zDest <span style=color:#f92672>=</span> (<span style=color:#66d9ef>char</span><span style=color:#f92672>*</span>)<span style=color:#a6e22e>SafeMalloc</span>( size );
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>strcpy</span>(zDest,zSrc);
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> zDest;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>However, I personally think that using <code>memcpy</code> is better here because we already calculated the string length here.</p><h3 id=references-5>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/strlen.3.html>strlen</a></li><li><a href=https://man7.org/linux/man-pages/man3/strcpy.3.html>strcpy</a></li><li><a href=https://man7.org/linux/man-pages/man3/memcpy.3.html>memcpy</a></li></ol><h2 id=strappend>StrAppend</h2><p>This function basically takes 3 C-string and concatenates them.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>StrAppend</span>(<span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zPrior, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zSep, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zSrc){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zDest;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>size_t</span> size;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>size_t</span> n0, n1, n2;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zSrc<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zPrior<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>StrDup</span>(zSrc);
+</span></span><span style=display:flex><span>  n0 <span style=color:#f92672>=</span> <span style=color:#a6e22e>strlen</span>(zPrior);
+</span></span><span style=display:flex><span>  n1 <span style=color:#f92672>=</span> <span style=color:#a6e22e>strlen</span>(zSep);
+</span></span><span style=display:flex><span>  n2 <span style=color:#f92672>=</span> <span style=color:#a6e22e>strlen</span>(zSrc);
+</span></span><span style=display:flex><span>  size <span style=color:#f92672>=</span> n0<span style=color:#f92672>+</span>n1<span style=color:#f92672>+</span>n2<span style=color:#f92672>+</span><span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>  zDest <span style=color:#f92672>=</span> (<span style=color:#66d9ef>char</span><span style=color:#f92672>*</span>)<span style=color:#a6e22e>SafeMalloc</span>( size );
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>memcpy</span>(zDest, zPrior, n0);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>free</span>(zPrior);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>memcpy</span>(<span style=color:#f92672>&amp;</span>zDest[n0],zSep,n1);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>memcpy</span>(<span style=color:#f92672>&amp;</span>zDest[n0<span style=color:#f92672>+</span>n1],zSrc,n2<span style=color:#f92672>+</span><span style=color:#ae81ff>1</span>);
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> zDest;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=visualization-1>Visualization</h3><p>Take 3 C-strings:</p><ol><li><code>zPrior</code> as <code>hello</code>.</li><li><code>zSep</code> as <code>my</code>.</li><li><code>zSrc</code> as <code>world</code>.</li></ol><p>After this function, we will get something like,</p><pre tabindex=0><code>h | e | l | l | o |  | m | y | | w | o | r | l | d | NULL |
+|-----------------|------------|---------------------------...
+&lt;     zPrior      &gt;&lt;    zSep   &gt;&lt;         zSrc          &gt;
+</code></pre><p>And the original <code>zPrior</code> is freed, for whatever reason.</p><h3 id=references-6>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/strlen.3.html>strlen</a>.</li><li><a href=https://man7.org/linux/man-pages/man3/memcpy.3.html>memcpy</a>.</li><li><a href=https://man7.org/linux/man-pages/man3/free.3p.html>free</a>.</li></ol><h2 id=compareetags>CompareEtags</h2><p>This function compares 2 C-strings and returns 0 if they differ and non-zero otherwise.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Compare two ETag values. Return 0 if they match and non-zero if they differ.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>**
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** The one on the left might be a NULL pointer and it might be quoted.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>CompareEtags</span>(<span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zA, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zB){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zA<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zA[<span style=color:#ae81ff>0</span>]<span style=color:#f92672>==</span><span style=color:#e6db74>&#39;&#34;&#39;</span> ){
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>int</span> lenB <span style=color:#f92672>=</span> (<span style=color:#66d9ef>int</span>)<span style=color:#a6e22e>strlen</span>(zB);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( <span style=color:#a6e22e>strncmp</span>(zA<span style=color:#f92672>+</span><span style=color:#ae81ff>1</span>, zB, lenB)<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> <span style=color:#f92672>&amp;&amp;</span> zA[lenB<span style=color:#f92672>+</span><span style=color:#ae81ff>1</span>]<span style=color:#f92672>==</span><span style=color:#e6db74>&#39;&#34;&#39;</span> ) <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>strcmp</span>(zA, zB);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Notice that the function never checks the length of <code>lenB</code>, so it might seem problematic that we perform an arbitrary index <code>zA[lenB + 1]</code> here.
+I think this is totally safe because the check is implicitly done by the fact that:</p><ol><li>All C-strings ends with a <code>NULL</code>.
+This is kind of hard to verify.</li><li>In the <code>if</code> logic, we will only evaluate the right-hand side iff the call to <code>strncmp</code>here succeed.
+This means that <code>zA</code> is at least as long as <code>lenB</code>.
+Coupled with the fact that its a C-string, we can be sure that there&rsquo;s at least <em>another</em> character beyond that, namely the <code>NULL</code> character.</li></ol><h3 id=references-7>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/strlen.3.html>strlen</a>.</li><li><a href=https://man7.org/linux/man-pages/man3/strncmp.3p.html>strncmp</a>.</li></ol><h2 id=removenewline>RemoveNewline</h2><p>This function replaces newline (<code>\n</code> or <code>\r</code>) with <code>NULL</code>.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Break a line at the first \n or \r character seen.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>RemoveNewline</span>(<span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>z){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( z<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ) <span style=color:#66d9ef>return</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>while</span>( <span style=color:#f92672>*</span>z <span style=color:#f92672>&amp;&amp;</span> <span style=color:#f92672>*</span>z<span style=color:#f92672>!=</span><span style=color:#e6db74>&#39;\n&#39;</span> <span style=color:#f92672>&amp;&amp;</span> <span style=color:#f92672>*</span>z<span style=color:#f92672>!=</span><span style=color:#e6db74>&#39;\r&#39;</span> ){ z<span style=color:#f92672>++</span>; }
+</span></span><span style=display:flex><span>  <span style=color:#f92672>*</span>z <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>This is probably done so that C-string appears as if it ends there.
+But this is highly problematic because it does not return the <code>z</code>.
+The caller have no way of knowing where that <code>NULL</code> was assigned.
+Even if they loop through again and find that <code>NULL</code>, how do they know that this <code>NULL</code> is the one that we assigned or this is the <em>actual</em> the end of the C-string?</p><p>In my opinion, it should return the pointer to the next character if its part of the C-string.</p><h2 id=rfc822date>Rfc822Date</h2><p>This function converts a <code>time_t</code> into its RFC822 representation.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/* Render seconds since 1970 as an RFC822 date string.  Return
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** a pointer to that string in a static buffer.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>Rfc822Date</span>(<span style=color:#66d9ef>time_t</span> t){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>struct</span> tm <span style=color:#f92672>*</span>tm;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>char</span> zDate[<span style=color:#ae81ff>100</span>];
+</span></span><span style=display:flex><span>  tm <span style=color:#f92672>=</span> <span style=color:#a6e22e>gmtime</span>(<span style=color:#f92672>&amp;</span>t);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>strftime</span>(zDate, <span style=color:#66d9ef>sizeof</span>(zDate), <span style=color:#e6db74>&#34;%a, %d %b %Y %H:%M:%S %Z&#34;</span>, tm);
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> zDate;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>The interesting (in a bad way) is that it returns a pointer to a statically allocated memory.
+So any time you make 2 calls to this bad boy, just remember that the first pointer returned is now invalid :).</p><p>One way to solve this is to make the caller of this function provides the bytes to write to.
+This makes this function free from being responsible for memory; which it shouldn&rsquo;t.</p><h3 id=testing>Testing</h3><p>Let&rsquo;s try to use this function and see what we get.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;stdio.h&gt;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;time.h&gt;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>Rfc822Date</span>(<span style=color:#66d9ef>time_t</span> t)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>struct</span> tm <span style=color:#f92672>*</span>tm;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>char</span> zDate[<span style=color:#ae81ff>100</span>];
+</span></span><span style=display:flex><span>    tm <span style=color:#f92672>=</span> <span style=color:#a6e22e>gmtime</span>(<span style=color:#f92672>&amp;</span>t);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>strftime</span>(zDate, <span style=color:#66d9ef>sizeof</span>(zDate), <span style=color:#e6db74>&#34;%a, %d %b %Y %H:%M:%S %Z&#34;</span>, tm);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> zDate;
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>int</span> <span style=color:#a6e22e>main</span>(<span style=color:#66d9ef>void</span>)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>time_t</span> t <span style=color:#f92672>=</span> <span style=color:#a6e22e>time</span>(NULL);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zDate <span style=color:#f92672>=</span> <span style=color:#a6e22e>Rfc822Date</span>(t);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>int</span> r <span style=color:#f92672>=</span> <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;%s</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>, zDate);
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> r <span style=color:#f92672>&lt;</span> <span style=color:#ae81ff>0</span> <span style=color:#f92672>?</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span> <span style=color:#f92672>:</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Compiling and running this small program yields,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>Sat, <span style=color:#ae81ff>12</span> Jun <span style=color:#ae81ff>2021</span> 16:24:15 GMT
+</span></span></code></pre></div><h3 id=references-8>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/strftime.3.html>strftime</a></li><li><a href=https://man7.org/linux/man-pages/man3/gmtime.3p.html>gmtime</a></li></ol><h2 id=datetag>DateTag</h2><p>Nothing really special about this function. It just appends the <code>zTag</code> and the <code>Rfc822Date</code> of the given time.
+The result is then printed to <code>stdout</code>.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Print a date tag in the header.  The name of the tag is zTag.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** The date is determined from the unix timestamp given.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>DateTag</span>(<span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zTag, <span style=color:#66d9ef>time_t</span> t){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;%s: %s</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>, zTag, <span style=color:#a6e22e>Rfc822Date</span>(t));
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=references-9>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/printf.3.html>printf</a></li></ol><h2 id=parserfc822date>ParseRfc822Date</h2><p>This function is quite complicated.
+I don&rsquo;t pretend to know half of how it works.
+However, as the comment said, its supposed to parse an RFC822 formatted strings.
+It just appends the <code>zTag</code> and the <code>Rfc822Date</code> of the given time.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Parse an RFC822-formatted timestamp as we&#39;d expect from HTTP and return
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** a Unix epoch time. &lt;= zero is returned on failure.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>time_t</span> <span style=color:#a6e22e>ParseRfc822Date</span>(<span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zDate){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>int</span> mday, mon, year, yday, hour, min, sec;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>char</span> zIgnore[<span style=color:#ae81ff>4</span>];
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>char</span> zMonth[<span style=color:#ae81ff>4</span>];
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span><span style=color:#66d9ef>const</span> azMonths[] <span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>    {<span style=color:#e6db74>&#34;Jan&#34;</span>, <span style=color:#e6db74>&#34;Feb&#34;</span>, <span style=color:#e6db74>&#34;Mar&#34;</span>, <span style=color:#e6db74>&#34;Apr&#34;</span>, <span style=color:#e6db74>&#34;May&#34;</span>, <span style=color:#e6db74>&#34;Jun&#34;</span>,
+</span></span><span style=display:flex><span>     <span style=color:#e6db74>&#34;Jul&#34;</span>, <span style=color:#e6db74>&#34;Aug&#34;</span>, <span style=color:#e6db74>&#34;Sep&#34;</span>, <span style=color:#e6db74>&#34;Oct&#34;</span>, <span style=color:#e6db74>&#34;Nov&#34;</span>, <span style=color:#e6db74>&#34;Dec&#34;</span>};
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( <span style=color:#ae81ff>7</span><span style=color:#f92672>==</span><span style=color:#a6e22e>sscanf</span>(zDate, <span style=color:#e6db74>&#34;%3[A-Za-z], %d %3[A-Za-z] %d %d:%d:%d&#34;</span>, zIgnore,
+</span></span><span style=display:flex><span>                       <span style=color:#f92672>&amp;</span>mday, zMonth, <span style=color:#f92672>&amp;</span>year, <span style=color:#f92672>&amp;</span>hour, <span style=color:#f92672>&amp;</span>min, <span style=color:#f92672>&amp;</span>sec)){
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( year <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>1900</span> ) year <span style=color:#f92672>-=</span> <span style=color:#ae81ff>1900</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span>(mon<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; mon<span style=color:#f92672>&lt;</span><span style=color:#ae81ff>12</span>; mon<span style=color:#f92672>++</span>){
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>if</span>( <span style=color:#f92672>!</span><span style=color:#a6e22e>strncmp</span>( azMonths[mon], zMonth, <span style=color:#ae81ff>3</span> )){
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>int</span> nDay;
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>int</span> isLeapYr;
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> priorDays[] <span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>         {  <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>31</span>, <span style=color:#ae81ff>59</span>, <span style=color:#ae81ff>90</span>,<span style=color:#ae81ff>120</span>,<span style=color:#ae81ff>151</span>,<span style=color:#ae81ff>181</span>,<span style=color:#ae81ff>212</span>,<span style=color:#ae81ff>243</span>,<span style=color:#ae81ff>273</span>,<span style=color:#ae81ff>304</span>,<span style=color:#ae81ff>334</span> };
+</span></span><span style=display:flex><span>        isLeapYr <span style=color:#f92672>=</span> year<span style=color:#f92672>%</span><span style=color:#ae81ff>4</span><span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> <span style=color:#f92672>&amp;&amp;</span> (year<span style=color:#f92672>%</span><span style=color:#ae81ff>100</span><span style=color:#f92672>!=</span><span style=color:#ae81ff>0</span> <span style=color:#f92672>||</span> (year<span style=color:#f92672>+</span><span style=color:#ae81ff>300</span>)<span style=color:#f92672>%</span><span style=color:#ae81ff>400</span><span style=color:#f92672>==</span><span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>        yday <span style=color:#f92672>=</span> priorDays[mon] <span style=color:#f92672>+</span> mday <span style=color:#f92672>-</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span>( isLeapYr <span style=color:#f92672>&amp;&amp;</span> mon<span style=color:#f92672>&gt;</span><span style=color:#ae81ff>1</span> ) yday<span style=color:#f92672>++</span>;
+</span></span><span style=display:flex><span>        nDay <span style=color:#f92672>=</span> (year<span style=color:#f92672>-</span><span style=color:#ae81ff>70</span>)<span style=color:#f92672>*</span><span style=color:#ae81ff>365</span> <span style=color:#f92672>+</span> (year<span style=color:#f92672>-</span><span style=color:#ae81ff>69</span>)<span style=color:#f92672>/</span><span style=color:#ae81ff>4</span> <span style=color:#f92672>-</span> year<span style=color:#f92672>/</span><span style=color:#ae81ff>100</span> <span style=color:#f92672>+</span> (year<span style=color:#f92672>+</span><span style=color:#ae81ff>300</span>)<span style=color:#f92672>/</span><span style=color:#ae81ff>400</span> <span style=color:#f92672>+</span> yday;
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> ((<span style=color:#66d9ef>time_t</span>)(nDay<span style=color:#f92672>*</span><span style=color:#ae81ff>24</span> <span style=color:#f92672>+</span> hour)<span style=color:#f92672>*</span><span style=color:#ae81ff>60</span> <span style=color:#f92672>+</span> min)<span style=color:#f92672>*</span><span style=color:#ae81ff>60</span> <span style=color:#f92672>+</span> sec;
+</span></span><span style=display:flex><span>      }
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Given how complex the notion of timezones and time itself, I bet this function is broken.
+Its much easier to just rely on the standard libc function &mdash; and likely more reliable.
+See the <a href=../althttpd/c_time_back_and_forth.c>C code here</a> to see parsing dates back and forth,</p><h3 id=references-10>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/gmtime.3p.html>gmtime</a></li><li><a href=https://man7.org/linux/man-pages/man3/strftime.3.html>strftime</a></li><li><a href=https://man7.org/linux/man-pages/man3/strptime.3.html>strptime</a></li><li><a href=https://man7.org/linux/man-pages/man3/time.3p.html>time</a></li><li><a href=https://man7.org/linux/man-pages/man3/memset.3.html>memset</a></li><li><a href=https://man7.org/linux/man-pages/man3/memcmp.3p.html>memcmp</a></li></ol><h2 id=testparserfc822date>TestParseRfc822Date</h2><p>This function only exists for testing purposes.
+I wonder how plausible it is to test <em>all</em> the possible values by forking a bunch of process&mldr;</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Test procedure for ParseRfc822Date
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>TestParseRfc822Date</span>(<span style=color:#66d9ef>void</span>){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>time_t</span> t1, t2;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>for</span>(t1<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; t1<span style=color:#f92672>&lt;</span><span style=color:#ae81ff>0x7fffffff</span>; t1 <span style=color:#f92672>+=</span> <span style=color:#ae81ff>127</span>){
+</span></span><span style=display:flex><span>    t2 <span style=color:#f92672>=</span> <span style=color:#a6e22e>ParseRfc822Date</span>(<span style=color:#a6e22e>Rfc822Date</span>(t1));
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>assert</span>( t1<span style=color:#f92672>==</span>t2 );
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>To show that its only used once,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>hbina.github.io on  master <span style=color:#f92672>[</span>?⇡<span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>❯ cat ./static/althttpd/althttpd.c | rg --line-number <span style=color:#e6db74>&#39;TestParseRfc822Date&#39;</span>
+</span></span><span style=display:flex><span>666:void TestParseRfc822Date<span style=color:#f92672>(</span>void<span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>2425:      TestParseRfc822Date<span style=color:#f92672>()</span>;
+</span></span></code></pre></div><h3 id=references-11>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/assert.3.html>assert</a></li></ol><h2 id=startresponse>StartResponse</h2><p>The way this program generates the response to HTTP requests is by printing to <code>stdout</code>.
+This function will setup the HTTP request header with the protocol and the status.
+It will also do some additional stuff based on the status response.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Print the first line of a response followed by the server type.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>StartResponse</span>(<span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zResultCode){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>time_t</span> now;
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>time</span>(<span style=color:#f92672>&amp;</span>now);
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( statusSent ) <span style=color:#66d9ef>return</span>;
+</span></span><span style=display:flex><span>  nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;%s %s</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>, zProtocol, zResultCode);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>strncpy</span>(zReplyStatus, zResultCode, <span style=color:#ae81ff>3</span>);
+</span></span><span style=display:flex><span>  zReplyStatus[<span style=color:#ae81ff>3</span>] <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zReplyStatus[<span style=color:#ae81ff>0</span>]<span style=color:#f92672>&gt;=</span><span style=color:#e6db74>&#39;4&#39;</span> ){
+</span></span><span style=display:flex><span>    closeConnection <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( closeConnection ){
+</span></span><span style=display:flex><span>    nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;Connection: close</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>);
+</span></span><span style=display:flex><span>  }<span style=color:#66d9ef>else</span>{
+</span></span><span style=display:flex><span>    nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;Connection: keep-alive</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>DateTag</span>(<span style=color:#e6db74>&#34;Date&#34;</span>, now);
+</span></span><span style=display:flex><span>  statusSent <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>One thing to notice that is that if the first digit in the reply status is <code>>=4</code>, it will append the HTTP header with <code>Connection: close</code>. It probably means that if there&rsquo;s <em>any</em> issue with the request, the server will just close the connection.</p><p>Let&rsquo;s see how its being used,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>hbina.github.io on  master <span style=color:#f92672>[</span>!?⇡<span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>❯ cat ./static/althttpd/althttpd.c | rg --line-number <span style=color:#e6db74>&#39;StartResponse&#39;</span>
+</span></span><span style=display:flex><span>677:static void StartResponse<span style=color:#f92672>(</span>const char *zResultCode<span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>700:  StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;404 Not Found&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>716:  StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;403 Forbidden&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>732:  StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;401 Authorization Required&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>748:  StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;500 Error&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>783:  StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;500 CGI Configuration Error&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>799:  StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;500 Server Malfunction&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>821:      StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;301 Permanent Redirect&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>824:      StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;308 Permanent Redirect&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>827:      StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;302 Temporary Redirect&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1317:    StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;304 Not Modified&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1329:    StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;206 Partial Content&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1337:    StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;200 OK&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1389:      StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;302 Redirect&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1424:    StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;206 Partial Content&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1432:    StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;200 OK&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1678:    StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;400 Bad Request&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1703:    StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;501 Not Implemented&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1902:      StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;500 Request too large&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1920:      StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;500 Cannot create /tmp file&#34;</span><span style=color:#f92672>)</span>;
+</span></span></code></pre></div><p>As you can see, these are all HTTP headers.
+All of them are also statically allocated, I think its worth creating a list of possible HTTP headers and use that.
+Some extra safety!</p><p>Another interesting to note is that if the browser uses <code>HTTP/2</code>, this response header can/should be considered malformed according to the <a href=https://datatracker.ietf.org/doc/html/rfc7540#section-8.1.2.2>spec</a>.</p><h3 id=references-12>References</h3><ol><li><a href=https://developer.mozilla.org/en-US/docs/Web/HTTP/Messages#http_responses>HTTP Response Header</a></li></ol><h2 id=notfound>NotFound</h2><p>This is just a generic &ldquo;404 NOT FOUND&rdquo; template.
+The only 2 values that it need to complete the document is:</p><ol><li><code>lineno</code> which depends on the caller of this function.
+As I said in previous entries, I think every compiler have a C macro for this already.</li><li><code>zScript</code> which is the document that the user is attempting to retrieve.
+This is probably the string after the domain in the URL.</li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Tell the client that there is no such document
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>NotFound</span>(<span style=color:#66d9ef>int</span> lineno){
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>StartResponse</span>(<span style=color:#e6db74>&#34;404 Not Found&#34;</span>);
+</span></span><span style=display:flex><span>  nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;Content-type: text/html; charset=utf-8</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;&lt;head&gt;&lt;title lineno=</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%d</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>&gt;Not Found&lt;/title&gt;&lt;/head&gt;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;&lt;body&gt;&lt;h1&gt;Document Not Found&lt;/h1&gt;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;The document %s is not available on this server</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;&lt;/body&gt;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>, lineno, zScript);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>MakeLogEntry</span>(<span style=color:#ae81ff>0</span>, lineno);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>exit</span>(<span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Note that before ending the process, it will create a log entry.
+It&rsquo;s used in quite a few places,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>hbina.github.io on  master <span style=color:#f92672>[</span>!?<span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>❯ cat static/althttpd/althttpd.c | rg --line-number <span style=color:#e6db74>&#39;NotFound&#39;</span>
+</span></span><span style=display:flex><span>699:static void NotFound<span style=color:#f92672>(</span>int lineno<span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>917:    NotFound<span style=color:#f92672>(</span>150<span style=color:#f92672>)</span>;  /* LOG: Cannot open -auth file */
+</span></span><span style=display:flex><span>943:        NotFound<span style=color:#f92672>(</span>160<span style=color:#f92672>)</span>;  /* LOG:  http request on https-only page */
+</span></span><span style=display:flex><span>958:      NotFound<span style=color:#f92672>(</span>180<span style=color:#f92672>)</span>;  /* LOG:  malformed entry in -auth file */
+</span></span><span style=display:flex><span>1327:  <span style=color:#66d9ef>if</span><span style=color:#f92672>(</span> in<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> <span style=color:#f92672>)</span> NotFound<span style=color:#f92672>(</span>480<span style=color:#f92672>)</span>; /* LOG: fopen<span style=color:#f92672>()</span> failed <span style=color:#66d9ef>for</span> static content */
+</span></span><span style=display:flex><span>1687:  <span style=color:#66d9ef>if</span><span style=color:#f92672>(</span> zScript<span style=color:#f92672>[</span>0<span style=color:#f92672>]</span>!<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;/&#39;</span> <span style=color:#f92672>)</span> NotFound<span style=color:#f92672>(</span>210<span style=color:#f92672>)</span>; /* LOG: Empty request URI */
+</span></span><span style=display:flex><span>1860:        NotFound<span style=color:#f92672>(</span>260<span style=color:#f92672>)</span>;  /* LOG: Disallowed referrer */
+</span></span><span style=display:flex><span>1962:      NotFound<span style=color:#f92672>(</span>300<span style=color:#f92672>)</span>; /* LOG: Path element begins with <span style=color:#e6db74>&#34;.&#34;</span> or <span style=color:#e6db74>&#34;-&#34;</span> */
+</span></span><span style=display:flex><span>1974:    NotFound<span style=color:#f92672>(</span>310<span style=color:#f92672>)</span>; /* LOG: URI does not start with <span style=color:#e6db74>&#34;/&#34;</span> */
+</span></span><span style=display:flex><span>1977:    NotFound<span style=color:#f92672>(</span>320<span style=color:#f92672>)</span>; /* LOG: URI too long */
+</span></span><span style=display:flex><span>1980:    NotFound<span style=color:#f92672>(</span>330<span style=color:#f92672>)</span>;  /* LOG: Missing HOST: parameter */
+</span></span><span style=display:flex><span>1982:    NotFound<span style=color:#f92672>(</span>340<span style=color:#f92672>)</span>;  /* LOG: HOST parameter too long */
+</span></span><span style=display:flex><span>2007:        NotFound<span style=color:#f92672>(</span>350<span style=color:#f92672>)</span>;  /* LOG: *.website permissions */
+</span></span><span style=display:flex><span>2049:      <span style=color:#66d9ef>if</span><span style=color:#f92672>(</span> stillSearching <span style=color:#f92672>)</span> NotFound<span style=color:#f92672>(</span>380<span style=color:#f92672>)</span>; /* LOG: URI not found */
+</span></span><span style=display:flex><span>2054:        NotFound<span style=color:#f92672>(</span>390<span style=color:#f92672>)</span>;  /* LOG: File not readable */
+</span></span><span style=display:flex><span>2071:        NotFound<span style=color:#f92672>(</span>400<span style=color:#f92672>)</span>; /* LOG: URI is a directory w/o index.html */
+</span></span><span style=display:flex><span>2211:    NotFound<span style=color:#f92672>(</span>460<span style=color:#f92672>)</span>; /* LOG: Excess URI content past static file name */
+</span></span></code></pre></div><h3 id=references-13>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/printf.3.html>printf</a></li><li><a href=https://man7.org/linux/man-pages/man3/exit.3.html>exit</a></li></ol><h2 id=forbidden>Forbidden</h2><p>Another HTTP response template.
+This time its to indicate that the request is forbidden.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Tell the client that they are not welcomed here.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>Forbidden</span>(<span style=color:#66d9ef>int</span> lineno){
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>StartResponse</span>(<span style=color:#e6db74>&#34;403 Forbidden&#34;</span>);
+</span></span><span style=display:flex><span>  nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;Content-type: text/plain; charset=utf-8</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;Access denied</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>  );
+</span></span><span style=display:flex><span>  closeConnection <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>MakeLogEntry</span>(<span style=color:#ae81ff>0</span>, lineno);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>exit</span>(<span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=what-is-forbidden>What is Forbidden?</h3><p>I think its amusing to look at the usage of this function.
+It&rsquo;s being used at several places,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span>hbina.github.io on <span style=color:#960050;background-color:#1e0010></span> master took <span style=color:#ae81ff>4</span>s
+</span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>❯</span> cat .<span style=color:#f92672>/</span><span style=color:#66d9ef>static</span><span style=color:#f92672>/</span>althttpd<span style=color:#f92672>/</span>althttpd.c <span style=color:#f92672>|</span> rg <span style=color:#f92672>--</span>line<span style=color:#f92672>-</span>number <span style=color:#960050;background-color:#1e0010>&#39;</span>Forbidden<span style=color:#960050;background-color:#1e0010>&#39;</span>
+</span></span><span style=display:flex><span><span style=color:#ae81ff>715</span><span style=color:#f92672>:</span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>Forbidden</span>(<span style=color:#66d9ef>int</span> lineno){
+</span></span><span style=display:flex><span><span style=color:#ae81ff>716</span><span style=color:#f92672>:</span>  <span style=color:#a6e22e>StartResponse</span>(<span style=color:#e6db74>&#34;403 Forbidden&#34;</span>);
+</span></span><span style=display:flex><span><span style=color:#ae81ff>1764</span><span style=color:#f92672>:</span>        <span style=color:#a6e22e>Forbidden</span>(<span style=color:#ae81ff>230</span>); <span style=color:#75715e>/* LOG: Referrer is devids.net */</span>
+</span></span><span style=display:flex><span><span style=color:#ae81ff>1778</span><span style=color:#f92672>:</span>        <span style=color:#a6e22e>Forbidden</span>(<span style=color:#ae81ff>240</span>);  <span style=color:#75715e>/* LOG: Illegal content in HOST: parameter */</span>
+</span></span><span style=display:flex><span><span style=color:#ae81ff>1838</span><span style=color:#f92672>:</span>        <span style=color:#a6e22e>Forbidden</span>(<span style=color:#ae81ff>250</span>);  <span style=color:#75715e>/* LOG: Disallowed user agent */</span>
+</span></span><span style=display:flex><span><span style=color:#ae81ff>1846</span><span style=color:#f92672>:</span>      <span style=color:#a6e22e>Forbidden</span>(<span style=color:#ae81ff>251</span>);  <span style=color:#75715e>/* LOG: Disallowed user agent (20190424) */</span>
+</span></span></code></pre></div><h3 id=forbidden-referer>Forbidden Referer</h3><p>HTTP headers have a &ldquo;referer&rdquo; value when making requests so that the server can know who made the request.
+For whatever reason, the author decides to forbid anyone from <code>devids.net</code>!</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span>    }<span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span>( <span style=color:#a6e22e>strcasecmp</span>(zFieldName,<span style=color:#e6db74>&#34;Referer:&#34;</span>)<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ){
+</span></span><span style=display:flex><span>      zReferer <span style=color:#f92672>=</span> <span style=color:#a6e22e>StrDup</span>(zVal);
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>if</span>( <span style=color:#a6e22e>strstr</span>(zVal, <span style=color:#e6db74>&#34;devids.net/&#34;</span>)<span style=color:#f92672>!=</span><span style=color:#ae81ff>0</span> ){ zReferer <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;devids.net.smut&#34;</span>;
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>Forbidden</span>(<span style=color:#ae81ff>230</span>); <span style=color:#75715e>/* LOG: Referrer is devids.net */</span>
+</span></span><span style=display:flex><span>      }
+</span></span></code></pre></div><h3 id=forbidden-host>Forbidden Host</h3><p>When parsing the <code>Host</code> header value, the server will also reply with forbidden if there&rsquo;s illegal content in it.
+We will cover what <code>sanitizeString</code> is later.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span>    }<span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span>( <span style=color:#a6e22e>strcasecmp</span>(zFieldName,<span style=color:#e6db74>&#34;Host:&#34;</span>)<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ){
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>int</span> inSquare <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>char</span> c;
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>if</span>( <span style=color:#a6e22e>sanitizeString</span>(zVal) ){
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>Forbidden</span>(<span style=color:#ae81ff>240</span>);  <span style=color:#75715e>/* LOG: Illegal content in HOST: parameter */</span>
+</span></span><span style=display:flex><span>      }
+</span></span></code></pre></div><h3 id=forbidden-agents>Forbidden Agents</h3><p>There&rsquo;s also a list of disallowed agents.
+I am not sure why half of these are in here&mldr;
+I guess its just what the author had accumulated after over 20 years of running this program.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#66d9ef>if</span>( zAgent ){
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>azDisallow[] <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;Windows 9&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;Download Master&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;Ezooms/&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;HTTrace&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;AhrefsBot&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;MicroMessenger&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;OPPO A33 Build&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;SemrushBot&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;MegaIndex.ru&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;MJ12bot&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;Chrome/0.A.B.C&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;Neevabot/&#34;</span>,
+</span></span><span style=display:flex><span>      <span style=color:#e6db74>&#34;BLEXBot/&#34;</span>,
+</span></span><span style=display:flex><span>    };
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>size_t</span> ii;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span>(ii<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; ii<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>sizeof</span>(azDisallow)<span style=color:#f92672>/</span><span style=color:#66d9ef>sizeof</span>(azDisallow[<span style=color:#ae81ff>0</span>]); ii<span style=color:#f92672>++</span>){
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>if</span>( <span style=color:#a6e22e>strstr</span>(zAgent,azDisallow[ii])<span style=color:#f92672>!=</span><span style=color:#ae81ff>0</span> ){
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>Forbidden</span>(<span style=color:#ae81ff>250</span>);  <span style=color:#75715e>/* LOG: Disallowed user agent */</span>
+</span></span><span style=display:flex><span>      }
+</span></span><span style=display:flex><span>    }
+</span></span></code></pre></div><h3 id=forbidden-spiders>Forbidden Spiders</h3><p>This one is disabled and its actually quite new!
+I am not sure what this is?
+I suppose there&rsquo;s a specific misbehaving/malicious website crawler attack the author&rsquo;s server at that time.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>#if 0</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>    /* Spider attack from 2019-04-24 */
+</span></span></span><span style=display:flex><span><span style=color:#75715e>    if( strcmp(zAgent,
+</span></span></span><span style=display:flex><span><span style=color:#75715e>            &#34;Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 &#34;
+</span></span></span><span style=display:flex><span><span style=color:#75715e>            &#34;(KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36&#34;)==0 ){
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      Forbidden(251);  /* LOG: Disallowed user agent (20190424) */
+</span></span></span><span style=display:flex><span><span style=color:#75715e>    }
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#75715e>#endif
+</span></span></span></code></pre></div><h3 id=references-14>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/printf.3.html>printf</a>.</li><li><a href=https://man7.org/linux/man-pages/man3/exit.3.html>exit</a>.</li><li><a href=https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referer>HTTP Header Referer</a>.</li><li><a href=https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Host>HTTP Header Host</a>.</li><li><a href=https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent>HTTP Header User-Agent</a>.</li></ol><h2 id=notauthorized>NotAuthorized</h2><p>Yet another HTTP response template.
+This time its to indicate that the request is unauthorised to access that resource.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Tell the client that authorization is required to access the
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** document.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>NotAuthorized</span>(<span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zRealm){
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>StartResponse</span>(<span style=color:#e6db74>&#34;401 Authorization Required&#34;</span>);
+</span></span><span style=display:flex><span>  nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;WWW-Authenticate: Basic realm=</span><span style=color:#ae81ff>\&#34;</span><span style=color:#e6db74>%s</span><span style=color:#ae81ff>\&#34;\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;Content-type: text/html; charset=utf-8</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;&lt;head&gt;&lt;title&gt;Not Authorized&lt;/title&gt;&lt;/head&gt;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;&lt;body&gt;&lt;h1&gt;401 Not Authorized&lt;/h1&gt;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;A login and password are required for this document</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;&lt;/body&gt;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>, zRealm);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>MakeLogEntry</span>(<span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>110</span>);  <span style=color:#75715e>/* LOG: Not authorized */</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>There&rsquo;s nothing much to be said about this function.
+So let&rsquo;s take a look at its usage.
+There&rsquo;s only 1 of them.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>hbina.github.io on  master <span style=color:#f92672>[</span>?<span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>❯ cat ./static/althttpd/althttpd.c | rg --line-number <span style=color:#e6db74>&#39;NotAuthorized&#39;</span>
+</span></span><span style=display:flex><span>731:static void NotAuthorized<span style=color:#f92672>(</span>const char *zRealm<span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>964:  NotAuthorized<span style=color:#f92672>(</span>zRealm<span style=color:#f92672>)</span>;
+</span></span></code></pre></div><h3 id=configuring-authorization>Configuring Authorization</h3><p>The function that made the call is <code>CheckBasicAuthorization</code>.
+This function parses an authorization file that may or may not exist in the directory that the resources is in.
+One of the parameters that can be added in this configuration file is <code>realm</code>.
+The documentation says,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#f92672>**</span>    <span style=color:#f92672>*</span>  <span style=color:#e6db74>&#34;realm TEXT&#34;</span> sets the realm to TEXT.
+</span></span></code></pre></div><p>So while parsing this configuration file, we assign the &ldquo;<code>TEXT</code>&rdquo; above to <code>zRealm</code> here,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( <span style=color:#a6e22e>strcmp</span>(zFieldName, <span style=color:#e6db74>&#34;realm&#34;</span>)<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ){
+</span></span><span style=display:flex><span>      zRealm <span style=color:#f92672>=</span> <span style=color:#a6e22e>StrDup</span>(zVal);
+</span></span></code></pre></div><p>But <code>zRealm</code> is never used!</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>hbina.github.io on  master <span style=color:#f92672>[</span>?<span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>❯ cat ./static/althttpd/althttpd.c | rg --line-number <span style=color:#e6db74>&#39;zRealm&#39;</span>
+</span></span><span style=display:flex><span>731:static void NotAuthorized<span style=color:#f92672>(</span>const char *zRealm<span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>740:    <span style=color:#e6db74>&#34;&lt;/body&gt;\n&#34;</span>, zRealm<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>910:  char *zRealm <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;unknown realm&#34;</span>;
+</span></span><span style=display:flex><span>930:      zRealm <span style=color:#f92672>=</span> StrDup<span style=color:#f92672>(</span>zVal<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>964:  NotAuthorized<span style=color:#f92672>(</span>zRealm<span style=color:#f92672>)</span>;
+</span></span></code></pre></div><p>So I assume its just a way for the author to determine what kind of files were being requested.</p><p>According to the actual <a href=https://datatracker.ietf.org/doc/html/rfc1945#section-11>HTTP/1.0 specification for authentication</a>, we can see that realms are basically used to tell the requester that the same realm should require the same kind of authentication.
+Probably for caching purposes?</p><p>So it kinda makes sense that this value is not being used anywhere.
+It&rsquo;s more like a guideline, not a strict spec.
+It depends entirely if the resources are properly configured.</p><h3 id=references-15>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/printf.3.html>printf</a>.</li><li><a href=https://man7.org/linux/man-pages/man3/exit.3.html>exit</a>.</li><li><a href=https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referer>HTTP Header Referer</a>.</li><li><a href=https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Host>HTTP Header Host</a>.</li><li><a href=https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent>HTTP Header User-Agent</a>.</li></ol><h2 id=cgierror>CgiError</h2><p>Another simple template to indicate CGI error.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Tell the client that there is an error in the script.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>CgiError</span>(<span style=color:#66d9ef>void</span>){
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>StartResponse</span>(<span style=color:#e6db74>&#34;500 Error&#34;</span>);
+</span></span><span style=display:flex><span>  nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;Content-type: text/html; charset=utf-8</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;&lt;head&gt;&lt;title&gt;CGI Program Error&lt;/title&gt;&lt;/head&gt;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;&lt;body&gt;&lt;h1&gt;CGI Program Error&lt;/h1&gt;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;The CGI program %s generated an error</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;&lt;/body&gt;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>, zScript);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>MakeLogEntry</span>(<span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>120</span>);  <span style=color:#75715e>/* LOG: CGI Error */</span>
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>exit</span>(<span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Its only being used once,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>hbina.github.io on  master <span style=color:#f92672>[</span>!?<span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>❯ cat static/althttpd/althttpd.c | rg --line-number <span style=color:#e6db74>&#39;CgiError&#39;</span>
+</span></span><span style=display:flex><span>747:static void CgiError<span style=color:#f92672>(</span>void<span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>2197:      CgiError<span style=color:#f92672>()</span>;
+</span></span></code></pre></div><h2 id=timeout>Timeout</h2><p>A function that will be called to handle timeouts.
+AFAIK, the server is set up such that each request must be handled in a set amount of time.
+Beyond that, the server will just timeout.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** This is called if we timeout or catch some other kind of signal.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Log an error code which is 900+iSig and then quit.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>Timeout</span>(<span style=color:#66d9ef>int</span> iSig){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( <span style=color:#f92672>!</span>debugFlag ){
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>if</span>( zScript <span style=color:#f92672>&amp;&amp;</span> zScript[<span style=color:#ae81ff>0</span>] ){
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>char</span> zBuf[<span style=color:#ae81ff>10</span>];
+</span></span><span style=display:flex><span>      zBuf[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;9&#39;</span>;
+</span></span><span style=display:flex><span>      zBuf[<span style=color:#ae81ff>1</span>] <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;0&#39;</span> <span style=color:#f92672>+</span> (iSig<span style=color:#f92672>/</span><span style=color:#ae81ff>10</span>)<span style=color:#f92672>%</span><span style=color:#ae81ff>10</span>;
+</span></span><span style=display:flex><span>      zBuf[<span style=color:#ae81ff>2</span>] <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;0&#39;</span> <span style=color:#f92672>+</span> iSig<span style=color:#f92672>%</span><span style=color:#ae81ff>10</span>;
+</span></span><span style=display:flex><span>      zBuf[<span style=color:#ae81ff>3</span>] <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>strcpy</span>(zReplyStatus, zBuf);
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>MakeLogEntry</span>(<span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>130</span>);  <span style=color:#75715e>/* LOG: Timeout */</span>
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>exit</span>(<span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>There&rsquo;s 2 things that I am unsure here.</p><ol><li>Why do we need 10 bytes when we only use 4 of them?</li><li>Why is the the error code here <code>9XX</code> when there&rsquo;s already a HTTP request code for this.
+It appears to be for logging purposes only, which is weird because its only enabled when <code>debugFlag</code> is false.</li></ol><p>Let&rsquo;s see how it&rsquo;s bein used,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>hbina.github.io on  master <span style=color:#f92672>[</span>!?<span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>❯ cat static/althttpd/althttpd.c | rg --line-number <span style=color:#e6db74>&#39;Timeout&#39;</span>
+</span></span><span style=display:flex><span>333:static int useTimeout <span style=color:#f92672>=</span> 1;       /* True to use times */
+</span></span><span style=display:flex><span>764:static void Timeout<span style=color:#f92672>(</span>int iSig<span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>773:      MakeLogEntry<span style=color:#f92672>(</span>0, 130<span style=color:#f92672>)</span>;  /* LOG: Timeout */
+</span></span><span style=display:flex><span>1352:  <span style=color:#66d9ef>if</span><span style=color:#f92672>(</span> useTimeout <span style=color:#f92672>)</span> alarm<span style=color:#f92672>(</span><span style=color:#ae81ff>30</span> + pStat-&gt;st_size/1000<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1381:  <span style=color:#66d9ef>if</span><span style=color:#f92672>(</span> useTimeout <span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>1657:  signal<span style=color:#f92672>(</span>SIGALRM, Timeout<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1658:  signal<span style=color:#f92672>(</span>SIGSEGV, Timeout<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1659:  signal<span style=color:#f92672>(</span>SIGPIPE, Timeout<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1660:  signal<span style=color:#f92672>(</span>SIGXCPU, Timeout<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1661:  <span style=color:#66d9ef>if</span><span style=color:#f92672>(</span> useTimeout <span style=color:#f92672>)</span> alarm<span style=color:#f92672>(</span>15<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1930:    <span style=color:#66d9ef>if</span><span style=color:#f92672>(</span> useTimeout <span style=color:#f92672>)</span> alarm<span style=color:#f92672>(</span><span style=color:#ae81ff>15</span> + len/2000<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1939:  <span style=color:#66d9ef>if</span><span style=color:#f92672>(</span> useTimeout <span style=color:#f92672>)</span> alarm<span style=color:#f92672>(</span>10<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>2224:  <span style=color:#66d9ef>if</span><span style=color:#f92672>(</span> useTimeout <span style=color:#f92672>)</span> alarm<span style=color:#f92672>(</span>30<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>2417:        useTimeout <span style=color:#f92672>=</span> 0;
+</span></span><span style=display:flex><span>2540:INSERT INTO xref VALUES<span style=color:#f92672>(</span>130,<span style=color:#e6db74>&#39;Timeout&#39;</span><span style=color:#f92672>)</span>;
+</span></span></code></pre></div><p>So it seems to register itself to a bunch of signals and that&rsquo;s pretty much it.</p><h3 id=references-16>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/signal.3p.html>signal</a>.</li><li><a href=https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/408>HTTP Status Request Timeout</a>.</li></ol><h2 id=cgiscriptwritable>CgiScriptWritable</h2><p>Just another HTTP response template for CGI errors.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Tell the client that there is an error in the script.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>CgiScriptWritable</span>(<span style=color:#66d9ef>void</span>){
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>StartResponse</span>(<span style=color:#e6db74>&#34;500 CGI Configuration Error&#34;</span>);
+</span></span><span style=display:flex><span>  nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;Content-type: text/plain; charset=utf-8</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;The CGI program %s is writable by users other than its owner.</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>,
+</span></span><span style=display:flex><span>    zRealScript);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>MakeLogEntry</span>(<span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>140</span>);  <span style=color:#75715e>/* LOG: CGI script is writable */</span>
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>exit</span>(<span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>As the function name implies, it&rsquo;s being used whenever a script is writable by group and other have write permission to the file.
+See &ldquo;The file type and mode&rdquo; section in the inode manual below.</p><h3 id=references-17>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man7/inode.7.html>inode</a>.</li></ol><h2 id=malfunction>Malfunction</h2><p>This is a template for a generic error in the server.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Tell the client that the server malfunctioned.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>Malfunction</span>(<span style=color:#66d9ef>int</span> linenum, <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zFormat, ...){
+</span></span><span style=display:flex><span>  va_list ap;
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>va_start</span>(ap, zFormat);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>StartResponse</span>(<span style=color:#e6db74>&#34;500 Server Malfunction&#34;</span>);
+</span></span><span style=display:flex><span>  nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;Content-type: text/plain; charset=utf-8</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;Web server malfunctioned; error number %d</span><span style=color:#ae81ff>\n\n</span><span style=color:#e6db74>&#34;</span>, linenum);
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zFormat ){
+</span></span><span style=display:flex><span>    nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>vprintf</span>(zFormat, ap);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>);
+</span></span><span style=display:flex><span>    nOut<span style=color:#f92672>++</span>;
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>MakeLogEntry</span>(<span style=color:#ae81ff>0</span>, linenum);
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>exit</span>(<span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>The strange part about this is that it exit the process with 0.
+If its malfunctioning, I assume it&rsquo;s supposed to return a negative value.
+It&rsquo;s being used in a variety of places, covering various kinds of errors.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>hbina.github.io on  master <span style=color:#f92672>[</span>!?<span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>❯ cat static/althttpd/althttpd.c | rg --line-number --fixed-strings <span style=color:#e6db74>&#34;Malfunction&#34;</span>796:static void Malfunction<span style=color:#f92672>(</span>int linenum, const char *zFormat, ...<span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>799:  StartResponse<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;500 Server Malfunction&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1413:          Malfunction<span style=color:#f92672>(</span>600, <span style=color:#e6db74>&#34;Out of memory: %d bytes&#34;</span>, nMalloc<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1451:           Malfunction<span style=color:#f92672>(</span>610, <span style=color:#e6db74>&#34;Out of memory: %d bytes&#34;</span>, nMalloc<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1492:    Malfunction<span style=color:#f92672>(</span>700, <span style=color:#e6db74>&#34;cannot open \&#34;%s\&#34;\n&#34;</span>, zFile<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1495:    Malfunction<span style=color:#f92672>(</span>701, <span style=color:#e6db74>&#34;cannot read \&#34;%s\&#34;\n&#34;</span>, zFile<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1498:    Malfunction<span style=color:#f92672>(</span>702, <span style=color:#e6db74>&#34;misformatted SCGI spec \&#34;%s\&#34;\n&#34;</span>, zFile<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1504:    Malfunction<span style=color:#f92672>(</span>703, <span style=color:#e6db74>&#34;misformatted SCGI spec \&#34;%s\&#34;\n&#34;</span>, zFile<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1521:    Malfunction<span style=color:#f92672>(</span>704, <span style=color:#e6db74>&#34;unrecognized line in SCGI spec: \&#34;%s %s\&#34;\n&#34;</span>,
+</span></span><span style=display:flex><span>1531:    Malfunction<span style=color:#f92672>(</span>704, <span style=color:#e6db74>&#34;cannot resolve SCGI server name %s:%s\n%s\n&#34;</span>,
+</span></span><span style=display:flex><span>1546:          Malfunction<span style=color:#f92672>(</span>721,<span style=color:#e6db74>&#34;Relight failed with %d: \&#34;%s\&#34;\n&#34;</span>,
+</span></span><span style=display:flex><span>1560:          Malfunction<span style=color:#f92672>(</span>720, /* LOG: chdir<span style=color:#f92672>()</span> failed */
+</span></span><span style=display:flex><span>1571:          Malfunction<span style=color:#f92672>(</span>706, <span style=color:#e6db74>&#34;bad fallback file: \&#34;%s\&#34;\n&#34;</span>, zFallback<span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1574:      Malfunction<span style=color:#f92672>(</span>707, <span style=color:#e6db74>&#34;cannot open socket to SCGI server %s\n&#34;</span>,
+</span></span><span style=display:flex><span>1593:        Malfunction<span style=color:#f92672>(</span>706, <span style=color:#e6db74>&#34;out of memory&#34;</span><span style=color:#f92672>)</span>;
+</span></span><span style=display:flex><span>1648:    Malfunction<span style=color:#f92672>(</span>190,   /* LOG: chdir<span style=color:#f92672>()</span> failed */
+</span></span><span style=display:flex><span>1915:      Malfunction<span style=color:#f92672>(</span>280,  /* LOG: mkstemp<span style=color:#f92672>()</span> failed */
+</span></span><span style=display:flex><span>2017:    Malfunction<span style=color:#f92672>(</span>360,  /* LOG: chdir<span style=color:#f92672>()</span> failed */
+</span></span><span style=display:flex><span>2122:      Malfunction<span style=color:#f92672>(</span>420, /* LOG: chdir<span style=color:#f92672>()</span> failed */
+</span></span><span style=display:flex><span>2151:        Malfunction<span style=color:#f92672>(</span>430,  /* LOG: dup<span style=color:#f92672>(</span>0<span style=color:#f92672>)</span> failed */
+</span></span><span style=display:flex><span>2177:        Malfunction<span style=color:#f92672>(</span>440, /* LOG: pipe<span style=color:#f92672>()</span> failed */
+</span></span><span style=display:flex><span>2184:          Malfunction<span style=color:#f92672>(</span>450, /* LOG: dup<span style=color:#f92672>(</span>1<span style=color:#f92672>)</span> failed */
+</span></span><span style=display:flex><span>2408:        Malfunction<span style=color:#f92672>(</span>500,  /* LOG: unknown IP protocol */
+</span></span><span style=display:flex><span>2421:        Malfunction<span style=color:#f92672>(</span>501, /* LOG: cannot open --input file */
+</span></span><span style=display:flex><span>2429:      Malfunction<span style=color:#f92672>(</span>510, /* LOG: unknown command-line argument on launch */
+</span></span><span style=display:flex><span>2439:      Malfunction<span style=color:#f92672>(</span>520, /* LOG: --root argument missing */
+</span></span><span style=display:flex><span>2448:    Malfunction<span style=color:#f92672>(</span>530, /* LOG: chdir<span style=color:#f92672>()</span> failed */
+</span></span><span style=display:flex><span>2458:      Malfunction<span style=color:#f92672>(</span>540, /* LOG: chroot<span style=color:#f92672>()</span> failed */
+</span></span><span style=display:flex><span>2467:    Malfunction<span style=color:#f92672>(</span>550, /* LOG: server startup failed */
+</span></span><span style=display:flex><span>2485:        Malfunction<span style=color:#f92672>(</span>560, /* LOG: setgid<span style=color:#f92672>()</span> failed */
+</span></span><span style=display:flex><span>2489:        Malfunction<span style=color:#f92672>(</span>570, /* LOG: setuid<span style=color:#f92672>()</span> failed */
+</span></span><span style=display:flex><span>2493:      Malfunction<span style=color:#f92672>(</span>580, /* LOG: unknown user */
+</span></span><span style=display:flex><span>2498:    Malfunction<span style=color:#f92672>(</span>590, /* LOG: cannot run as root */
+</span></span></code></pre></div><h3 id=references-18>References</h3><ol><li><a href=https://man7.org/linux/man-pages/man3/exit.3.html>exit</a></li></ol><h2 id=redirect>Redirect</h2><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** Do a server redirect to the document specified.  The document
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** name not contain scheme or network location or the query string.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** It will be just the path.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>Redirect</span>(<span style=color:#66d9ef>const</span> <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zPath, <span style=color:#66d9ef>int</span> iStatus, <span style=color:#66d9ef>int</span> finish, <span style=color:#66d9ef>int</span> lineno){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>switch</span>( iStatus ){
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>case</span> <span style=color:#ae81ff>301</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>StartResponse</span>(<span style=color:#e6db74>&#34;301 Permanent Redirect&#34;</span>);
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>break</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>case</span> <span style=color:#ae81ff>308</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>StartResponse</span>(<span style=color:#e6db74>&#34;308 Permanent Redirect&#34;</span>);
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>break</span>;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>default</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>StartResponse</span>(<span style=color:#e6db74>&#34;302 Temporary Redirect&#34;</span>);
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>break</span>;
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( zServerPort<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> <span style=color:#f92672>||</span> zServerPort[<span style=color:#ae81ff>0</span>]<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> <span style=color:#f92672>||</span> <span style=color:#a6e22e>strcmp</span>(zServerPort,<span style=color:#e6db74>&#34;80&#34;</span>)<span style=color:#f92672>==</span><span style=color:#ae81ff>0</span> ){
+</span></span><span style=display:flex><span>    nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;Location: %s://%s%s%s</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>,
+</span></span><span style=display:flex><span>                   zHttp, zServerName, zPath, zQuerySuffix);
+</span></span><span style=display:flex><span>  }<span style=color:#66d9ef>else</span>{
+</span></span><span style=display:flex><span>    nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;Location: %s://%s:%s%s%s</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>,
+</span></span><span style=display:flex><span>                   zHttp, zServerName, zServerPort, zPath, zQuerySuffix);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( finish ){
+</span></span><span style=display:flex><span>    nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;Content-length: 0</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>);
+</span></span><span style=display:flex><span>    nOut <span style=color:#f92672>+=</span> <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;</span><span style=color:#ae81ff>\r\n</span><span style=color:#e6db74>&#34;</span>);
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>MakeLogEntry</span>(<span style=color:#ae81ff>0</span>, lineno);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>fflush</span>(stdout);
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>This function simply redirects using the <a href=#startresponse>StartResponse</a> that we have previously seen.</p><h3 id=the-different-kinds-of-http-status-code-for-redirection>The Different Kinds of HTTP Status Code for Redirection</h3><p>The first it does is to map the integer given in <code>iStatus</code> to their complete HTTP status code.
+I would like to not however that the first and the last statuses in use here are incorrect.</p><p>Using <a href=https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml>IANA</a> itself as reference, we can see that we should change:</p><ol><li><p>&ldquo;301 Permanent Redirect&rdquo; => &ldquo;301 Moved Permanently&rdquo;</p></li><li><p>&ldquo;302 Temporary Redirect&rdquo; => &ldquo;302 Found&rdquo;</p></li></ol><p>If the intention is to used indicate &ldquo;temporary redirect&rdquo;, then the correct status code for that is &ldquo;307 Temporary Indirect&rdquo;.
+As far as I know, the standard says that only the first 3 letters (the numeric part of the status code) actually matters.
+I have already raised a ticket for this <a href="https://sqlite.org/althttpd/tktview?name=2ac5f38c13">here</a>.</p><h3 id=where-to-redirect>Where to Redirect</h3><p>The way a client determine where it should retry is provided in the <code>Location</code> header.
+This is what the second part of this function is doing.</p><p>If a port is provided (and it is not port 80 which is already used by the HTTP server), then it will append the port to the domain.</p><p>If there are no additional data to be included into this response, then it will add the header &ldquo;Content-Length&rdquo; with the value 0 to indicate an empty body.
+However, if we grep for the usage of this function, we can see that we will <em>always</em> finish here.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>hbina@akarin:~/git/hbina.github.io$ rg <span style=color:#e6db74>&#39;Redirect\(&#39;</span> ./static/althttpd/althttpd.c
+</span></span><span style=display:flex><span>819:static void Redirect<span style=color:#f92672>(</span>const char *zPath, int iStatus, int finish, int lineno<span style=color:#f92672>){</span>
+</span></span><span style=display:flex><span>951:        Redirect<span style=color:#f92672>(</span>zScript, 301, 1, 170<span style=color:#f92672>)</span>; /* LOG: -auth redirect */
+</span></span><span style=display:flex><span>2044:          Redirect<span style=color:#f92672>(</span>zRealScript, 302, 1, 370<span style=color:#f92672>)</span>; /* LOG: redirect to not-found */
+</span></span><span style=display:flex><span>2080:        Redirect<span style=color:#f92672>(</span>zRealScript,301,1,410<span style=color:#f92672>)</span>; /* LOG: redirect to add trailing / */
+</span></span></code></pre></div><p>Finally, we will flush the buffer to stdout.
+However, I am not particularly sure why we explicitly do it here and not before we finally want to exit from this fork.</p><h2 id=decode64>Decode64</h2><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** This function treats its input as a base-64 string and returns the
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** decoded value of that string.  Characters of input that are not
+</span></span></span><span style=display:flex><span><span style=color:#75715e>** valid base-64 characters (such as spaces and newlines) are ignored.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>*/</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>Decode64</span>(<span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>z64){
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>zData;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>int</span> n64;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>int</span> i, j;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>int</span> a, b, c, d;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> isInit <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>int</span> trans[<span style=color:#ae81ff>128</span>];
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>unsigned</span> <span style=color:#66d9ef>char</span> zBase[] <span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>    <span style=color:#e6db74>&#34;ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/&#34;</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( <span style=color:#f92672>!</span>isInit ){
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span>(i<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; i<span style=color:#f92672>&lt;</span><span style=color:#ae81ff>128</span>; i<span style=color:#f92672>++</span>){ trans[i] <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>; }
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>for</span>(i<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; zBase[i]; i<span style=color:#f92672>++</span>){ trans[zBase[i] <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x7f</span>] <span style=color:#f92672>=</span> i; }
+</span></span><span style=display:flex><span>    isInit <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  n64 <span style=color:#f92672>=</span> <span style=color:#a6e22e>strlen</span>(z64);
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>while</span>( n64<span style=color:#f92672>&gt;</span><span style=color:#ae81ff>0</span> <span style=color:#f92672>&amp;&amp;</span> z64[n64<span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>]<span style=color:#f92672>==</span><span style=color:#e6db74>&#39;=&#39;</span> ) n64<span style=color:#f92672>--</span>;
+</span></span><span style=display:flex><span>  zData <span style=color:#f92672>=</span> z64;
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>for</span>(i<span style=color:#f92672>=</span>j<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>; i<span style=color:#f92672>+</span><span style=color:#ae81ff>3</span><span style=color:#f92672>&lt;</span>n64; i<span style=color:#f92672>+=</span><span style=color:#ae81ff>4</span>){
+</span></span><span style=display:flex><span>    a <span style=color:#f92672>=</span> trans[z64[i] <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x7f</span>];
+</span></span><span style=display:flex><span>    b <span style=color:#f92672>=</span> trans[z64[i<span style=color:#f92672>+</span><span style=color:#ae81ff>1</span>] <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x7f</span>];
+</span></span><span style=display:flex><span>    c <span style=color:#f92672>=</span> trans[z64[i<span style=color:#f92672>+</span><span style=color:#ae81ff>2</span>] <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x7f</span>];
+</span></span><span style=display:flex><span>    d <span style=color:#f92672>=</span> trans[z64[i<span style=color:#f92672>+</span><span style=color:#ae81ff>3</span>] <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x7f</span>];
+</span></span><span style=display:flex><span>    zData[j<span style=color:#f92672>++</span>] <span style=color:#f92672>=</span> ((a<span style=color:#f92672>&lt;&lt;</span><span style=color:#ae81ff>2</span>) <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0xfc</span>) <span style=color:#f92672>|</span> ((b<span style=color:#f92672>&gt;&gt;</span><span style=color:#ae81ff>4</span>) <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x03</span>);
+</span></span><span style=display:flex><span>    zData[j<span style=color:#f92672>++</span>] <span style=color:#f92672>=</span> ((b<span style=color:#f92672>&lt;&lt;</span><span style=color:#ae81ff>4</span>) <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0xf0</span>) <span style=color:#f92672>|</span> ((c<span style=color:#f92672>&gt;&gt;</span><span style=color:#ae81ff>2</span>) <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x0f</span>);
+</span></span><span style=display:flex><span>    zData[j<span style=color:#f92672>++</span>] <span style=color:#f92672>=</span> ((c<span style=color:#f92672>&lt;&lt;</span><span style=color:#ae81ff>6</span>) <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0xc0</span>) <span style=color:#f92672>|</span> (d <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x3f</span>);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span>( i<span style=color:#f92672>+</span><span style=color:#ae81ff>2</span><span style=color:#f92672>&lt;</span>n64 ){
+</span></span><span style=display:flex><span>    a <span style=color:#f92672>=</span> trans[z64[i] <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x7f</span>];
+</span></span><span style=display:flex><span>    b <span style=color:#f92672>=</span> trans[z64[i<span style=color:#f92672>+</span><span style=color:#ae81ff>1</span>] <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x7f</span>];
+</span></span><span style=display:flex><span>    c <span style=color:#f92672>=</span> trans[z64[i<span style=color:#f92672>+</span><span style=color:#ae81ff>2</span>] <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x7f</span>];
+</span></span><span style=display:flex><span>    zData[j<span style=color:#f92672>++</span>] <span style=color:#f92672>=</span> ((a<span style=color:#f92672>&lt;&lt;</span><span style=color:#ae81ff>2</span>) <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0xfc</span>) <span style=color:#f92672>|</span> ((b<span style=color:#f92672>&gt;&gt;</span><span style=color:#ae81ff>4</span>) <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x03</span>);
+</span></span><span style=display:flex><span>    zData[j<span style=color:#f92672>++</span>] <span style=color:#f92672>=</span> ((b<span style=color:#f92672>&lt;&lt;</span><span style=color:#ae81ff>4</span>) <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0xf0</span>) <span style=color:#f92672>|</span> ((c<span style=color:#f92672>&gt;&gt;</span><span style=color:#ae81ff>2</span>) <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x0f</span>);
+</span></span><span style=display:flex><span>  }<span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span>( i<span style=color:#f92672>+</span><span style=color:#ae81ff>1</span><span style=color:#f92672>&lt;</span>n64 ){
+</span></span><span style=display:flex><span>    a <span style=color:#f92672>=</span> trans[z64[i] <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x7f</span>];
+</span></span><span style=display:flex><span>    b <span style=color:#f92672>=</span> trans[z64[i<span style=color:#f92672>+</span><span style=color:#ae81ff>1</span>] <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x7f</span>];
+</span></span><span style=display:flex><span>    zData[j<span style=color:#f92672>++</span>] <span style=color:#f92672>=</span> ((a<span style=color:#f92672>&lt;&lt;</span><span style=color:#ae81ff>2</span>) <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0xfc</span>) <span style=color:#f92672>|</span> ((b<span style=color:#f92672>&gt;&gt;</span><span style=color:#ae81ff>4</span>) <span style=color:#f92672>&amp;</span> <span style=color:#ae81ff>0x03</span>);
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  zData[j] <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>This function decodes <a href=https://en.wikipedia.org/wiki/Base64>base64</a> C-string input into its binary data.
+Interestingly, this function does not perform any allocation.
+The decoding is done in-place in the original buffer.</p><p>Here&rsquo;s a <a href=../althttpd/decode_base64_test.c>test program</a> to see the result of decoding some data.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>hbina@akarin:~/git/hbina.github.io$ clang ./static/althttpd/decode_base64_test.c  <span style=color:#f92672>&amp;&amp;</span> ./a.out
+</span></span><span style=display:flex><span>Encoded:<span style=color:#e6db74>&#39;TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcmsu===============&#39;</span>
+</span></span><span style=display:flex><span>Decoded:<span style=color:#e6db74>&#39;Many hands make light work.&#39;</span>
+</span></span></code></pre></div><p>Note that this is for illustrative purpose only.
+The <code>base64</code> encoding is used to encode binary data which may contain a bunch of <code>O</code>s and/or non-printable characters.
+Thefore, the result of decoded data cannot be trivially printed.</p><ul class=pa0></ul><div class="mt6 instapaper_ignoref"></div></div><aside class="w-30-l mt6-l"></aside></article></main><footer class="bg-black bottom-0 w-100 pa3" role=contentinfo><div class="flex justify-between"><a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href=https://hbina.github.io/>&copy; IDK what a copyright is 2022</a><div><div class=ananke-socials></div></div></div></footer></body></html>
