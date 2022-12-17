@@ -1,10 +1,10 @@
 ---
 title: "althttpd: From Top to Bottom"
 author: "Hanif Bin Ariffin"
-draft: true
+draft: false
 ---
 
-## Before Venturing Further...
+# Before Venturing Further...
 
 It's nice to have the codebase open as reference.
 Each chapters will cover mostly 1 function and I wouldn't go through every single bit.
@@ -17,7 +17,11 @@ Please read about the design philosophy [here](https://sqlite.org/althttpd/doc/t
 
 Check out the source code [here](/althttpd/althttpd.c).
 
-# Escape
+With that out of the way...Let's go!
+
+# Functions
+
+## Escape
 
 This function accepts a C-string and returns another C-string with every double-quote doubled.
 
@@ -74,7 +78,7 @@ bash-3.2$ rg 'Escape' ./content/althttpd.c
 Notice that they don't even assign the pointer returned by this function!
 I will let you judge whether this is good idea or not.
 
-# tvms
+## tvms
 
 This function is pretty much self explanatory.
 It is what is...
@@ -93,7 +97,7 @@ static long long int tvms(struct timeval *p){
 
 1. [gettimeofday](https://man7.org/linux/man-pages/man3/gettimeofday.3p.html)
 
-# MakeLogEntry
+## MakeLogEntry
 
 This function is quite big.
 Lets dig in.
@@ -317,7 +321,7 @@ So all those "memory leaks" previously (AFAIK) will be inconsequential.
 5. [strftime](https://man7.org/linux/man-pages/man3/strftime.3.html)
 6. [exit](https://man7.org/linux/man-pages/man3/exit.3.html)
 
-# SafeMalloc
+## SafeMalloc
 
 This function is a wrapper for malloc where it will exit the process if it fails.
 I think the function itself is self-explanatory.
@@ -345,7 +349,7 @@ static char *SafeMalloc( size_t size ){
 1. [strcpy](https://man7.org/linux/man-pages/man3/strcpy.3.html)
 2. [exit](https://man7.org/linux/man-pages/man3/exit.3.html)
 
-# SetEnv
+## SetEnv
 
 This function sets the environment variables.
 
@@ -389,7 +393,7 @@ I am not sure if compilers are smart enough (or allowed to) optimized the call t
 
 1. [setenv](https://man7.org/linux/man-pages/man3/setenv.3.html)
 
-# GetFirstElement
+## GetFirstElement
 
 This function is basically `strtok` with a slightly different interface.
 It accepts:
@@ -447,7 +451,7 @@ Obviously the above algorithm needs to take into consideration the `NULL` value 
 
 1. [strtok](https://man7.org/linux/man-pages/man3/strtok.3.html)
 
-# StrDup
+## StrDup
 
 This function basically copies a C-string.
 Nothing special.
@@ -476,7 +480,7 @@ However, I personally think that using `memcpy` is better here because we alread
 2. [strcpy](https://man7.org/linux/man-pages/man3/strcpy.3.html)
 3. [memcpy](https://man7.org/linux/man-pages/man3/memcpy.3.html)
 
-# StrAppend
+## StrAppend
 
 This function basically takes 3 C-string and concatenates them.
 
@@ -525,7 +529,7 @@ And the original `zPrior` is freed, for whatever reason.
 2. [memcpy](https://man7.org/linux/man-pages/man3/memcpy.3.html).
 3. [free](https://man7.org/linux/man-pages/man3/free.3p.html).
 
-# CompareEtags
+## CompareEtags
 
 This function compares 2 C-strings and returns 0 if they differ and non-zero otherwise.
 
@@ -559,7 +563,7 @@ I think this is totally safe because the check is implicitly done by the fact th
 1. [strlen](https://man7.org/linux/man-pages/man3/strlen.3.html).
 2. [strncmp](https://man7.org/linux/man-pages/man3/strncmp.3p.html).
 
-# RemoveNewline
+## RemoveNewline
 
 This function replaces newline (`\n` or `\r`) with `NULL`.
 
@@ -581,7 +585,7 @@ Even if they loop through again and find that `NULL`, how do they know that this
 
 In my opinion, it should return the pointer to the next character if its part of the C-string.
 
-# Rfc822Date
+## Rfc822Date
 
 This function converts a `time_t` into its RFC822 representation.
 
@@ -641,7 +645,7 @@ Sat, 12 Jun 2021 16:24:15 GMT
 1. [strftime](https://man7.org/linux/man-pages/man3/strftime.3.html)
 2. [gmtime](https://man7.org/linux/man-pages/man3/gmtime.3p.html)
 
-# DateTag
+## DateTag
 
 Nothing really special about this function. It just appends the `zTag` and the `Rfc822Date` of the given time.
 The result is then printed to `stdout`.
@@ -660,7 +664,7 @@ static int DateTag(const char *zTag, time_t t){
 
 1. [printf](https://man7.org/linux/man-pages/man3/printf.3.html)
 
-# ParseRfc822Date
+## ParseRfc822Date
 
 This function is quite complicated.
 I don't pretend to know half of how it works.
@@ -713,7 +717,7 @@ See the [C code here](../althttpd/c_time_back_and_forth.c) to see parsing dates 
 5. [memset](https://man7.org/linux/man-pages/man3/memset.3.html)
 6. [memcmp](https://man7.org/linux/man-pages/man3/memcmp.3p.html)
 
-# TestParseRfc822Date
+## TestParseRfc822Date
 
 This function only exists for testing purposes.
 I wonder how plausible it is to test _all_ the possible values by forking a bunch of process...
@@ -744,7 +748,7 @@ hbina.github.io on  master [?⇡]
 
 1. [assert](https://man7.org/linux/man-pages/man3/assert.3.html)
 
-# StartResponse
+## StartResponse
 
 The way this program generates the response to HTTP requests is by printing to `stdout`.
 This function will setup the HTTP request header with the protocol and the status.
@@ -813,7 +817,7 @@ Another interesting to note is that if the browser uses `HTTP/2`, this response 
 
 1. [HTTP Response Header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Messages#http_responses)
 
-# NotFound
+## NotFound
 
 This is just a generic "404 NOT FOUND" template.
 The only 2 values that it need to complete the document is:
@@ -871,7 +875,7 @@ hbina.github.io on  master [!?]
 1. [printf](https://man7.org/linux/man-pages/man3/printf.3.html)
 2. [exit](https://man7.org/linux/man-pages/man3/exit.3.html)
 
-# Forbidden
+## Forbidden
 
 Another HTTP response template.
 This time its to indicate that the request is forbidden.
@@ -909,7 +913,7 @@ hbina.github.io on  master took 4s
 1846:      Forbidden(251);  /* LOG: Disallowed user agent (20190424) */
 ```
 
-#### Forbidden Referer
+### Forbidden Referer
 
 HTTP headers have a "referer" value when making requests so that the server can know who made the request.
 For whatever reason, the author decides to forbid anyone from `devids.net`!
@@ -922,7 +926,7 @@ For whatever reason, the author decides to forbid anyone from `devids.net`!
       }
 ```
 
-#### Forbidden Host
+### Forbidden Host
 
 When parsing the `Host` header value, the server will also reply with forbidden if there's illegal content in it.
 We will cover what `sanitizeString` is later.
@@ -936,7 +940,7 @@ We will cover what `sanitizeString` is later.
       }
 ```
 
-#### Forbidden Agents
+### Forbidden Agents
 
 There's also a list of disallowed agents.
 I am not sure why half of these are in here...
@@ -967,7 +971,7 @@ if( zAgent ){
     }
 ```
 
-#### Forbidden Spiders
+### Forbidden Spiders
 
 This one is disabled and its actually quite new!
 I am not sure what this is?
@@ -992,7 +996,7 @@ I suppose there's a specific misbehaving/malicious website crawler attack the au
 4. [HTTP Header Host](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Host).
 5. [HTTP Header User-Agent](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent).
 
-# NotAuthorized
+## NotAuthorized
 
 Yet another HTTP response template.
 This time its to indicate that the request is unauthorised to access that resource.
@@ -1074,7 +1078,7 @@ It depends entirely if the resources are properly configured.
 4. [HTTP Header Host](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Host).
 5. [HTTP Header User-Agent](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent).
 
-# CgiError
+## CgiError
 
 Another simple template to indicate CGI error.
 
@@ -1105,7 +1109,7 @@ hbina.github.io on  master [!?]
 2197:      CgiError();
 ```
 
-# Timeout
+## Timeout
 
 A function that will be called to handle timeouts.
 AFAIK, the server is set up such that each request must be handled in a set amount of time.
@@ -1167,7 +1171,7 @@ So it seems to register itself to a bunch of signals and that's pretty much it.
 1. [signal](https://man7.org/linux/man-pages/man3/signal.3p.html).
 2. [HTTP Status Request Timeout](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/408).
 
-# CgiScriptWritable
+## CgiScriptWritable
 
 Just another HTTP response template for CGI errors.
 
@@ -1194,7 +1198,7 @@ See "The file type and mode" section in the inode manual below.
 
 1. [inode](https://man7.org/linux/man-pages/man7/inode.7.html).
 
-# Malfunction
+## Malfunction
 
 This is a template for a generic error in the server.
 
@@ -1265,7 +1269,7 @@ hbina.github.io on  master [!?]
 
 1. [exit](https://man7.org/linux/man-pages/man3/exit.3.html)
 
-# Redirect
+## Redirect
 
 ```c
 /*
@@ -1339,7 +1343,7 @@ hbina@akarin:~/git/hbina.github.io$ rg 'Redirect\(' ./static/althttpd/althttpd.c
 Finally, we will flush the buffer to stdout.
 However, I am not particularly sure why we explicitly do it here and not before we finally want to exit from this fork.
 
-# Decode64
+## Decode64
 
 ```c
 /*

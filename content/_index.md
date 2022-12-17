@@ -1,6 +1,6 @@
 ---
-title: "posts"
+title: "Hanif Ariffin's Blog"
 author: "Hanif Bin Ariffin"
 ---
 
-Something about myself here?
+Sometimes I write stuff but I am terrible at it.
