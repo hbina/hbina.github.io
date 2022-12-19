@@ -1,0 +1,16 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>List Page</title>
+  </head>
+  <body>
+    <p>{{.Content}}</p>
+    <ul>
+      {{ range .Pages }}
+      <li>
+        <a href="{{.Permalink}}">{{.Date.Format "2006-01-02"}} | {{.Title}}</a>
+      </li>
+      {{ end }}
+    </ul>
+  </body>
+</html>
