@@ -1,11 +1,4 @@
-baseURL = "https://hbina.github.io"
-theme = "ananke"
-title = "hbina page"
-author = "Hanif Bin Ariffin"
-copyright = "IDK what a copyright is"
-languageCode = "en-us"
-DefaultContentLanguage = "en-us"
-enableInlineShortcodes = true
-
-# Automatically add content sections to main menu
-sectionPagesMenu = "main"
+baseURL = 'https://hbina.github.io'
+languageCode = 'en-us'
+title = 'hbina page'
+theme = 'ananke'

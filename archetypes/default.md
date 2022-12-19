@@ -4,5 +4,3 @@ date: {{ .Date }}
 author: "Hanif Bin Ariffin"
 draft: true
 ---
-
-what?

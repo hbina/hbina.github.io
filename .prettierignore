@@ -1,6 +1,0 @@
-public/
-static/
-test_files/
-.gitignore
-.prettierignore
-*.toml
