@@ -1,6 +1,7 @@
 ---
-title: "Hanif Ariffin's Blog"
-author: "Hanif Bin Ariffin"
+title: Home page?
+date: 2017-03-23
+publishdate: 2017-03-24
 ---
 
-Sometimes I write stuff but I am terrible at it.
+Some things I write about.
