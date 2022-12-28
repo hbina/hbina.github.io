@@ -1,0 +1,774 @@
+<html><head><meta charset=utf-8><title>Writing a basic redis clone in Go from scratch</title></head><body><a href=/>home</a><h1 style=text-align:center>Writing a basic redis clone in Go from scratch</h1><p><h1 id=introduction>Introduction</h1><p>In this tutorial, we will write a basic <code>redis</code> server that is capable of responding to a valid RESP request.
+In case you are not familiar with what <code>redis</code> is, check out their <a href=https://redis.io/>website</a>.
+Needless to say, it is an extremely popular caching mechanism that is used everywhere.</p><p>However, you might think that to yourself that implementing one is a daunting task.
+I am going to show you that (minus all the critical performance requirement), a <code>redis</code> server is in fact pretty simple.
+I believe implementing one is a great way to learn about programming.
+Plus, it also makes you appreciate the engineering challenges of developing a <em>good</em> one.</p><p>Let&rsquo;s begin.</p><h1 id=introduction-to-redis-protocol-resp>Introduction to REdiS Protocol (RESP)</h1><p>Before we can interact with a <code>redis</code> application, we need to look at the protocol that it understand.
+A <code>redis</code> application talks using a protocol called RESP.
+The protocol is quite simple, the <a href=https://redis.io/docs/reference/protocol-spec/>reference documentation</a> fits within a reasonably short HTML page (with examples!).</p><p>So, in summary, a RESP object is one of 5 things:</p><ol><li>A simple string.</li><li>An error string.</li><li>An integer value.</li><li>A bulk string.</li><li>An array where.</li></ol><p>A RESP object begins with a flag byte and uses <code>\r\n</code> (will be referred to as CRLF) as a separator or terminator.
+For example, a RESP simple string looks like <code>+PING\r\n</code>.
+Where,</p><ol><li>the first byte (<code>+</code>) indicates the type of data, in this case its a simple string</li><li><code>PING</code> is the payload,</li><li>and ends with a CRLF (<code>\r\n</code>).</li></ol><p>Let&rsquo;s take a look at each object.</p><h2 id=simple-strings>Simple Strings</h2><p>As we have seen above, a simple string:</p><ol><li>Starts with the <code>+</code> flag byte.</li><li>Followed by the payload (which are just bytes).</li><li>Ends with the CRLF.</li></ol><p>Now you might be wondering, what if there are <code>\r\n</code> within the payload?
+For example, something like <code>+PINGTHEN\r\nPONG\r\n</code> where <code>PINGTHEN\r\nPONG</code> is intended to be the payload.
+Well, simple string simply cannot handle this particular use case.
+For payloads that may contain <code>\r\n</code> consecutively, one should use bulk strings instead.</p><h2 id=error-strings>Error Strings</h2><p>Error string is exactly the same as a simple string except that:</p><ol><li>It begins with the <code>-</code> as the flag byte.</li><li>It is supposed to be treated as an error message by the client.</li></ol><h2 id=integers>Integers</h2><p>A RESP integer:</p><ol><li>Starts with <code>:</code> as the flag byte.</li><li>Followed by the decimal string representation of that number.</li><li>Ends with the CRLF.</li></ol><p>For example, <code>:12354\r\n</code> is a valid integer.
+The specification does not specify the limit of these integer.
+However, most implementations will limit it to whatever the host machine can handle.
+Note that it ONLY supports decimal representation.
+So something like, <code>:0xffff\r\n</code> is not a valid RESP integer.</p><h2 id=bulk-strings>Bulk Strings</h2><p>A bulk string is a little bit more complicated.
+It,</p><ol><li>Starts with <code>$</code> as the flag byte.</li><li>Followed by a decimal string representation of the length of the string.</li><li>Followed by the CRLF</li><li>Followed payload.</li><li>Then another final CRLF.</li></ol><p>Therefore, a ping reponse (like above) will look like <code>$4\r\nPING\r\n</code> instead.</p><p>This might seem like a redundant object type since already have simple strings, why do we need another string representation?
+Well, for one, because a bulk string comes with the length of the payload, it can safely have the CRLF as the payload.
+Another is a matter of performance.
+Consider what happens if you send/receive a very, very, very long string like a 4MB text of a long novel.
+If represented as a simple string, the RESP parser would have to iterate over 33554432 bytes looking for the CRLF.
+However, using bulk strings, they can just check the length of the byte they receive and wait until it have 33554432 of them.</p><h2 id=arrays>Arrays</h2><p>A RESP array is represented simply as multiple RESP objects.
+It,</p><ol><li>Begins with the <code>*</code> flag byte.</li><li>Then the number of elements in the array (also in decimal string representation),</li><li>Then the CRLF,</li><li>Then N number of RESP objects.</li></ol><p>Visually it looks like this,</p><pre tabindex=0><code>*&lt;length-of-array&gt;\r\n&lt;resp&gt;&lt;resp&gt;&lt;resp&gt;...
+</code></pre><p>For example, a RESP array that consists of 2 simple strings, PING and PONG, looks like,</p><pre tabindex=0><code>*2\r\n+PING\r\n+PONG\r\n
+</code></pre><p>It is also possible to have multidimensional RESP arrays.
+Let&rsquo;s try to represent something like <code>[["hello","world"], ["goodbye", "world"]]</code> as a RESP array.</p><ol><li>First, we need the <code>*</code> byte to mark this as a RESP array.
+So we have <code>*</code>.</li><li>And we have an array of length 2.
+Now we have <code>*2</code>.</li><li>Then we need the CRLF to mark the end of the length.
+Now we have <code>*2\r\n</code>.</li><li>Now we have another RESP of length 2&mldr;so we just do the same!
+Now we have <code>*2\r\n*2\r\n</code>.</li><li>This first inner array contains 2 simple strings <code>hello</code> and <code>world</code>.
+Now we have <code>*2\r\n*2\r\n+hello\r\n+world\r\n</code>.</li><li>Then we have another inner array that contains 2 simple strings of <code>goodbye</code> and <code>world</code>.
+Now we have <code>*2\r\n*2\r\n+hello\r\n+world\r\n*2\r\n+hello\r\n+world\r\n</code></li></ol><p>And that&rsquo;s it! That&rsquo;s the entire RESP protocol.
+We can now try to implement one.</p><h2 id=additional-notes-on-bulk-string-and-array>Additional Notes on Bulk String and Array</h2><p>There&rsquo;s an additional use for bulk strings and arrays, they can be used to represent the nil (or null) value.
+Let&rsquo;s say our Redis server stores an empty set, what should the server return when we query for its member?
+We could return an error saying &ldquo;sorry, but it&rsquo;s empty!&rdquo; but then the client would have to manually parse and differentiate different kind of error messages.
+In my opinion, this is bad API design.</p><p>So, here&rsquo;s where the length component of bulk strings and array come in handy.
+There are 2 kinds of null value in RESP: nil bulk string and nil arrays.
+They are represented as <code>$-1\r\n</code> and <code>*-1\r\n</code> respectively.</p><p>As far as I know, they can be any negative number.
+I don&rsquo;t think the particular value have any meaning at all.</p><h1 id=implementation-of-resp-in-golang>Implementation of RESP in Golang</h1><p>If you look at the description of RESP above, you might notice that we deal a lot with data that ends with CRLF.
+So it will be very useful to have a helper function that takes some bytes and return the:</p><ol><li>Bytes up to the CRLF</li><li>The leftover bytes beginning from the CRLF to the end</li><li>Whether or not this is valid</li></ol><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// resp.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>TakeBytesUntilClrf</span>(<span style=color:#a6e22e>in</span> []<span style=color:#66d9ef>byte</span>) ([]<span style=color:#66d9ef>byte</span>, []<span style=color:#66d9ef>byte</span>, <span style=color:#66d9ef>bool</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// If we have empty data, we can&#39;t do anything so just return false
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>in</span>) <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> []<span style=color:#66d9ef>byte</span>{}, []<span style=color:#66d9ef>byte</span>{}, <span style=color:#66d9ef>false</span>
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>idx</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// Keep incrementing the index until we have nothing left or we found a CRLF
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>for</span> len(<span style=color:#a6e22e>in</span>) &gt; <span style=color:#a6e22e>idx</span><span style=color:#f92672>+</span><span style=color:#ae81ff>1</span> <span style=color:#f92672>&amp;&amp;</span> !(<span style=color:#a6e22e>in</span>[<span style=color:#a6e22e>idx</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;\r&#39;</span> <span style=color:#f92672>&amp;&amp;</span> <span style=color:#a6e22e>in</span>[<span style=color:#a6e22e>idx</span><span style=color:#f92672>+</span><span style=color:#ae81ff>1</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;\n&#39;</span>) {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>idx</span><span style=color:#f92672>++</span>
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// Now check again why did we stop looping, is it because we found a CRLF or because we ran out of data?
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>in</span>) &gt; <span style=color:#a6e22e>idx</span><span style=color:#f92672>+</span><span style=color:#ae81ff>1</span> <span style=color:#f92672>&amp;&amp;</span> <span style=color:#a6e22e>in</span>[<span style=color:#a6e22e>idx</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;\r&#39;</span> <span style=color:#f92672>&amp;&amp;</span> <span style=color:#a6e22e>in</span>[<span style=color:#a6e22e>idx</span><span style=color:#f92672>+</span><span style=color:#ae81ff>1</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;\n&#39;</span> {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// We found the CRLF, return the result
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>in</span>[:<span style=color:#a6e22e>idx</span>], <span style=color:#a6e22e>in</span>[<span style=color:#a6e22e>idx</span><span style=color:#f92672>+</span><span style=color:#ae81ff>2</span>:], <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// We didn&#39;t find the CRLF, return false
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>in</span>, []<span style=color:#66d9ef>byte</span>{}, <span style=color:#66d9ef>false</span>
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=representation-of-resp-in-golang>Representation of RESP in Golang</h2><p>First, we need some way to represent RESP as an interface,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// resp.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Resp</span> <span style=color:#66d9ef>interface</span> {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// Converts into their byte representation.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// For example a RESP simple string that contains &#34;hello&#34; will convert into `+hello\r\n`
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#a6e22e>AsBytes</span>() []<span style=color:#66d9ef>byte</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// static FromBytes([]byte) Resp
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>}
+</span></span></code></pre></div><p>The <code>AsBytes</code> function here is important because we will be dealing with networking which only understand bytes.
+Thus, we want a consistent way to convert from our internal Go&rsquo;s representation into the network stream.</p><h3 id=simple-string>Simple String</h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// resp.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>RespSimpleString</span> <span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>inner</span> <span style=color:#66d9ef>string</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>rs</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>RespSimpleString</span>) <span style=color:#a6e22e>AsBytes</span>() []<span style=color:#66d9ef>byte</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> <span style=color:#f92672>:=</span> make([]<span style=color:#66d9ef>byte</span>, <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>1</span><span style=color:#f92672>+</span>len(<span style=color:#a6e22e>rs</span>.<span style=color:#a6e22e>inner</span>)<span style=color:#f92672>+</span><span style=color:#ae81ff>2</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#e6db74>&#34;+&#34;</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#a6e22e>rs</span>.<span style=color:#a6e22e>inner</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#e6db74>&#34;\r\n&#34;</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>result</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>RssFromBytes</span>(<span style=color:#a6e22e>in</span> []<span style=color:#66d9ef>byte</span>) (<span style=color:#a6e22e>Resp</span>, []<span style=color:#66d9ef>byte</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>in</span>) <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>in</span>[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;+&#39;</span> {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// For simple strings, we simply get everything from the byte after &#39;+&#39; until CRLF
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>str</span>, <span style=color:#a6e22e>leftover</span>, <span style=color:#a6e22e>ok</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>TakeBytesUntilClrf</span>(<span style=color:#a6e22e>in</span>[<span style=color:#ae81ff>1</span>:])
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> !<span style=color:#a6e22e>ok</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>rs</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>RespSimpleString</span>{
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>inner</span>: string(<span style=color:#a6e22e>str</span>),
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>rs</span>, <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=error-string>Error String</h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// resp.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>RespErrorString</span> <span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>inner</span> <span style=color:#66d9ef>string</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>rs</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>RespErrorString</span>) <span style=color:#a6e22e>AsBytes</span>() []<span style=color:#66d9ef>byte</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> <span style=color:#f92672>:=</span> make([]<span style=color:#66d9ef>byte</span>, <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>1</span><span style=color:#f92672>+</span>len(<span style=color:#a6e22e>rs</span>.<span style=color:#a6e22e>inner</span>)<span style=color:#f92672>+</span><span style=color:#ae81ff>2</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#e6db74>&#34;-&#34;</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#a6e22e>rs</span>.<span style=color:#a6e22e>inner</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#e6db74>&#34;\r\n&#34;</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>result</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>ResFromBytes</span>(<span style=color:#a6e22e>in</span> []<span style=color:#66d9ef>byte</span>) (<span style=color:#a6e22e>Resp</span>, []<span style=color:#66d9ef>byte</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>in</span>) <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>in</span>[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;-&#39;</span> {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// Similar to error strings
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>str</span>, <span style=color:#a6e22e>leftover</span>, <span style=color:#a6e22e>ok</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>TakeBytesUntilClrf</span>(<span style=color:#a6e22e>in</span>[<span style=color:#ae81ff>1</span>:])
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> !<span style=color:#a6e22e>ok</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>rs</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>RespErrorString</span>{
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>inner</span>: string(<span style=color:#a6e22e>str</span>),
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>rs</span>, <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=integer>Integer</h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// resp.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>RespInteger</span> <span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>inner</span> <span style=color:#66d9ef>int</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>rs</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>RespInteger</span>) <span style=color:#a6e22e>AsBytes</span>() []<span style=color:#66d9ef>byte</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>v</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Sprintf</span>(<span style=color:#e6db74>&#34;%d&#34;</span>, <span style=color:#a6e22e>rs</span>.<span style=color:#a6e22e>inner</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> <span style=color:#f92672>:=</span> make([]<span style=color:#66d9ef>byte</span>, <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>1</span><span style=color:#f92672>+</span>len(<span style=color:#a6e22e>v</span>)<span style=color:#f92672>+</span><span style=color:#ae81ff>2</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#e6db74>&#34;:&#34;</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#a6e22e>v</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#e6db74>&#34;\r\n&#34;</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>result</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>RiFromBytes</span>(<span style=color:#a6e22e>in</span> []<span style=color:#66d9ef>byte</span>) (<span style=color:#a6e22e>Resp</span>, []<span style=color:#66d9ef>byte</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>in</span>) <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>in</span>[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;:&#39;</span> {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// Integer is a little bit interesting, we get everything until CRLF
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>str</span>, <span style=color:#a6e22e>leftover</span>, <span style=color:#a6e22e>ok</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>TakeBytesUntilClrf</span>(<span style=color:#a6e22e>in</span>[<span style=color:#ae81ff>1</span>:])
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> !<span style=color:#a6e22e>ok</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// Then we try to parse the bytes as a 32-bit integer
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>val</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>strconv</span>.<span style=color:#a6e22e>ParseInt</span>(string(<span style=color:#a6e22e>str</span>), <span style=color:#ae81ff>10</span>, <span style=color:#ae81ff>32</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>rs</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>RespInteger</span>{
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>inner</span>: int(<span style=color:#a6e22e>val</span>),
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>rs</span>, <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=bulk-string>Bulk String</h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// resp.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>RespBulkString</span> <span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>inner</span> <span style=color:#66d9ef>string</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>rs</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>RespBulkString</span>) <span style=color:#a6e22e>AsBytes</span>() []<span style=color:#66d9ef>byte</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>a</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Sprintf</span>(<span style=color:#e6db74>&#34;%d&#34;</span>, len(<span style=color:#a6e22e>rs</span>.<span style=color:#a6e22e>inner</span>))
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>b</span> <span style=color:#f92672>:=</span> []byte(<span style=color:#a6e22e>rs</span>.<span style=color:#a6e22e>inner</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> <span style=color:#f92672>:=</span> make([]<span style=color:#66d9ef>byte</span>, <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>1</span><span style=color:#f92672>+</span>len(<span style=color:#a6e22e>a</span>)<span style=color:#f92672>+</span><span style=color:#ae81ff>2</span><span style=color:#f92672>+</span>len(<span style=color:#a6e22e>b</span>)<span style=color:#f92672>+</span><span style=color:#ae81ff>2</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#e6db74>&#34;$&#34;</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#a6e22e>a</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#e6db74>&#34;\r\n&#34;</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, <span style=color:#a6e22e>b</span><span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#e6db74>&#34;\r\n&#34;</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>result</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>RbFromBytes</span>(<span style=color:#a6e22e>in</span> []<span style=color:#66d9ef>byte</span>) (<span style=color:#a6e22e>Resp</span>, []<span style=color:#66d9ef>byte</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>in</span>) <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>in</span>[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;$&#39;</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>lenStr</span>, <span style=color:#a6e22e>leftover</span>, <span style=color:#a6e22e>ok</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>TakeBytesUntilClrf</span>(<span style=color:#a6e22e>in</span>[<span style=color:#ae81ff>1</span>:])
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> !<span style=color:#a6e22e>ok</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>len64</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>strconv</span>.<span style=color:#a6e22e>ParseInt</span>(string(<span style=color:#a6e22e>lenStr</span>), <span style=color:#ae81ff>10</span>, <span style=color:#ae81ff>32</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>len32</span> <span style=color:#f92672>:=</span> int(<span style=color:#a6e22e>len64</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// If its negative, regardless what value it is, we just return nil bulk
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>len32</span> &lt; <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>RespNilBulk</span>{}, <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>		} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>			<span style=color:#75715e>// Since we already have the length of the string that we expected, we don&#39;t have to use TakeBytesUntilClrf.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			<span style=color:#75715e>// Instead, we can simply check at the specified index.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>len32</span><span style=color:#f92672>+</span><span style=color:#ae81ff>1</span> &lt; len(<span style=color:#a6e22e>leftover</span>) <span style=color:#f92672>&amp;&amp;</span> <span style=color:#a6e22e>leftover</span>[<span style=color:#a6e22e>len32</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;\r&#39;</span> <span style=color:#f92672>&amp;&amp;</span> <span style=color:#a6e22e>leftover</span>[<span style=color:#a6e22e>len32</span><span style=color:#f92672>+</span><span style=color:#ae81ff>1</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;\n&#39;</span> {
+</span></span><span style=display:flex><span>				<span style=color:#a6e22e>rs</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>RespBulkString</span>{
+</span></span><span style=display:flex><span>					<span style=color:#a6e22e>inner</span>: string(<span style=color:#a6e22e>leftover</span>[:<span style=color:#a6e22e>len64</span>]),
+</span></span><span style=display:flex><span>				}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>				<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>rs</span>, <span style=color:#a6e22e>leftover</span>[<span style=color:#a6e22e>len64</span><span style=color:#f92672>+</span><span style=color:#ae81ff>2</span>:]
+</span></span><span style=display:flex><span>			} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>				<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>			}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=nil-bulk>Nil Bulk</h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// resp.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>RespNilBulk</span> <span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>rs</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>RespNilBulk</span>) <span style=color:#a6e22e>AsBytes</span>() []<span style=color:#66d9ef>byte</span> {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> []byte(<span style=color:#e6db74>&#34;$-1\r\n&#34;</span>)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=array>Array</h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// resp.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>RespArray</span> <span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>inner</span> []<span style=color:#a6e22e>Resp</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>rs</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>RespArray</span>) <span style=color:#a6e22e>AsBytes</span>() []<span style=color:#66d9ef>byte</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>blen</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Sprintf</span>(<span style=color:#e6db74>&#34;%d&#34;</span>, len(<span style=color:#a6e22e>rs</span>.<span style=color:#a6e22e>inner</span>))
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> <span style=color:#f92672>:=</span> make([]<span style=color:#66d9ef>byte</span>, <span style=color:#ae81ff>0</span>, <span style=color:#ae81ff>1</span><span style=color:#f92672>+</span>len(<span style=color:#a6e22e>blen</span>)<span style=color:#f92672>+</span><span style=color:#ae81ff>2</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#e6db74>&#34;*&#34;</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#a6e22e>blen</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, []byte(<span style=color:#e6db74>&#34;\r\n&#34;</span>)<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>_</span>, <span style=color:#a6e22e>r</span> <span style=color:#f92672>:=</span> <span style=color:#66d9ef>range</span> <span style=color:#a6e22e>rs</span>.<span style=color:#a6e22e>inner</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>b</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>r</span>.<span style=color:#a6e22e>AsBytes</span>()
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>result</span> = append(<span style=color:#a6e22e>result</span>, <span style=color:#a6e22e>b</span><span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>result</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>RaFromBytes</span>(<span style=color:#a6e22e>in</span> []<span style=color:#66d9ef>byte</span>) (<span style=color:#a6e22e>Resp</span>, []<span style=color:#66d9ef>byte</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>in</span>) <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>in</span>[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;*&#39;</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>lenStr</span>, <span style=color:#a6e22e>leftover</span>, <span style=color:#a6e22e>ok</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>TakeBytesUntilClrf</span>(<span style=color:#a6e22e>in</span>[<span style=color:#ae81ff>1</span>:])
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> !<span style=color:#a6e22e>ok</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>len64</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>strconv</span>.<span style=color:#a6e22e>ParseInt</span>(string(<span style=color:#a6e22e>lenStr</span>), <span style=color:#ae81ff>10</span>, <span style=color:#ae81ff>32</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>len32</span> <span style=color:#f92672>:=</span> int(<span style=color:#a6e22e>len64</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// We parsed the length of the array, now we march forward
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>nextInput</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>len32</span> &lt; <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>RespNilArray</span>{}, <span style=color:#a6e22e>in</span>
+</span></span><span style=display:flex><span>		} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>replies</span> <span style=color:#f92672>:=</span> make([]<span style=color:#a6e22e>Resp</span>, <span style=color:#ae81ff>0</span>, <span style=color:#a6e22e>len32</span>)
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>idx</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>; <span style=color:#a6e22e>idx</span> &lt; <span style=color:#a6e22e>len32</span> <span style=color:#f92672>&amp;&amp;</span> len(<span style=color:#a6e22e>nextInput</span>) <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span>; <span style=color:#a6e22e>idx</span><span style=color:#f92672>++</span> {
+</span></span><span style=display:flex><span>				<span style=color:#a6e22e>reply</span>, <span style=color:#a6e22e>leftover</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>TryConvertBytesToResp</span>(<span style=color:#a6e22e>nextInput</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>				<span style=color:#75715e>// If any of the elements are bad or we can&#39;t make progress, just bail
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>				<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>reply</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>					<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>				}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>				<span style=color:#a6e22e>nextInput</span> = <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>				<span style=color:#a6e22e>replies</span> = append(<span style=color:#a6e22e>replies</span>, <span style=color:#a6e22e>reply</span>)
+</span></span><span style=display:flex><span>			}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>replies</span>) <span style=color:#f92672>!=</span> <span style=color:#a6e22e>len32</span> {
+</span></span><span style=display:flex><span>				<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>			}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>rs</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>RespArray</span>{
+</span></span><span style=display:flex><span>				<span style=color:#a6e22e>inner</span>: <span style=color:#a6e22e>replies</span>,
+</span></span><span style=display:flex><span>			}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>rs</span>, <span style=color:#a6e22e>nextInput</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=nil-array>Nil Array</h3><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// resp.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>RespNilArray</span> <span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>rs</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>RespNilArray</span>) <span style=color:#a6e22e>AsBytes</span>() []<span style=color:#66d9ef>byte</span> {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> []byte(<span style=color:#e6db74>&#34;*-1\r\n&#34;</span>)
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=converting-from-bytes-to-resp>Converting From Bytes to RESP</h2><p>Putting together all the structs and functions we wrote above, we can implement a function that converts bytes to RESP objects,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// resp.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>TryConvertBytesToResp</span>(<span style=color:#a6e22e>input</span> []<span style=color:#66d9ef>byte</span>) (<span style=color:#a6e22e>Resp</span>, []<span style=color:#66d9ef>byte</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// We need at least 1 byte for the first redis type byte
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>input</span>) <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>input</span>[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;+&#39;</span> { <span style=color:#75715e>// Simple strings
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>leftover</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>RssFromBytes</span>(<span style=color:#a6e22e>input</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>resp</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>input</span>[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;-&#39;</span> { <span style=color:#75715e>// Error strings
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>leftover</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>ResFromBytes</span>(<span style=color:#a6e22e>input</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>resp</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>input</span>[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;:&#39;</span> { <span style=color:#75715e>// Integers
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>leftover</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>RiFromBytes</span>(<span style=color:#a6e22e>input</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>resp</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>input</span>[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;$&#39;</span> { <span style=color:#75715e>// Bulk strings
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>leftover</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>RbFromBytes</span>(<span style=color:#a6e22e>input</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>resp</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>input</span>[<span style=color:#ae81ff>0</span>] <span style=color:#f92672>==</span> <span style=color:#e6db74>&#39;*&#39;</span> { <span style=color:#75715e>// Arrays
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>leftover</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>RaFromBytes</span>(<span style=color:#a6e22e>input</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>resp</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>, []<span style=color:#66d9ef>byte</span>{}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>And that should be all there is to our RESP library.
+The next thing to do is to implement the server and client.</p><h1 id=implementing-redis-client>Implementing redis Client</h1><p><code>redis</code> already comes with their own standard tool to communicate with it: <code>redis-cli</code>.
+However, for our use cases (and for fun) we will be implementing our own.
+One problem with <code>redis-cli</code> is that you cannot test what happens if you send a bad request to redis.
+<code>redis-cli</code> will automatically sanitize the input for you, which is not what we want for learning purposes.</p><p>What we want to do is to manually send a command and then receive a response:</p><pre tabindex=0><code>$ redis-client &#34;*1$4\r\nPING\r\n&#34;
++PONG
+</code></pre><p>Therefore, our <code>redis-client</code> is a simple Golang program that:</p><ol><li>Connects to a port</li><li>Writes some bytes to that port</li><li>Read some bytes from that port</li></ol><p>Here is the full program plus their explanations,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// cmd/client/client.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#f92672>package</span> <span style=color:#a6e22e>main</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> (
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;fmt&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;net&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;os&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;strings&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>redis</span> <span style=color:#e6db74>&#34;redis_clone&#34;</span>
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>main</span>() {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// Check if user passed in an argument
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>os</span>.<span style=color:#a6e22e>Args</span>) <span style=color:#f92672>!=</span> <span style=color:#ae81ff>2</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;This program only accepts 1 argument which is the data to send to port 6379&#34;</span>)
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>os</span>.<span style=color:#a6e22e>Exit</span>(<span style=color:#ae81ff>1</span>)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// Since we will be dealing with bytes, immediately cast the string to []byte
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#a6e22e>data</span> <span style=color:#f92672>:=</span> []byte(<span style=color:#a6e22e>ConvertCrlf</span>(<span style=color:#a6e22e>os</span>.<span style=color:#a6e22e>Args</span>[<span style=color:#ae81ff>1</span>]))
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// redis server usually uses port 6379 so we will use that too here
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#a6e22e>tcpAddr</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>net</span>.<span style=color:#a6e22e>ResolveTCPAddr</span>(<span style=color:#e6db74>&#34;tcp&#34;</span>, <span style=color:#e6db74>&#34;localhost:6379&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Printf</span>(<span style=color:#e6db74>&#34;Failed to resolve TCP address:%s\n&#34;</span>, <span style=color:#a6e22e>err</span>)
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>os</span>.<span style=color:#a6e22e>Exit</span>(<span style=color:#ae81ff>1</span>)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>tcpConn</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>net</span>.<span style=color:#a6e22e>DialTCP</span>(<span style=color:#e6db74>&#34;tcp&#34;</span>, <span style=color:#66d9ef>nil</span>, <span style=color:#a6e22e>tcpAddr</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Printf</span>(<span style=color:#e6db74>&#34;Failed to dial TCP:%s\n&#34;</span>, <span style=color:#a6e22e>err</span>)
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>os</span>.<span style=color:#a6e22e>Exit</span>(<span style=color:#ae81ff>1</span>)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>defer</span> <span style=color:#a6e22e>tcpConn</span>.<span style=color:#a6e22e>Close</span>()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>WriteData</span>(<span style=color:#a6e22e>tcpConn</span>, <span style=color:#a6e22e>data</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>resp</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>ReadData</span>(<span style=color:#a6e22e>tcpConn</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>respBytes</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>resp</span>.<span style=color:#a6e22e>AsBytes</span>()
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Printf</span>(<span style=color:#e6db74>&#34;%v\n&#34;</span>, <span style=color:#a6e22e>EscapeString</span>(string(<span style=color:#a6e22e>respBytes</span>)))
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// WriteData writes data into the tcp connection
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>WriteData</span>(<span style=color:#a6e22e>tcpConn</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>net</span>.<span style=color:#a6e22e>TCPConn</span>, <span style=color:#a6e22e>data</span> []<span style=color:#66d9ef>byte</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>writtenC</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// tcpConn.Write returns the number of bytes that it have written.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// Therefore, we need to loop and keep trying to write until we have written all the bytes in data.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// tcpConn.Write only partially writes the data if the buffer on the tcp connection is smaller than our data
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// or if its busy.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>for</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>c</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>tcpConn</span>.<span style=color:#a6e22e>Write</span>(<span style=color:#a6e22e>data</span>[<span style=color:#a6e22e>writtenC</span>:])
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// Connection might be closed while we are writing?
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// In any case, nothing we can do so just abort.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Printf</span>(<span style=color:#e6db74>&#34;Failed to write to connection%s\n&#34;</span>, <span style=color:#a6e22e>err</span>)
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>os</span>.<span style=color:#a6e22e>Exit</span>(<span style=color:#ae81ff>1</span>)
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>writtenC</span> <span style=color:#f92672>+=</span> <span style=color:#a6e22e>c</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// We have finally written all the bytes, break from this loop
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>writtenC</span> <span style=color:#f92672>==</span> len(<span style=color:#a6e22e>data</span>) {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>break</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// WriteData reads data from the tcp connection
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>ReadData</span>(<span style=color:#a6e22e>tcpConn</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>net</span>.<span style=color:#a6e22e>TCPConn</span>) <span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>Resp</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>total</span> <span style=color:#f92672>:=</span> make([]<span style=color:#66d9ef>byte</span>, <span style=color:#ae81ff>0</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// Similar to tcpConn.Write, reading from a tcp connection might not be complete.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#75715e>// So we need to keep trying until the bytes that we received can form a complete RESP object.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>for</span> {
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// A buffer of 1024 length means that we will at most 1024 bytes from the connection.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// This means that if the server is trying to send something bigger than 1024 bytes, we will have to try multiple times.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#75715e>// Try changing it to 0 and see what happen (your application will hang).
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>buffer</span> <span style=color:#f92672>:=</span> make([]<span style=color:#66d9ef>byte</span>, <span style=color:#ae81ff>1024</span>)
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>count</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>tcpConn</span>.<span style=color:#a6e22e>Read</span>(<span style=color:#a6e22e>buffer</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// If something bad happens, just abort
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;Unable to read from connection&#34;</span>)
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>os</span>.<span style=color:#a6e22e>Exit</span>(<span style=color:#ae81ff>1</span>)
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>total</span> = append(<span style=color:#a6e22e>total</span>, <span style=color:#a6e22e>buffer</span>[:<span style=color:#a6e22e>count</span>]<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// Here, we try to parse the bytes we have and see if it can form a RESP
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>_</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>TryConvertBytesToResp</span>(<span style=color:#a6e22e>total</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// It does! so return from this function with the resp that we got
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>resp</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>resp</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// ConvertClrf converts the textual input of \r (which is 2 seperate UTF-8 character) into the actual &#39;\r&#39;
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>ConvertCrlf</span>(<span style=color:#a6e22e>in</span> <span style=color:#66d9ef>string</span>) <span style=color:#66d9ef>string</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>in</span> = <span style=color:#a6e22e>strings</span>.<span style=color:#a6e22e>ReplaceAll</span>(<span style=color:#a6e22e>in</span>, <span style=color:#e6db74>&#34;\\r&#34;</span>, <span style=color:#e6db74>&#34;\r&#34;</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>in</span> = <span style=color:#a6e22e>strings</span>.<span style=color:#a6e22e>ReplaceAll</span>(<span style=color:#a6e22e>in</span>, <span style=color:#e6db74>&#34;\\n&#34;</span>, <span style=color:#e6db74>&#34;\n&#34;</span>)
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>in</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// EscapeString does the reverse of ConvertClrf, since printing them as is will cause the output to have a weird format.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>EscapeString</span>(<span style=color:#a6e22e>in</span> <span style=color:#66d9ef>string</span>) <span style=color:#66d9ef>string</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>in</span> = <span style=color:#a6e22e>strings</span>.<span style=color:#a6e22e>ReplaceAll</span>(<span style=color:#a6e22e>in</span>, <span style=color:#e6db74>&#34;\r&#34;</span>, <span style=color:#e6db74>&#34;\\r&#34;</span>)
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>in</span> = <span style=color:#a6e22e>strings</span>.<span style=color:#a6e22e>ReplaceAll</span>(<span style=color:#a6e22e>in</span>, <span style=color:#e6db74>&#34;\n&#34;</span>, <span style=color:#e6db74>&#34;\\n&#34;</span>)
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>in</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h1 id=implementing-redis-server>Implementing redis Server</h1><p>Before we implement the actual redis server, we can implement a redis echo server that simply returns back whatever RESP input that it&rsquo;s given.
+To show that this is a valid redis server, we will try to send data to it using our client and through <code>redis-cli</code>.</p><p>The implementation is the following,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// cmd/echo/echo.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#f92672>package</span> <span style=color:#a6e22e>main</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> (
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;fmt&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;net&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;os&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;time&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>redis</span> <span style=color:#e6db74>&#34;redis_clone&#34;</span>
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>main</span>() {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// We want to listen to port 6379
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#a6e22e>listen</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>net</span>.<span style=color:#a6e22e>Listen</span>(<span style=color:#e6db74>&#34;tcp&#34;</span>, <span style=color:#e6db74>&#34;localhost:6379&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> <span style=color:#f92672>||</span> <span style=color:#a6e22e>listen</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Printf</span>(<span style=color:#e6db74>&#34;Unable to listen to socket:%s\n&#34;</span>, <span style=color:#a6e22e>err</span>)
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>os</span>.<span style=color:#a6e22e>Exit</span>(<span style=color:#ae81ff>1</span>)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 	Loop forever listening for any connections
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>for</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>conn</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>listen</span>.<span style=color:#a6e22e>Accept</span>()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Printf</span>(<span style=color:#e6db74>&#34;Unable to accept connection:%s\n&#34;</span>, <span style=color:#a6e22e>err</span>)
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>continue</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// Once we get a connection, we start handling it
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>conn</span>.<span style=color:#a6e22e>SetDeadline</span>(<span style=color:#a6e22e>time</span>.<span style=color:#a6e22e>Now</span>().<span style=color:#a6e22e>Add</span>(<span style=color:#ae81ff>1</span> <span style=color:#f92672>*</span> <span style=color:#a6e22e>time</span>.<span style=color:#a6e22e>Second</span>))
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>HandleRequest</span>(<span style=color:#a6e22e>conn</span>)
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>conn</span>.<span style=color:#a6e22e>Close</span>()
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>HandleRequest</span>(<span style=color:#a6e22e>conn</span> <span style=color:#a6e22e>net</span>.<span style=color:#a6e22e>Conn</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>total</span> <span style=color:#f92672>:=</span> make([]<span style=color:#66d9ef>byte</span>, <span style=color:#ae81ff>0</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>for</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>buffer</span> <span style=color:#f92672>:=</span> make([]<span style=color:#66d9ef>byte</span>, <span style=color:#ae81ff>1024</span>)
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>count</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>conn</span>.<span style=color:#a6e22e>Read</span>(<span style=color:#a6e22e>buffer</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;Unable to read from socket&#34;</span>)
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>total</span> = append(<span style=color:#a6e22e>total</span>, <span style=color:#a6e22e>buffer</span>[:<span style=color:#a6e22e>count</span>]<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>leftover</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>TryConvertBytesToResp</span>(<span style=color:#a6e22e>total</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>resp</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>total</span> = <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>			<span style=color:#75715e>// For now we just reply back the exact same thing
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			<span style=color:#a6e22e>WriteData</span>(<span style=color:#a6e22e>conn</span>, <span style=color:#a6e22e>resp</span>.<span style=color:#a6e22e>AsBytes</span>())
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>leftover</span>) <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>WriteData</span>(<span style=color:#a6e22e>conn</span> <span style=color:#a6e22e>net</span>.<span style=color:#a6e22e>Conn</span>, <span style=color:#a6e22e>data</span> []<span style=color:#66d9ef>byte</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>writeC</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>writeC</span> <span style=color:#f92672>!=</span> len(<span style=color:#a6e22e>data</span>) {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>read</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>conn</span>.<span style=color:#a6e22e>Write</span>(<span style=color:#a6e22e>data</span>[<span style=color:#a6e22e>writeC</span>:])
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;Unable to write to socket&#34;</span>)
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>writeC</span> <span style=color:#f92672>+=</span> <span style=color:#a6e22e>read</span>
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Now let&rsquo;s try our server and client.
+In another shell, run <code>go run cmd/echo/echo.go</code>.
+Then we can test our redis client by sending valid RESP messages,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>$ go run cmd/client/client.go <span style=color:#e6db74>&#34;+PING\r\n&#34;</span>
+</span></span><span style=display:flex><span>+PING<span style=color:#ae81ff>\r\n</span>
+</span></span><span style=display:flex><span>$ go run cmd/client/client.go <span style=color:#e6db74>&#34;*2\r\n+PING\r\n-PING\r\n&#34;</span>
+</span></span><span style=display:flex><span>*2<span style=color:#ae81ff>\r\n</span>+PING<span style=color:#ae81ff>\r\n</span>-PING<span style=color:#ae81ff>\r\n</span>
+</span></span><span style=display:flex><span>$ go run cmd/client/client.go <span style=color:#e6db74>&#34;-PING\r\n&#34;</span>
+</span></span><span style=display:flex><span>-PING<span style=color:#ae81ff>\r\n</span>
+</span></span></code></pre></div><p>We can also use the official <code>redis-cli</code> and see that it seems to work!</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>$ redis-cli -p <span style=color:#ae81ff>6379</span> set key value
+</span></span><span style=display:flex><span>1<span style=color:#f92672>)</span> <span style=color:#e6db74>&#34;set&#34;</span>
+</span></span><span style=display:flex><span>2<span style=color:#f92672>)</span> <span style=color:#e6db74>&#34;key&#34;</span>
+</span></span><span style=display:flex><span>3<span style=color:#f92672>)</span> <span style=color:#e6db74>&#34;value&#34;</span>
+</span></span><span style=display:flex><span>$ redis-cli -p <span style=color:#ae81ff>6379</span> get key
+</span></span><span style=display:flex><span>1<span style=color:#f92672>)</span> <span style=color:#e6db74>&#34;get&#34;</span>
+</span></span><span style=display:flex><span>2<span style=color:#f92672>)</span> <span style=color:#e6db74>&#34;key&#34;</span>
+</span></span></code></pre></div><p>The reason why we get the output in this form is due to how redis commands work.
+Basically, most redis command is sent through a RESP array.
+So when we type,</p><p><code>redis-cli -p 6379 set key value</code></p><p>We are actually sending something like,</p><p><code>*3\r\n$3\r\nset\r\n$3\r\nkey\r\n$5\r\nvalue\r\n</code></p><p>And then, since our current redis server is just echoing back whatever it receives, and this is just how <code>redis-cli</code> displays RESP arrays!</p><p>Now what happens if we send invalid RESP objects?</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>$ go run cmd/client/client.go <span style=color:#e6db74>&#34;!PING\r\n&#34;</span>
+</span></span><span style=display:flex><span>Unable to read from connection
+</span></span><span style=display:flex><span>exit status <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>$ go run cmd/client/client.go <span style=color:#e6db74>&#34;*2\r\n+PING\r\n&#34;</span>
+</span></span><span style=display:flex><span>Unable to read from connection
+</span></span><span style=display:flex><span>exit status <span style=color:#ae81ff>1</span>
+</span></span></code></pre></div><p>We can see that our redis server rejects them outright!
+Let&rsquo;s try a basic PING command,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>$ go run cmd/client/client.go <span style=color:#e6db74>&#34;*1\r\n\$4\r\nPING\r\n&#34;</span>
+</span></span><span style=display:flex><span>+PONG<span style=color:#ae81ff>\r\n</span>
+</span></span></code></pre></div><p>What about a basic <a href=https://redis.io/commands/set/>SET</a> command like <code>SET KEY VALUE</code>?</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>$ go run cmd/client/client.go <span style=color:#e6db74>&#34;*3\r\n\$3\r\nSET\r\n\$3\r\nKEY\r\n\$5\r\nVALUE\r\n&#34;</span>
+</span></span><span style=display:flex><span>+OK<span style=color:#ae81ff>\r\n</span>
+</span></span></code></pre></div><p>We received the OK from the redis server.
+And getting them back using <a href=https://redis.io/commands/get/>GET</a> command like <code>GET KEY</code>?</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>$ go run cmd/client/client.go <span style=color:#e6db74>&#34;*2\r\n\$3\r\nGET\r\n\$3\r\nKEY\r\n&#34;</span>
+</span></span><span style=display:flex><span>$5<span style=color:#ae81ff>\r\n</span>VALUE<span style=color:#ae81ff>\r\n</span>
+</span></span></code></pre></div><p>And we got our value back!</p><h1 id=implementing-get-and-set-commands>Implementing GET and SET commands</h1><p>Now that our server and client can correctly send and receive RESP objects, we now want it to actually do something with it.
+The 2 most basic <code>redis</code> command is perhaps the <a href=https://redis.io/commands/get/><code>GET</code></a> and <a href=https://redis.io/commands/set/><code>SET</code></a> commands.
+Using these 2, a client can store data at some key and retrieve them again over the network,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>$ redis-cli -p <span style=color:#ae81ff>6379</span> set key value
+</span></span><span style=display:flex><span>OK
+</span></span><span style=display:flex><span>$ redis-cli -p <span style=color:#ae81ff>6379</span> get key
+</span></span><span style=display:flex><span><span style=color:#e6db74>&#34;value&#34;</span>
+</span></span></code></pre></div><p>So we want our <code>redis</code> server to contain some kind of state.
+Let&rsquo;s implement one is basically just a dictionary underneath,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-golang data-lang=golang><span style=display:flex><span><span style=color:#75715e>// cmd/server/server.go
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#f92672>package</span> <span style=color:#a6e22e>main</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>import</span> (
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;fmt&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;net&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;os&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;strings&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#e6db74>&#34;time&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>redis</span> <span style=color:#e6db74>&#34;redis_clone&#34;</span>
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>main</span>() {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// We want to listen to port 6379
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#a6e22e>listen</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>net</span>.<span style=color:#a6e22e>Listen</span>(<span style=color:#e6db74>&#34;tcp&#34;</span>, <span style=color:#e6db74>&#34;localhost:6379&#34;</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> <span style=color:#f92672>||</span> <span style=color:#a6e22e>listen</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Printf</span>(<span style=color:#e6db74>&#34;Unable to listen to socket:%s\n&#34;</span>, <span style=color:#a6e22e>err</span>)
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>os</span>.<span style=color:#a6e22e>Exit</span>(<span style=color:#ae81ff>1</span>)
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>state</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>State</span>{
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>kv</span>: make(<span style=color:#66d9ef>map</span>[<span style=color:#66d9ef>string</span>]<span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>Resp</span>, <span style=color:#ae81ff>0</span>),
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// 	Loop forever listening for any connections
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>for</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>conn</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>listen</span>.<span style=color:#a6e22e>Accept</span>()
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Printf</span>(<span style=color:#e6db74>&#34;Unable to accept connection:%s\n&#34;</span>, <span style=color:#a6e22e>err</span>)
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>continue</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#75715e>// Once we get a connection, we start handling it
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#a6e22e>conn</span>.<span style=color:#a6e22e>SetDeadline</span>(<span style=color:#a6e22e>time</span>.<span style=color:#a6e22e>Now</span>().<span style=color:#a6e22e>Add</span>(<span style=color:#ae81ff>1</span> <span style=color:#f92672>*</span> <span style=color:#a6e22e>time</span>.<span style=color:#a6e22e>Second</span>))
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>HandleRequest</span>(<span style=color:#a6e22e>conn</span>, <span style=color:#a6e22e>state</span>)
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>conn</span>.<span style=color:#a6e22e>Close</span>()
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>HandleRequest</span>(<span style=color:#a6e22e>conn</span> <span style=color:#a6e22e>net</span>.<span style=color:#a6e22e>Conn</span>, <span style=color:#a6e22e>state</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>State</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>total</span> <span style=color:#f92672>:=</span> make([]<span style=color:#66d9ef>byte</span>, <span style=color:#ae81ff>0</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>for</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>buffer</span> <span style=color:#f92672>:=</span> make([]<span style=color:#66d9ef>byte</span>, <span style=color:#ae81ff>1024</span>)
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>count</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>conn</span>.<span style=color:#a6e22e>Read</span>(<span style=color:#a6e22e>buffer</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;Unable to read from socket&#34;</span>)
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>total</span> = append(<span style=color:#a6e22e>total</span>, <span style=color:#a6e22e>buffer</span>[:<span style=color:#a6e22e>count</span>]<span style=color:#f92672>...</span>)
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>resp</span>, <span style=color:#a6e22e>leftover</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>TryConvertBytesToResp</span>(<span style=color:#a6e22e>total</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>resp</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>total</span> = <span style=color:#a6e22e>leftover</span>
+</span></span><span style=display:flex><span>			<span style=color:#75715e>// HandleRequest(conn)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			<span style=color:#a6e22e>resl</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>state</span>.<span style=color:#a6e22e>HandleResp</span>(<span style=color:#a6e22e>resp</span>)
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>WriteData</span>(<span style=color:#a6e22e>conn</span>, <span style=color:#a6e22e>resl</span>.<span style=color:#a6e22e>AsBytes</span>())
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>leftover</span>) <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>WriteData</span>(<span style=color:#a6e22e>conn</span> <span style=color:#a6e22e>net</span>.<span style=color:#a6e22e>Conn</span>, <span style=color:#a6e22e>data</span> []<span style=color:#66d9ef>byte</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>writeC</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>writeC</span> <span style=color:#f92672>!=</span> len(<span style=color:#a6e22e>data</span>) {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>read</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>conn</span>.<span style=color:#a6e22e>Write</span>(<span style=color:#a6e22e>data</span>[<span style=color:#a6e22e>writeC</span>:])
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Println</span>(<span style=color:#e6db74>&#34;Unable to write to socket&#34;</span>)
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>writeC</span> <span style=color:#f92672>+=</span> <span style=color:#a6e22e>read</span>
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>State</span> <span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// Dictionary of map to RESP
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#a6e22e>kv</span> <span style=color:#66d9ef>map</span>[<span style=color:#66d9ef>string</span>]<span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>Resp</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// Get returns the RESP at key if it exists, otherwise returns nil
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>s</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>State</span>) <span style=color:#a6e22e>Get</span>(<span style=color:#a6e22e>key</span> <span style=color:#66d9ef>string</span>) <span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>Resp</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>v</span>, <span style=color:#a6e22e>e</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>s</span>.<span style=color:#a6e22e>kv</span>[<span style=color:#a6e22e>key</span>]
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> !<span style=color:#a6e22e>e</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#66d9ef>nil</span>
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>v</span>
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// Set simply maps key to some value. Overwrites the old value
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>s</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>State</span>) <span style=color:#a6e22e>Set</span>(<span style=color:#a6e22e>key</span> <span style=color:#66d9ef>string</span>, <span style=color:#a6e22e>value</span> <span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>Resp</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>s</span>.<span style=color:#a6e22e>kv</span>[<span style=color:#a6e22e>key</span>] = <span style=color:#a6e22e>value</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// HandleResp takes the RESP, processes it and returns RESP response
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>s</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>State</span>) <span style=color:#a6e22e>HandleResp</span>(<span style=color:#a6e22e>resp</span> <span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>Resp</span>) <span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>Resp</span> {
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// The default error. redis have various kind of error messages
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#a6e22e>errResult</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>RespErrorString</span>{
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>Inner</span>: <span style=color:#e6db74>&#34;please provide a valid redis command&#34;</span>,
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>rarr</span> <span style=color:#f92672>:=</span> make([]<span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>Resp</span>, <span style=color:#ae81ff>0</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// Make sure that the RESP we received is a RESP array
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>arr</span>, <span style=color:#a6e22e>ok</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>resp</span>.(<span style=color:#f92672>*</span><span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>RespArray</span>); <span style=color:#a6e22e>ok</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>rarr</span> = <span style=color:#a6e22e>arr</span>.<span style=color:#a6e22e>Inner</span>
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// If its empty, return error (or if the above if failed)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>rarr</span>) <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>errResult</span>
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>sarr</span> <span style=color:#f92672>:=</span> make([]<span style=color:#f92672>*</span><span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>RespBulkString</span>, <span style=color:#ae81ff>0</span>, len(<span style=color:#a6e22e>rarr</span>))
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#75715e>// Each RESP in the array must be a bulk string
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>_</span>, <span style=color:#a6e22e>r</span> <span style=color:#f92672>:=</span> <span style=color:#66d9ef>range</span> <span style=color:#a6e22e>rarr</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>r</span>, <span style=color:#a6e22e>ok</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>r</span>.(<span style=color:#f92672>*</span><span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>RespBulkString</span>); <span style=color:#a6e22e>ok</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>sarr</span> = append(<span style=color:#a6e22e>sarr</span>, <span style=color:#a6e22e>r</span>)
+</span></span><span style=display:flex><span>		} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>errResult</span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>strings</span>.<span style=color:#a6e22e>ToLower</span>(<span style=color:#a6e22e>sarr</span>[<span style=color:#ae81ff>0</span>].<span style=color:#a6e22e>Inner</span>) <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;get&#34;</span> { <span style=color:#75715e>// GET command
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>sarr</span>) <span style=color:#f92672>!=</span> <span style=color:#ae81ff>2</span> { <span style=color:#75715e>// GET command requires exactly 2 arguments i.e GET &lt;key&gt;
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>errResult</span>
+</span></span><span style=display:flex><span>		} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>v</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>s</span>.<span style=color:#a6e22e>Get</span>(<span style=color:#a6e22e>sarr</span>[<span style=color:#ae81ff>1</span>].<span style=color:#a6e22e>Inner</span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>v</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>				<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>RespNilArray</span>{}
+</span></span><span style=display:flex><span>			} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>				<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>v</span>
+</span></span><span style=display:flex><span>			}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> <span style=color:#66d9ef>if</span> <span style=color:#a6e22e>strings</span>.<span style=color:#a6e22e>ToLower</span>(<span style=color:#a6e22e>sarr</span>[<span style=color:#ae81ff>0</span>].<span style=color:#a6e22e>Inner</span>) <span style=color:#f92672>==</span> <span style=color:#e6db74>&#34;set&#34;</span> { <span style=color:#75715e>// SET command
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>if</span> len(<span style=color:#a6e22e>sarr</span>) <span style=color:#f92672>!=</span> <span style=color:#ae81ff>3</span> { <span style=color:#75715e>// SET command requires exactly 2 arguments i.e SET &lt;key&gt; &lt;value&gt;
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>			<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>errResult</span>
+</span></span><span style=display:flex><span>		} <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>			<span style=color:#a6e22e>s</span>.<span style=color:#a6e22e>Set</span>(<span style=color:#a6e22e>sarr</span>[<span style=color:#ae81ff>1</span>].<span style=color:#a6e22e>Inner</span>, <span style=color:#a6e22e>sarr</span>[<span style=color:#ae81ff>2</span>])
+</span></span><span style=display:flex><span>			<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>RespSimpleString</span>{<span style=color:#a6e22e>Inner</span>: <span style=color:#e6db74>&#34;OK&#34;</span>}
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	} <span style=color:#66d9ef>else</span> { <span style=color:#75715e>// Reject every other commands
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>		<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>redis</span>.<span style=color:#a6e22e>RespErrorString</span>{<span style=color:#a6e22e>Inner</span>: <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Sprintf</span>(<span style=color:#e6db74>&#34;command %s is not yet supported&#34;</span>, <span style=color:#a6e22e>sarr</span>[<span style=color:#ae81ff>0</span>].<span style=color:#a6e22e>Inner</span>)}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Now let&rsquo;s try using our <code>redis</code> server and client, and see if it works!
+Start the server and execute,</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>$ go run cmd/client/client.go <span style=color:#e6db74>&#34;*3\r\n\$3\r\nSET\r\n\$3\r\nKEY\r\n\$5\r\nhello\r\n&#34;</span>
+</span></span><span style=display:flex><span>+OK<span style=color:#ae81ff>\r\n</span>
+</span></span><span style=display:flex><span>$ go run cmd/client/client.go <span style=color:#e6db74>&#34;*2\r\n\$3\r\nGET\r\n\$3\r\nKEY\r\n&#34;</span>
+</span></span><span style=display:flex><span>$5<span style=color:#ae81ff>\r\n</span>hello<span style=color:#ae81ff>\r\n</span>
+</span></span></code></pre></div><p>Awesome!
+You&rsquo;ve now implement a basic <code>redis</code> clone!
+Well&mldr;now what?
+Here&rsquo;s how you can make this implementation better:</p><ol><li>Implement all the commands <a href=https://redis.io/commands/>here</a>&mldr;.
+Now that&rsquo;s a lot of commands.
+But this should give you a foundation to implement many of them (try to implement <code>LPUSH</code>, <code>LPOP</code>).</li><li>You can also try to make this multithreaded using a <code>RWLock</code>!</li><li>Support blocking commands?</li><li>Persistency by writing to disk?</li></ol></p></body></html>
