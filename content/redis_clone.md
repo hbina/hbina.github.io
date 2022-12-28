@@ -1033,6 +1033,7 @@ $5\r\nhello\r\n
 
 Awesome!
 You've now implement a basic `redis` clone!
+You can get the full code [here](/redis_clone/redis_clone.zip)
 Well...now what?
 Here's how you can make this implementation better:
 
