@@ -1,6 +1,6 @@
 ---
 title: "Kaomoji (顔文字)"
-date: 2022-12-19T12:19:57+08:00
+date: 2022-12-19
 author: "Hanif Bin Ariffin"
 draft: true
 ---
