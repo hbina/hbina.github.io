@@ -1,4 +1,4 @@
-<html><head><meta charset=utf-8><title>althttpd: From Top to Bottom</title></head><body><a href=/>home</a><h1 style=text-align:center>althttpd: From Top to Bottom</h1><p><h2 id=before-venturing-further>Before Venturing Further&mldr;</h2><p>It&rsquo;s nice to have the codebase open as reference.
+<html><head><meta charset=utf-8><title>althttpd: From Top to Bottom</title><style>body{width:60%;min-width:1000px;margin:auto;background-color:#b3b3b3}</style></head><body><a href=/>home</a><h1 style=text-align:center>althttpd: From Top to Bottom</h1><h2 id=before-venturing-further>Before Venturing Further&mldr;</h2><p>It&rsquo;s nice to have the codebase open as reference.
 Each chapters will cover mostly 1 function and I wouldn&rsquo;t go through every single bit.
 Just the parts that I find interesting.
 I will cover the global variables as we go through.</p><p>Sometimes there will be backtracking and jumping ahead of the source code as I see necessary.</p><p>Please read about the design philosophy <a href=https://sqlite.org/althttpd/doc/trunk/althttpd.md>here</a>.</p><p>Check out the source code <a href=/althttpd/althttpd.c>here</a>.</p><p>With that out of the way&mldr;Let&rsquo;s go!</p><h2 id=functions>Functions</h2><h3 id=escape>Escape</h3><p>This function accepts a C-string and returns another C-string with every double-quote doubled.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>/*
@@ -852,4 +852,4 @@ The decoding is done in-place in the original buffer.</p><p>Here&rsquo;s a <a hr
 </span></span><span style=display:flex><span>Decoded:<span style=color:#e6db74>&#39;Many hands make light work.&#39;</span>
 </span></span></code></pre></div><p>Note that this is for illustrative purpose only.
 The <code>base64</code> encoding is used to encode binary data which may contain a bunch of <code>O</code>s and/or non-printable characters.
-Thefore, the result of decoded data cannot be trivially printed.</p></p></body></html>
+Thefore, the result of decoded data cannot be trivially printed.</p></body></html>

@@ -1,4 +1,4 @@
-<html><head><meta charset=utf-8><title>Writing a basic redis clone in Go from scratch</title></head><body><a href=/>home</a><h1 style=text-align:center>Writing a basic redis clone in Go from scratch</h1><p><h1 id=introduction>Introduction</h1><p>In this tutorial, we will write a basic <code>redis</code> server that is capable of responding to a valid RESP request.
+<html><head><meta charset=utf-8><title>Writing a basic redis clone in Go from scratch</title><style>body{width:60%;min-width:1000px;margin:auto;background-color:#b3b3b3}</style></head><body><a href=/>home</a><h1 style=text-align:center>Writing a basic redis clone in Go from scratch</h1><h1 id=introduction>Introduction</h1><p>In this tutorial, we will write a basic <code>redis</code> server that is capable of responding to a valid RESP request.
 In case you are not familiar with what <code>redis</code> is, check out their <a href=https://redis.io/>website</a>.
 Needless to say, it is an extremely popular caching mechanism that is used everywhere.</p><p>However, you might think that to yourself that implementing one is a daunting task.
 I am going to show you that (minus all the critical performance requirement), a <code>redis</code> server is in fact pretty simple.
@@ -772,4 +772,4 @@ You can get the full code <a href=/redis_clone/redis_clone.zip>here</a>
 Well&mldr;now what?
 Here&rsquo;s how you can make this implementation better:</p><ol><li>Implement all the commands <a href=https://redis.io/commands/>here</a>&mldr;.
 Now that&rsquo;s a lot of commands.
-But this should give you a foundation to implement many of them (try to implement <code>LPUSH</code>, <code>LPOP</code>).</li><li>You can also try to make this multithreaded using a <code>RWLock</code>!</li><li>Support blocking commands?</li><li>Persistency by writing to disk?</li></ol></p></body></html>
+But this should give you a foundation to implement many of them (try to implement <code>LPUSH</code>, <code>LPOP</code>).</li><li>You can also try to make this multithreaded using a <code>RWLock</code>!</li><li>Support blocking commands?</li><li>Persistency by writing to disk?</li></ol></body></html>
