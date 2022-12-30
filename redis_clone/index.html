@@ -1,9 +1,9 @@
-<html><head><meta charset=utf-8><title>Writing a basic redis clone in Go from scratch</title><style>body{width:60%;min-width:1000px;margin:auto;background-color:#b3b3b3}</style></head><body><a href=/>home</a><h1 style=text-align:center>Writing a basic redis clone in Go from scratch</h1><h1 id=introduction>Introduction</h1><p>In this tutorial, we will write a basic <code>redis</code> server that is capable of responding to a valid RESP request.
+<html><head><meta charset=utf-8><title>Writing a basic redis clone in Go from scratch</title><style>body{width:60%;min-width:1000px;margin:auto;background-color:#b3b3b3}</style></head><body><a href=/>home</a><h1 style=text-align:center>Writing a basic redis clone in Go from scratch</h1><h1 id=introduction>Introduction</h1><p>In this tutorial, we will write a basic <code>redis</code> server that is capable of responding to valid RESP requests.
 In case you are not familiar with what <code>redis</code> is, check out their <a href=https://redis.io/>website</a>.
-Needless to say, it is an extremely popular caching mechanism that is used everywhere.</p><p>However, you might think that to yourself that implementing one is a daunting task.
-I am going to show you that (minus all the critical performance requirement), a <code>redis</code> server is in fact pretty simple.
+Needless to say, it is an extremely popular caching mechanism that is used everywhere.</p><p>However, you might think to yourself that implementing one is a daunting task.
+I am going to show you that (minus all the critical performance requirements), a <code>redis</code> server is in fact pretty simple.
 I believe implementing one is a great way to learn about programming.
-Plus, it also makes you appreciate the engineering challenges of developing a <em>good</em> one.</p><p>Let&rsquo;s begin.</p><h1 id=introduction-to-redis-protocol-resp>Introduction to REdiS Protocol (RESP)</h1><p>Before we can interact with a <code>redis</code> application, we need to look at the protocol that it understand.
+Plus, it also makes you appreciate the engineering challenges of developing a <em>good</em> one.</p><p>The full source code is available in this <a href=https://github.com/hbina/redis_clone>repository</a>.</p><p>Let&rsquo;s begin.</p><h1 id=introduction-to-redis-protocol-resp>Introduction to REdiS Protocol (RESP)</h1><p>Before we can interact with a <code>redis</code> application, we need to look at the protocol that it understand.
 A <code>redis</code> application talks using a protocol called RESP.
 The protocol is quite simple, the <a href=https://redis.io/docs/reference/protocol-spec/>reference documentation</a> fits within a reasonably short HTML page (with examples!).</p><p>So, in summary, a RESP object is one of 5 things:</p><ol><li>A simple string.</li><li>An error string.</li><li>An integer value.</li><li>A bulk string.</li><li>An array where.</li></ol><p>A RESP object begins with a flag byte and uses <code>\r\n</code> (will be referred to as CRLF) as a separator or terminator.
 For example, a RESP simple string looks like <code>+PING\r\n</code>.
@@ -768,7 +768,6 @@ Start the server and execute,</p><div class=highlight><pre tabindex=0 style=colo
 </span></span><span style=display:flex><span>$5<span style=color:#ae81ff>\r\n</span>hello<span style=color:#ae81ff>\r\n</span>
 </span></span></code></pre></div><p>Awesome!
 You&rsquo;ve now implement a basic <code>redis</code> clone!
-You can get the full code <a href=/redis_clone/redis_clone.zip>here</a>
 Well&mldr;now what?
 Here&rsquo;s how you can make this implementation better:</p><ol><li>Implement all the commands <a href=https://redis.io/commands/>here</a>&mldr;.
 Now that&rsquo;s a lot of commands.
