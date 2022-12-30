@@ -6,7 +6,7 @@
     "email": "hanif.ariffin.4326@gmail.com",
     "phone": "+60 175930487",
     "url": "https://hbina.github.io",
-    "summary": "Highly experienced and independent problem solver.",
+    "summary": "Highly experienced and independent problem solver. Contributes to various widely used open source projects",
     "location": {
       "address": "Lot 633, Kampung Tok Dokang, Banggol",
       "postalCode": "15350",
@@ -24,6 +24,11 @@
         "network": "LinkedIn",
         "username": "Hanif Bin Ariffin",
         "url": "https://www.linkedin.com/in/hanif-bin-ariffin-73057a8b/"
+      },
+      {
+        "network": "Github Static Page",
+        "username": "https://hbina.github.io/",
+        "url": "https://hbina.github.io/"
       }
     ]
   },
@@ -35,10 +40,10 @@
       "url": "https://www.setel.com/",
       "startDate": "2020-12-01",
       "endDate": "2022-02-01",
-      "summary": "Responsible for implementing and maintaining the loyalty system for self-checkout, the inventory and the store ordering system.",
+      "summary": "Responsible for implementing and maintaining the loyalty system for self-checkout, the inventory and the store ordering system",
       "highlights": [
-        "Uses TypeScript for backend.",
-        "Uses React + TypeScript for frontend."
+        "Uses TypeScript for backend",
+        "Uses React + TypeScript for frontend"
       ]
     },
     {
@@ -49,11 +54,11 @@
       "url": "https://www.globelise.com/",
       "startDate": "2022-02-01",
       "endDate": "2022-07-01",
-      "summary": "Recruit diverse talent, hire from anywhere, onboard compliantly, and worry no more about global payroll.",
+      "summary": "Recruit diverse talent, hire from anywhere, onboard compliantly, and worry no more about global payroll",
       "highlights": [
-        "Uses Rust + Actix for backend.",
-        "Uses React + JavaScript for frontend.",
-        "Implemented various 3rd party integrations."
+        "Uses Rust + Actix for backend",
+        "Uses React + JavaScript for frontend",
+        "Implemented various 3rd party integrations"
       ]
     }
   ],
@@ -61,46 +66,47 @@
     {
       "organization": "Godot",
       "position": "Contributor",
-      "url": "https://github.com/godotengine/godot",
-      "summary": "Multi-platform 2D and 3D game engine written in C/C++14.",
+      "url": "https://github.com/godotengine/godot/pulls/hbina",
+      "summary": "Multi-platform 2D and 3D game engine written in C/C++14",
       "highlights": [
         "Debugged various memory issues and crashes",
-        "General UI fixes."
+        "Implemented and fixed various UI features"
       ]
     },
     {
       "organization": "Rust Coreutils",
       "position": "Contributor",
-      "url": "https://github.com/uutils/coreutils",
-      "summary": "Cross-platform Rust rewrite of the GNU coreutils.",
+      "url": "https://github.com/uutils/coreutils/pulls/hbina",
+      "summary": "Cross-platform Rust rewrite of the GNU coreutils",
       "highlights": [
-        "Various improvements to more. See https://github.com/uutils/coreutils/pull/2407",
-        "Various improvements to ls.",
-        "Reimplement tr to be fully compatible with GNU tr. See https://github.com/uutils/coreutils/pull/2502"
+        "Reimplemented tr to be fully compatible with GNU tr (passes all tests)",
+        "Various improvement to ls",
+        "Various improvement to more",
+        "Top 50 contributor of the project"
+      ]
+    },
+    {
+      "organization": "redis",
+      "position": "Contributor",
+      "url": "https://github.com/redis/redis/pulls/hbina",
+      "summary": "Redis is an in-memory database that persists on disk. The data model is key-value, but many different kind of values are supported: Strings, Lists, Sets, Sorted Sets, Hashes, Streams, HyperLogLogs, Bitmaps. ",
+      "highlights": [
+        "Discovered and help fix a crash involving ZINTER of SET and ZSET",
+        "Removed redundant checks when using small integers (slight performance improvement)",
+        "Some fixes to usage of C string formatter",
+        "Suggested a change to the implementation of sds to be more space efficient at the cost of some complexity (rejected)"
       ]
     },
     {
       "organization": "Lapce",
       "position": "Contributor",
       "url": "https://github.com/lapce/lapce",
-      "summary": "Open source. Quick from launch to every keystroke, and batteries included. Compatible alternative to Microsoft's VSCode.",
+      "summary": "Open source. Quick from launch to every keystroke, and batteries included. Compatible alternative to Microsoft's VSCode",
       "highlights": [
-        "Fix plugin tab not accepting keyboard inputs. See https://github.com/lapce/lapce/pull/1601",
-        "Fix some memory leak with scratch documents. See https://github.com/lapce/lapce/pull/1465",
-        "Display unique path to disambiguate multiple files with the same name. See https://github.com/lapce/lapce/pull/1521",
-        "Various other small fixes."
-      ]
-    },
-    {
-      "organization": "redis",
-      "position": "Contributor",
-      "url": "https://github.com/redis/redis",
-      "summary": "Redis is an in-memory database that persists on disk. The data model is key-value, but many different kind of values are supported: Strings, Lists, Sets, Sorted Sets, Hashes, Streams, HyperLogLogs, Bitmaps.",
-      "highlights": [
-        "Suggested a change to the sds implementation to not waste some extra bits to avoid reallocation when resizing. See https://github.com/redis/redis/pull/7904",
-        "Some printf format specifier fixes",
-        "Small performance improvement when using integers smaller than 1000. See https://github.com/redis/redis/pull/11479",
-        "Discovered a crash in Redis using simple inputs involving ZSET and SET. See https://github.com/redis/redis/issues/11578"
+        "Implement some UI features like collapsing panels and search panel preview",
+        "Fixed some memory leaks with scratch documents",
+        "Show unique paths to disambiguate multiple files with the same name",
+        "Fix bad initialization of mouse pointers in the about modal"
       ]
     }
   ],
@@ -135,11 +141,16 @@
       "type": "library"
     },
     {
-      "name": "Pinky Pie",
-      "description": "Cross platform GUI for MongoDB. Open source alternative to Mongo Compass.",
-      "highlights": ["Able to perform aggregation from the GUI"],
-      "keywords": ["Rust", "Tauri", "React", "TypeScript"],
-      "url": "https://github.com/hbina/pinky-pie",
+      "name": "radish",
+      "description": "Multithreaded implementation of redis in Golang for learning purposes",
+      "highlights": [
+        "Close to 90% of reference redis performance without any optimizations",
+        "Discovered a crash in redis while developing this",
+        "Passed unit/types/string, unit/types/zset, unit/types/set",
+        "Supports block and non-blocking commands"
+      ],
+      "keywords": ["redis", "golang"],
+      "url": "https://github.com/hbina/radish",
       "roles": [],
       "type": "application"
     },
