@@ -6,14 +6,16 @@ author: "Hanif Bin Ariffin"
 
 # Introduction
 
-In this tutorial, we will write a basic `redis` server that is capable of responding to a valid RESP request.
+In this tutorial, we will write a basic `redis` server that is capable of responding to valid RESP requests.
 In case you are not familiar with what `redis` is, check out their [website](https://redis.io/).
 Needless to say, it is an extremely popular caching mechanism that is used everywhere.
 
-However, you might think that to yourself that implementing one is a daunting task.
-I am going to show you that (minus all the critical performance requirement), a `redis` server is in fact pretty simple.
+However, you might think to yourself that implementing one is a daunting task.
+I am going to show you that (minus all the critical performance requirements), a `redis` server is in fact pretty simple.
 I believe implementing one is a great way to learn about programming.
 Plus, it also makes you appreciate the engineering challenges of developing a _good_ one.
+
+The full source code is available in this [repository](https://github.com/hbina/redis_clone).
 
 Let's begin.
 
@@ -1033,7 +1035,6 @@ $5\r\nhello\r\n
 
 Awesome!
 You've now implement a basic `redis` clone!
-You can get the full code [here](/redis_clone/redis_clone.zip)
 Well...now what?
 Here's how you can make this implementation better:
 
