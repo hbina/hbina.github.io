@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>hbina</title>
+    <style>
+    body {
+      width: 60%;
+      min-width: 1000px;
+      margin: auto;
+      background-color:#B3B3B3;
+    }
+    </style>
+  </head>
+  <body>
+    <p>{{.Content}}</p>
+    <ul>
+      {{ range .Pages }}
+      <li>
+        <a href="{{.Permalink}}">{{.Date.Format "2006-01-02"}} | {{.Title}}</a>
+      </li>
+      {{ end }}
+    </ul>
+  </body>
+</html>

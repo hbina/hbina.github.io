@@ -1,4 +1,3 @@
 baseURL = 'https://hbina.github.io'
 languageCode = 'en-us'
 title = 'hbina page'
-theme = 'ananke'
