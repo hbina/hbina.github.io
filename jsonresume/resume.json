@@ -165,6 +165,17 @@
       "url": "https://github.com/hbina/fatuous",
       "roles": [],
       "type": "application"
+    },
+    {
+      "name": "radish",
+      "description": "Multithreaded implementation of redis using Golang",
+      "highlights": [
+        "Simple RWLock enables this to perform 3x better than Redis when tested with redis-benchmark"
+      ],
+      "keywords": ["Golang", "Redis", "Multithread"],
+      "url": "https://github.com/hbina/radish",
+      "roles": [],
+      "type": "application"
     }
   ],
   "meta": {
