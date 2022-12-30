@@ -64,7 +64,7 @@
       "url": "https://github.com/godotengine/godot",
       "summary": "Multi-platform 2D and 3D game engine written in C/C++14.",
       "highlights": [
-        "Debugged various memory issues and crashes.",
+        "Debugged various memory issues and crashes",
         "General UI fixes."
       ]
     },
@@ -74,9 +74,9 @@
       "url": "https://github.com/uutils/coreutils",
       "summary": "Cross-platform Rust rewrite of the GNU coreutils.",
       "highlights": [
-        "Reimplemented tr to be fully compatible with GNU tr (passes all tests) using no unsafe code.",
-        "Various improvement to ls.",
-        "Top 50 contributor of the project."
+        "Various improvements to more. See https://github.com/uutils/coreutils/pull/2407",
+        "Various improvements to ls.",
+        "Reimplement tr to be fully compatible with GNU tr. See https://github.com/uutils/coreutils/pull/2502"
       ]
     },
     {
@@ -84,7 +84,24 @@
       "position": "Contributor",
       "url": "https://github.com/lapce/lapce",
       "summary": "Open source. Quick from launch to every keystroke, and batteries included. Compatible alternative to Microsoft's VSCode.",
-      "highlights": []
+      "highlights": [
+        "Fix plugin tab not accepting keyboard inputs. See https://github.com/lapce/lapce/pull/1601",
+        "Fix some memory leak with scratch documents. See https://github.com/lapce/lapce/pull/1465",
+        "Display unique path to disambiguate multiple files with the same name. See https://github.com/lapce/lapce/pull/1521",
+        "Various other small fixes."
+      ]
+    },
+    {
+      "organization": "redis",
+      "position": "Contributor",
+      "url": "https://github.com/redis/redis",
+      "summary": "Redis is an in-memory database that persists on disk. The data model is key-value, but many different kind of values are supported: Strings, Lists, Sets, Sorted Sets, Hashes, Streams, HyperLogLogs, Bitmaps.",
+      "highlights": [
+        "Suggested a change to the sds implementation to not waste some extra bits to avoid reallocation when resizing. See https://github.com/redis/redis/pull/7904",
+        "Some printf format specifier fixes",
+        "Small performance improvement when using integers smaller than 1000. See https://github.com/redis/redis/pull/11479",
+        "Discovered a crash in Redis using simple inputs involving ZSET and SET. See https://github.com/redis/redis/issues/11578"
+      ]
     }
   ],
   "education": [
@@ -135,6 +152,17 @@
       ],
       "keywords": ["C++", "OpenGL"],
       "url": "https://github.com/hbina/fatuous",
+      "roles": [],
+      "type": "application"
+    },
+    {
+      "name": "radish",
+      "description": "Multithreaded implementation of redis using Golang",
+      "highlights": [
+        "Simple RWLock enables this to perform 3x better than Redis when tested with redis-benchmark"
+      ],
+      "keywords": ["Golang", "Redis", "Multithread"],
+      "url": "https://github.com/hbina/radish",
       "roles": [],
       "type": "application"
     }
