@@ -31,7 +31,7 @@ So, in summary, a RESP object is one of 5 things:
 2. An error string.
 3. An integer value.
 4. A bulk string.
-5. An array where.
+5. An array where each element is another RESP object.
 
 A RESP object begins with a flag byte and uses `\r\n` (will be referred to as CRLF) as a separator or terminator.
 For example, a RESP simple string looks like `+PING\r\n`.
@@ -84,18 +84,19 @@ It,
 
 1. Starts with `$` as the flag byte.
 2. Followed by a decimal string representation of the length of the string.
-3. Followed by the CRLF
-4. Followed payload.
+3. Followed by the CRLF.
+4. Followed by the payload.
 5. Then another final CRLF.
 
 Therefore, a ping reponse (like above) will look like `$4\r\nPING\r\n` instead.
 
-This might seem like a redundant object type since already have simple strings, why do we need another string representation?
+This might seem like a redundant object type since we already have simple strings.
+Why do we need another string representation?
 Well, for one, because a bulk string comes with the length of the payload, it can safely have the CRLF as the payload.
 Another is a matter of performance.
-Consider what happens if you send/receive a very, very, very long string like a 4MB text of a long novel.
+Consider what happens if you send/receive a very, very, very long string like a 4MB (33554432 bytes) text of a long novel.
 If represented as a simple string, the RESP parser would have to iterate over 33554432 bytes looking for the CRLF.
-However, using bulk strings, they can just check the length of the byte they receive and wait until it have 33554432 of them.
+However, using bulk strings, they can just check the length of the byte they receive and wait until there are 33554432 bytes.
 
 ## Arrays
 
