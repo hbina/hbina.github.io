@@ -130,8 +130,17 @@
   "references": [],
   "projects": [
     {
+      "name": "MIPS processor in VHDL",
+      "summary": "Circuit schematic for a basic MIPS processor that supports forwarding unit and branch protection in VHDL",
+      "highlights": ["Support forwarding unit", "Support branch protection"],
+      "keywords": ["VHDL", "Altera Quartus II Simulator"],
+      "url": "https://github.com/hbina/mips_processor",
+      "roles": [],
+      "type": "circuit_schematic"
+    },
+    {
       "name": "iso_14977",
-      "description": "Fully compatible ISO 14977 EBNF parser",
+      "summary": "Fully compatible ISO 14977 EBNF parser in Rust",
       "highlights": [
         "Code almost maps directly to the specification using the nom parsing library"
       ],
@@ -142,7 +151,7 @@
     },
     {
       "name": "radish",
-      "description": "Multithreaded implementation of redis in Golang for learning purposes",
+      "summary": "Multithreaded implementation of redis in Golang for learning purposes",
       "highlights": [
         "Close to 90% of reference redis performance without any optimizations",
         "Discovered a crash in redis while developing this",
@@ -156,24 +165,13 @@
     },
     {
       "name": "Fatuous",
-      "description": "Basic 3D renderer",
+      "summary": "Basic 3D renderer",
       "highlights": [
-        "Able to load simple 3D models and skyboxes",
-        "Able to render shadows"
+        "Able to load simple 3D models and skyboxes (Uses ASSIMP)",
+        "Support object culling, tesselation and shadows"
       ],
       "keywords": ["C++", "OpenGL"],
       "url": "https://github.com/hbina/fatuous",
-      "roles": [],
-      "type": "application"
-    },
-    {
-      "name": "radish",
-      "description": "Multithreaded implementation of redis using Golang",
-      "highlights": [
-        "Simple RWLock enables this to perform 3x better than Redis when tested with redis-benchmark"
-      ],
-      "keywords": ["Golang", "Redis", "Multithread"],
-      "url": "https://github.com/hbina/radish",
       "roles": [],
       "type": "application"
     }
