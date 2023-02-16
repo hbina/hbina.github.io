@@ -2,6 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json",
   "basics": {
     "name": "Hanif Bin Ariffin",
+    "image": "./photo.jpg",
     "label": "Programmer",
     "email": "hanif.ariffin.4326@gmail.com",
     "phone": "+60 175930487",
@@ -22,12 +23,12 @@
       },
       {
         "network": "LinkedIn",
-        "username": "Hanif Bin Ariffin",
+        "username": "LinkedIn",
         "url": "https://www.linkedin.com/in/hanif-bin-ariffin-73057a8b/"
       },
       {
-        "network": "Github Static Page",
-        "username": "https://hbina.github.io/",
+        "network": "Personal Blog",
+        "username": "Personal Blog",
         "url": "https://hbina.github.io/"
       }
     ]
@@ -49,12 +50,11 @@
     {
       "name": "Globelise",
       "location": "Singapore",
-      "description": "Awesome compression company",
       "position": "Senior Fullstack Developer",
       "url": "https://www.globelise.com/",
       "startDate": "2022-02-01",
       "endDate": "2022-07-01",
-      "summary": "Recruit diverse talent, hire from anywhere, onboard compliantly, and worry no more about global payroll",
+      "summary": "Designed and implemented the backend system for a global hiring management system and 3rd party payroll integrations.",
       "highlights": [
         "Uses Rust + Actix for backend",
         "Uses React + JavaScript for frontend",
