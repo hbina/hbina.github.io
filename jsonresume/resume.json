@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/jsonresume/resume-schema/v1.0.0/schema.json",
   "basics": {
     "name": "Hanif Bin Ariffin",
-    "image": "./photo.jpg",
+    "image": "photo.jpg",
     "label": "Programmer",
     "email": "hanif.ariffin.4326@gmail.com",
     "phone": "+60 175930487",

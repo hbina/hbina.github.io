@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "serve": "resume-cli serve --resume resume.json --theme jsonresume-theme-stackoverflow"
+    "serve": "resume serve --resume resume.json --theme jsonresume-theme-stackoverflow",
+    "render": "resumed render resume.json --theme jsonresume-theme-stackoverflow"
   },
   "dependencies": {
     "jsonresume-theme-stackoverflow": "^2.0.0",
