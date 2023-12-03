@@ -556,8 +556,8 @@ One problem with `redis-cli` is that you cannot test what happens if you send a 
 What we want to do is to manually send a command and then receive a response:
 
 ```
-$ redis-client "*1$4\r\nPING\r\n"
-+PONG
+$ go run cmd/client/client.go "*1\r\n\$4\r\nPING\r\n"
++PONG\r\n
 ```
 
 Therefore, our `redis-client` is a simple Golang program that:
@@ -687,7 +687,17 @@ func EscapeString(in string) string {
 }
 ```
 
-# Implementing redis Server
+Let's try this simple CLI. Make sure you have redis-server running and listening to port 6379.
+Then we can try sending a PING command,
+
+```shell
+$ go run cmd/client/client.go "*1\r\n\$4\r\nPING\r\n"
++PONG\r\n
+```
+
+So it works!
+
+# Implementing an Echo Server
 
 Before we implement the actual redis server, we can implement a redis echo server that simply returns back whatever RESP input that it's given.
 To show that this is a valid redis server, we will try to send data to it using our client and through `redis-cli`.
