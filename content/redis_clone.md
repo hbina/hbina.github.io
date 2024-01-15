@@ -2,6 +2,7 @@
 title: "Writing a basic redis clone in Go from scratch"
 date: 2022-12-22
 author: "Hanif Bin Ariffin"
+draft: false
 ---
 
 # Introduction

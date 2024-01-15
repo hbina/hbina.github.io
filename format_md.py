@@ -1,0 +1,11 @@
+input_file = open("/home/hbina/git/hbina.github.io/content/liars_poker.md", "r")
+contents = input_file.read()
+# contents = contents.replace("\n", " ")
+lines = contents.split(".")
+output_file = open("/home/hbina/git/hbina.github.io/content/liars_poker_fmt.md", "w")
+for line in lines:
+    line = line.strip()
+    output_file.write(line)
+    output_file.write(".")
+    output_file.write("\n")
+    print(line)

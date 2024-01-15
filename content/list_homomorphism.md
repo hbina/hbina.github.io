@@ -2,7 +2,7 @@
 title: "Intuitions for List Homomorphism"
 date: 2022-12-20
 author: "Hanif Bin Ariffin"
-draft: false
+draft: true
 ---
 
 ## Introduction

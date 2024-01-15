@@ -2,7 +2,7 @@
 title: "An Accidental HFT Firm"
 date: 2018-01-24
 author: "Thomas Anderson"
-draft: false
+draft: true
 ---
 
 The original source by a Thomas Anderson (on Wednesday, 24th of January 2018) which is now archived here: https://web.archive.org/web/20210205014443/https://meanderful.blogspot.com/2018/01/the-accidental-hft-firm.html.

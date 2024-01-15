@@ -2,7 +2,7 @@
 title: "Liar's Poker"
 date: 2023-02-15
 author: "Michael Lewis"
-draft: false
+draft: true
 ---
 
 ## Preface
@@ -54,7 +54,7 @@ This is striking, but incomplete. It omits the kindergarten in the middle.
 
 ## Chapter One: Liars Poker
 
-IT WAS sometime early in 198 6, the first year of the decline of my
+IT WAS sometime early in 1986, the first year of the decline of my
 firm, Salomon Brothers. Our chairman, John Gutfreund, left his desk at
 the head of the trading floor and went for a walk. At any given moment
 on the trading floor billions of dollars were being risked by bond traders.
@@ -82,9 +82,9 @@ assumed that he smoked a more expensive blend than the rest,
 purchased with a few of the $40 million he had cleared on the sale of
 Salomon
 
-Brothers in 1981 (or a few of the $3. 1 million he paid himself in 19 86,
+Brothers in 1981 (or a few of the $3. 1 million he paid himself in 1986,
 more than any other Wall Street CEO).
-This day in 198 6, however, Gutfreund did something strange. Instead of
+This day in 1986, however, Gutfreund did something strange. Instead of
 terrifying us all, he walked a straight line to the trading desk of John
 Meriwether, a member of the board of Salomon Inc. and also one of
 Salomon's finest bond traders. He whispered a few words. The traders
@@ -3790,7 +3790,7 @@ ankle-high tbootV arid six-inch-wide neckties. Every Friday he arrived on
 the trading floor in a tan polyester jacket and black chinos. He owned
 exactly four-suits, all polyester.
 As he grrew wealthy, earning between two and five million in each of the
-golde:n years between 1982 and 198 6, he continued to own four suits.
+golde:n years between 1982 and 1986, he continued to own four suits.
 Jeffeny Kronthal recalls, "We used to kid him that he stood inline at The
 Male: Shop in Brooklyn to get his suits. They used to sell you a suit, with
 altrip to Florida, a bottle of champagne, and food stamps, all for ninety-
@@ -4597,7 +4597,7 @@ hundreds of millions of dollars. In the early days of trading, mortgage
 bonds were profitable because the traders could buy them at one price
 and sell them almost instantly at a much higher price. A trader would pay
 a thrift in Kansas 94 for a bond, then sell it to a thrift in Texas at 95.
-By early 19 86 margins had narrowed. A trader paid 94.5 for a bond which
+By early 1986 margins had narrowed. A trader paid 94.5 for a bond which
 he might just possibly, on a good day, sell at 94.55. Michael Mortara
 says, "We'd see them [former Salomon traders] at work on the screens.
 Or the customers would tell us that they had dealt with them. We
@@ -4810,7 +4810,7 @@ value of bonds on their books. The senior management of Salomon
 Brothers never knew.
 The bad times befalling the mortgage department were characteristic of
 
-business throughout the firm. The year 198 6 was a poor one for Salomon
+business throughout the firm. The year 1986 was a poor one for Salomon
 Brothers, and 19 87 was worse, as revenues ceased to grow and costs
 spun out of control. In an effort to install management control,
 Gutfreund created a wealth of new titles. A board of directors of
@@ -4891,7 +4891,7 @@ problem. Costs were most out of control in the mortgage department.
 Who cared? Revenues had always been what mattered. "You're going to
 go and change the rules on us now?" was the response of a few traders.
 There had been so much revenue in the mortgage department between
-1981 and 19 86 that costs were a trivial issue. But as revenues subsided,
+1981 and 1986 that costs were a trivial issue. But as revenues subsided,
 costs all of a sudden mattered, too. A managing director of government
 sales was moved to the mortgage department in late 1985 and
 simultaneously put in charge of Salomon's expense committee. That
@@ -5085,7 +5085,7 @@ head, but that ended when the rest of the mortgage trading department
 was fired. Where had Lewie been?
 Although it was not widely known, while Smith was poaching profits from
 the mortgage arbitrage books, Ranieri was, in his mind anyway, no longer
-officially in charge of mortgage trading. "In December 19 86 John came
+officially in charge of mortgage trading. "In December 1986 John came
 to me and said, 'I want to dismantle the mortgage department. I want
 you to help manage the firm as a whole,' " says Ranieri. "The department
 didn't exist as a separate entity. It was a part of fixed income trading,"
@@ -6322,7 +6322,7 @@ its next move and maneuver a few of my fifty billion dollars in front of
 the next wave.
 I was, in short, doing pretty well. I stopped feeling like a geek the
 moment Salomon traders started asking my advice. And sometime in the
-middle of 19 86, more by luck than by skill, I ceased to be a geek. I
+middle of 1986, more by luck than by skill, I ceased to be a geek. I
 became a normal, established Salomon salesman. There was no one event
 that marked the change. I knew I was no longer a geek only because
 people stopped calling me geek and started calling me Michael, which I
@@ -6998,7 +6998,7 @@ operation, Charlie McVeigh, was a forty-five-year-old American who had
 a great deal of experience but was more the firm's diplomat than its
 manager. At no time had there been a managing director of Salomon
 Brothers in London who spoke any language but English.
-In November 198 6 our offices moved from the doughnut in the heart of
+In November 1986 our offices moved from the doughnut in the heart of
 London's financial district into the airspace immediately above Victoria
 Station, now named Victoria Plaza. The new office was nearly as large as
 the station itself and more a sign of our optimism than our needs. "When
@@ -7054,7 +7054,7 @@ London, the managers associated noise with profits and silence with
 losses.
 
 Quick, just give me my money while there is still some left. That was the
-general sentiment in the air at the end of 19 86 for the aforementioned
+general sentiment in the air at the end of 1986 for the aforementioned
 reasons. As we moved into Victoria Plaza, a jury of managing directors
 was forming in New York to divide the spoils. The money was handed out
 on December 21, and till that time people thought and spoke of nothing
@@ -7459,7 +7459,7 @@ weeks of work. For the first time in many years other firms, not
 Salomon, were making the money. Ironically, the new winners were just
 those men helping Ronald Perelman in his bid to buy us: Milken,
 Wasserstein, and Perella. Drexel Burnham, thanks to Michael Milken, had
-replaced us as Wall Street's most profitable investment bank in 19 86. It
+replaced us as Wall Street's most profitable investment bank in 1986. It
 had cleared $545.5 million on revenues of $4 billion, more than we had
 made at our best.
 Drexel was making its fortune in junk bonds, and that stung. We were
