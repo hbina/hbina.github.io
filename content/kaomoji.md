@@ -10,7 +10,7 @@ draft: true
 <table>
   <tr>
     <td>
-      <a href="#joy">Joy</a>
+      <a href="#joy">Joy </a>
     </td>
     <td>
       <a href="#embarrassment">Embarrassment</a>
