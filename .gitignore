@@ -2,3 +2,4 @@ resources/
 public/
 *.lock
 **/.vscode/
+*__pycache__*
