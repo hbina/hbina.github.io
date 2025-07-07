@@ -1,6 +1,99 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Home page? on hbina page</title><link>https://hbina.github.io/</link><description>Recent content in Home page? on hbina page</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sun, 07 Apr 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://hbina.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>Human (Dis)connection</title><link>https://hbina.github.io/human_disconnection/</link><pubDate>Sun, 07 Apr 2024 00:00:00 +0000</pubDate><guid>https://hbina.github.io/human_disconnection/</guid><description>I had a memory from when I was growing up that I am not even sure is real or not. The memory is that of staring at myself in the mirror and realizing that the person in the mirror is &amp;ldquo;me&amp;rdquo;. It was a very stark moment of realization for me that &amp;ldquo;that is me, that will always be me. That&amp;rsquo;s it&amp;rdquo;. I remember staring at the mirror for quite some, Of course, I know that other people exist, and that they are living and interacting iamong each other.</description></item><item><title>A Retrospective on The Humble Programmer by Edsger W. Dijkstra</title><link>https://hbina.github.io/humble_programmer/</link><pubDate>Wed, 15 Feb 2023 00:00:00 +0000</pubDate><guid>https://hbina.github.io/humble_programmer/</guid><description>The article is freely available here or at the bottom where I have also copied the transcript below for prosperity. It is crazy to think how much foresight he had 50 years ago.
-The increased power of the hardware, together with the perhaps even more dramatic increase in its reliability, made solutions feasible that the programmer had not dared to dream about a few years before. And now, a few years later, he had to dream about them and, even worse, he had to transform such dreams into reality!</description></item><item><title>Writing a basic redis clone in Go from scratch</title><link>https://hbina.github.io/redis_clone/</link><pubDate>Thu, 22 Dec 2022 00:00:00 +0000</pubDate><guid>https://hbina.github.io/redis_clone/</guid><description>Introduction In this tutorial, we will write a basic redis server that is capable of responding to valid RESP requests. In case you are not familiar with what redis is, check out their website. Needless to say, it is an extremely popular caching mechanism that is used everywhere.
-However, you might think to yourself that implementing one is a daunting task. I am going to show you that (minus all the critical performance requirements), a redis server is in fact pretty simple.</description></item><item><title>althttpd: From Top to Bottom</title><link>https://hbina.github.io/althttp_from_top_to_bottom/</link><pubDate>Sun, 18 Dec 2022 00:00:00 +0000</pubDate><guid>https://hbina.github.io/althttp_from_top_to_bottom/</guid><description>Before Venturing Further&amp;hellip; It&amp;rsquo;s nice to have the codebase open as reference. Each chapters will cover mostly 1 function and I wouldn&amp;rsquo;t go through every single bit. Just the parts that I find interesting. I will cover the global variables as we go through.
-Sometimes there will be backtracking and jumping ahead of the source code as I see necessary.
-Please read about the design philosophy here.
-Check out the source code here.</description></item></channel></rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Home page? on hbina page</title><link>https://hbina.github.io/</link><description>Recent content in Home page? on hbina page</description><generator>Hugo</generator><language>en-us</language><lastBuildDate>Fri, 04 Jul 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://hbina.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>Monad of Consciousness (draft)</title><link>https://hbina.github.io/monad_of_consciousness/</link><pubDate>Fri, 04 Jul 2025 00:00:00 +0000</pubDate><guid>https://hbina.github.io/monad_of_consciousness/</guid><description>&lt;p>I think consciousness (the fact that there is experience) is the most profound question of all.
+It is perhaps the only question that matters.
+Everything else matters because this matters.&lt;/p>
+&lt;p>Interestingly (for me), there&amp;rsquo;s not that many that are intrigued by this question or problem.
+Or at least they have never talked openly about it.
+So this is my attempt to:&lt;/p>
+&lt;ol>
+&lt;li>Start the conversation.&lt;/li>
+&lt;li>Share an idea that have been consuming me.&lt;/li>
+&lt;li>Spark some interest in the question.&lt;/li>
+&lt;li>Put my thoughts into words for my own sanity.&lt;/li>
+&lt;/ol>
+&lt;p>One thing that I want to avoid in this post is to be philosophical.
+While this question often ends up being philosophical, it arises from the realization or the reality that &amp;ldquo;there appears to be something&amp;rdquo;.&lt;/p></description></item><item><title>Human (Dis)connection</title><link>https://hbina.github.io/human_disconnection/</link><pubDate>Sun, 07 Apr 2024 00:00:00 +0000</pubDate><guid>https://hbina.github.io/human_disconnection/</guid><description>&lt;p>I had a memory from when I was growing up that I am not even sure is real or not.
+The memory is that of staring at myself in the mirror and realizing that the person in the mirror is &amp;ldquo;me&amp;rdquo;.
+It was a very stark moment of realization for me that &amp;ldquo;that is me, that will always be me. That&amp;rsquo;s it&amp;rdquo;.
+I remember staring at the mirror for quite some,
+Of course, I know that other people exist, and that they are living and interacting iamong each other.
+Perhaps for a long time I never considered that I am &amp;hellip; one of the person?&lt;/p></description></item><item><title>A Retrospective on The Humble Programmer by Edsger W. Dijkstra</title><link>https://hbina.github.io/humble_programmer/</link><pubDate>Wed, 15 Feb 2023 00:00:00 +0000</pubDate><guid>https://hbina.github.io/humble_programmer/</guid><description>&lt;p>The article is freely available &lt;a href="https://dl.acm.org/doi/10.1145/355604.361591">here&lt;/a> or at the bottom where I have also copied the transcript below for prosperity.
+It is crazy to think how much foresight he had 50 years ago.&lt;/p>
+&lt;blockquote>
+&lt;p>The increased power of the hardware, together with the perhaps even more dramatic increase in its reliability, made solutions feasible that the programmer had not dared to dream about a few years before. And now, a few years later, he had to dream about them and, even worse, he had to transform such dreams into reality!&lt;/p></description></item><item><title>Writing a basic redis clone in Go from scratch</title><link>https://hbina.github.io/redis_clone/</link><pubDate>Thu, 22 Dec 2022 00:00:00 +0000</pubDate><guid>https://hbina.github.io/redis_clone/</guid><description>&lt;h1 id="introduction">Introduction&lt;/h1>
+&lt;p>In this tutorial, we will write a basic &lt;code>redis&lt;/code> server that is capable of responding to valid RESP requests.
+In case you are not familiar with what &lt;code>redis&lt;/code> is, check out their &lt;a href="https://redis.io/">website&lt;/a>.
+Needless to say, it is an extremely popular caching mechanism that is used everywhere.&lt;/p>
+&lt;p>However, you might think to yourself that implementing one is a daunting task.
+I am going to show you that (minus all the critical performance requirements), a &lt;code>redis&lt;/code> server is in fact pretty simple.
+I believe implementing one is a great way to learn about programming.
+Plus, it also makes you appreciate the engineering challenges of developing a &lt;em>good&lt;/em> one.&lt;/p></description></item><item><title>Programming with Context (draft)</title><link>https://hbina.github.io/programming_with_context/</link><pubDate>Wed, 21 Dec 2022 00:00:00 +0000</pubDate><guid>https://hbina.github.io/programming_with_context/</guid><description>&lt;h2 id="disclaimer">Disclaimer&lt;/h2>
+&lt;p>I have no formal traning in functional programming so if I have any mistakes here please feel free to correct and educate me!&lt;/p>
+&lt;h2 id="introduction">Introduction&lt;/h2>
+&lt;p>In programming, we have to deal with a lot of complexities.
+In my experience, there are 2 different kinds of complexities:&lt;/p>
+&lt;ol>
+&lt;li>
+&lt;p>Business complexity.
+This is the complexity of the requirement that have been tasked to us developers. For example, a requirement that says &amp;ldquo;User can go to our website to browse our catalogue&amp;rdquo;.
+This is inherent.&lt;/p></description></item><item><title>Some Examples of List Homomorphism (draft)</title><link>https://hbina.github.io/list_homomorphism/</link><pubDate>Tue, 20 Dec 2022 00:00:00 +0000</pubDate><guid>https://hbina.github.io/list_homomorphism/</guid><description>&lt;h2 id="introduction">Introduction&lt;/h2>
+&lt;p>List homomorphism is a powerful concept that allows us to turn a computation into an embarrasingly parallel problem.&lt;/p>
+&lt;h2 id="code">Code&lt;/h2>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-typescript" data-lang="typescript">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Basically need to satisfy this constraint
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// f(list_one + list_two) === homo_list(f(list_one), f(list_two));
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// The function &amp;#39;f&amp;#39; is a list homomorphism if there exists a function `homo_list` that satisfy the above equation
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">type&lt;/span> &lt;span style="color:#a6e22e">IntermediateState&lt;/span> &lt;span style="color:#f92672">=&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mss&lt;/span>: &lt;span style="color:#66d9ef">number&lt;/span>; &lt;span style="color:#75715e">// the actual MSS of a given array
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">mss_from_left&lt;/span>: &lt;span style="color:#66d9ef">number&lt;/span>; &lt;span style="color:#75715e">// the MSS if we force subarray to include the first element
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">mss_from_right&lt;/span>: &lt;span style="color:#66d9ef">number&lt;/span>; &lt;span style="color:#75715e">// the MSS if we force the subarray to include the last element
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span> &lt;span style="color:#a6e22e">total_sum&lt;/span>: &lt;span style="color:#66d9ef">number&lt;/span>; &lt;span style="color:#75715e">// simply the total sum of the array
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>};
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">// Transforming a single element into intermediate state is trivial
+&lt;/span>&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#75715e">&lt;/span>&lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">f&lt;/span> &lt;span style="color:#f92672">=&lt;/span> (&lt;span style="color:#a6e22e">input&lt;/span>: &lt;span style="color:#66d9ef">number&lt;/span>)&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">IntermediateState&lt;/span> &lt;span style="color:#f92672">=&amp;gt;&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mss&lt;/span>: &lt;span style="color:#66d9ef">input&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mss_from_left&lt;/span>: &lt;span style="color:#66d9ef">input&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mss_from_right&lt;/span>: &lt;span style="color:#66d9ef">input&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">total_sum&lt;/span>: &lt;span style="color:#66d9ef">input&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> };
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">dot&lt;/span> &lt;span style="color:#f92672">=&lt;/span> (
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">lhs&lt;/span>: &lt;span style="color:#66d9ef">IntermediateState&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">rhs&lt;/span>: &lt;span style="color:#66d9ef">IntermediateState&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>)&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">IntermediateState&lt;/span> &lt;span style="color:#f92672">=&amp;gt;&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mss&lt;/span>: &lt;span style="color:#66d9ef">Math.max&lt;/span>(&lt;span style="color:#a6e22e">lhs&lt;/span>.&lt;span style="color:#a6e22e">mss&lt;/span>, &lt;span style="color:#a6e22e">rhs&lt;/span>.&lt;span style="color:#a6e22e">mss&lt;/span>, &lt;span style="color:#a6e22e">lhs&lt;/span>.&lt;span style="color:#a6e22e">mss_from_right&lt;/span> &lt;span style="color:#f92672">+&lt;/span> &lt;span style="color:#a6e22e">rhs&lt;/span>.&lt;span style="color:#a6e22e">mss_from_left&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mss_from_left&lt;/span>: &lt;span style="color:#66d9ef">Math.max&lt;/span>(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">lhs&lt;/span>.&lt;span style="color:#a6e22e">mss_from_left&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">lhs&lt;/span>.&lt;span style="color:#a6e22e">total_sum&lt;/span> &lt;span style="color:#f92672">+&lt;/span> &lt;span style="color:#a6e22e">rhs&lt;/span>.&lt;span style="color:#a6e22e">mss_from_left&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mss_from_right&lt;/span>: &lt;span style="color:#66d9ef">Math.max&lt;/span>(
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">rhs&lt;/span>.&lt;span style="color:#a6e22e">mss_from_right&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">lhs&lt;/span>.&lt;span style="color:#a6e22e">mss_from_right&lt;/span> &lt;span style="color:#f92672">+&lt;/span> &lt;span style="color:#a6e22e">rhs&lt;/span>.&lt;span style="color:#a6e22e">total_sum&lt;/span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> ),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">total_sum&lt;/span>: &lt;span style="color:#66d9ef">lhs.total_sum&lt;/span> &lt;span style="color:#f92672">+&lt;/span> &lt;span style="color:#a6e22e">rhs&lt;/span>.&lt;span style="color:#a6e22e">total_sum&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> };
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">h&lt;/span> &lt;span style="color:#f92672">=&lt;/span> (&lt;span style="color:#a6e22e">input&lt;/span>: &lt;span style="color:#66d9ef">Array&lt;/span>&amp;lt;&lt;span style="color:#f92672">number&lt;/span>&amp;gt;)&lt;span style="color:#f92672">:&lt;/span> &lt;span style="color:#a6e22e">IntermediateState&lt;/span> &lt;span style="color:#f92672">=&amp;gt;&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">if&lt;/span> (&lt;span style="color:#a6e22e">input&lt;/span>.&lt;span style="color:#a6e22e">length&lt;/span> &lt;span style="color:#f92672">===&lt;/span> &lt;span style="color:#ae81ff">0&lt;/span>) {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mss&lt;/span>: &lt;span style="color:#66d9ef">0&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mss_from_left&lt;/span>: &lt;span style="color:#66d9ef">0&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">mss_from_right&lt;/span>: &lt;span style="color:#66d9ef">0&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#a6e22e">total_sum&lt;/span>: &lt;span style="color:#66d9ef">0&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> };
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> } &lt;span style="color:#66d9ef">else&lt;/span> {
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">return&lt;/span> &lt;span style="color:#a6e22e">input&lt;/span>.&lt;span style="color:#a6e22e">map&lt;/span>((&lt;span style="color:#a6e22e">x&lt;/span>) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> &lt;span style="color:#a6e22e">f&lt;/span>(&lt;span style="color:#a6e22e">x&lt;/span>)).&lt;span style="color:#a6e22e">reduce&lt;/span>((&lt;span style="color:#a6e22e">acc&lt;/span>, &lt;span style="color:#a6e22e">curr&lt;/span>) &lt;span style="color:#f92672">=&amp;gt;&lt;/span> &lt;span style="color:#a6e22e">dot&lt;/span>(&lt;span style="color:#a6e22e">acc&lt;/span>, &lt;span style="color:#a6e22e">curr&lt;/span>));
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>};
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div></description></item><item><title>althttpd: From Top to Bottom</title><link>https://hbina.github.io/althttp_from_top_to_bottom/</link><pubDate>Sun, 18 Dec 2022 00:00:00 +0000</pubDate><guid>https://hbina.github.io/althttp_from_top_to_bottom/</guid><description>&lt;h2 id="before-venturing-further">Before Venturing Further&amp;hellip;&lt;/h2>
+&lt;p>It&amp;rsquo;s nice to have the codebase open as reference.
+Each chapters will cover mostly 1 function and I wouldn&amp;rsquo;t go through every single bit.
+Just the parts that I find interesting.
+I will cover the global variables as we go through.&lt;/p>
+&lt;p>Sometimes there will be backtracking and jumping ahead of the source code as I see necessary.&lt;/p>
+&lt;p>Please read about the design philosophy &lt;a href="https://sqlite.org/althttpd/doc/trunk/althttpd.md">here&lt;/a>.&lt;/p>
+&lt;p>Check out the source code &lt;a href="https://hbina.github.io/althttpd/althttpd.c">here&lt;/a>.&lt;/p></description></item></channel></rss>

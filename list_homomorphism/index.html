@@ -1,0 +1,52 @@
+<html><head><meta charset=UTF-8><title>Some Examples of List Homomorphism (draft)</title><style>body{width:60%;min-width:1000px;margin:auto;background-color:#b3b3b3}</style></head><body><a href=/>home</a><h1 style=text-align:center>Some Examples of List Homomorphism (draft)</h1><h2 id=introduction>Introduction</h2><p>List homomorphism is a powerful concept that allows us to turn a computation into an embarrasingly parallel problem.</p><h2 id=code>Code</h2><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-typescript data-lang=typescript><span style=display:flex><span><span style=color:#75715e>// Basically need to satisfy this constraint
+</span></span></span><span style=display:flex><span><span style=color:#75715e>// f(list_one + list_two) === homo_list(f(list_one), f(list_two));
+</span></span></span><span style=display:flex><span><span style=color:#75715e>// The function &#39;f&#39; is a list homomorphism if there exists a function `homo_list` that satisfy the above equation
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>IntermediateState</span> <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>mss</span>: <span style=color:#66d9ef>number</span>; <span style=color:#75715e>// the actual MSS of a given array
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#a6e22e>mss_from_left</span>: <span style=color:#66d9ef>number</span>; <span style=color:#75715e>// the MSS if we force subarray to include the first element
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#a6e22e>mss_from_right</span>: <span style=color:#66d9ef>number</span>; <span style=color:#75715e>// the MSS if we force the subarray to include the last element
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#a6e22e>total_sum</span>: <span style=color:#66d9ef>number</span>; <span style=color:#75715e>// simply the total sum of the array
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// Transforming a single element into intermediate state is trivial
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>f</span> <span style=color:#f92672>=</span> (<span style=color:#a6e22e>input</span>: <span style=color:#66d9ef>number</span>)<span style=color:#f92672>:</span> <span style=color:#a6e22e>IntermediateState</span> <span style=color:#f92672>=&gt;</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>mss</span>: <span style=color:#66d9ef>input</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>mss_from_left</span>: <span style=color:#66d9ef>input</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>mss_from_right</span>: <span style=color:#66d9ef>input</span>,
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>total_sum</span>: <span style=color:#66d9ef>input</span>,
+</span></span><span style=display:flex><span>  };
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>dot</span> <span style=color:#f92672>=</span> (
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>lhs</span>: <span style=color:#66d9ef>IntermediateState</span>,
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>rhs</span>: <span style=color:#66d9ef>IntermediateState</span>
+</span></span><span style=display:flex><span>)<span style=color:#f92672>:</span> <span style=color:#a6e22e>IntermediateState</span> <span style=color:#f92672>=&gt;</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>mss</span>: <span style=color:#66d9ef>Math.max</span>(<span style=color:#a6e22e>lhs</span>.<span style=color:#a6e22e>mss</span>, <span style=color:#a6e22e>rhs</span>.<span style=color:#a6e22e>mss</span>, <span style=color:#a6e22e>lhs</span>.<span style=color:#a6e22e>mss_from_right</span> <span style=color:#f92672>+</span> <span style=color:#a6e22e>rhs</span>.<span style=color:#a6e22e>mss_from_left</span>),
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>mss_from_left</span>: <span style=color:#66d9ef>Math.max</span>(
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>lhs</span>.<span style=color:#a6e22e>mss_from_left</span>,
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>lhs</span>.<span style=color:#a6e22e>total_sum</span> <span style=color:#f92672>+</span> <span style=color:#a6e22e>rhs</span>.<span style=color:#a6e22e>mss_from_left</span>
+</span></span><span style=display:flex><span>    ),
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>mss_from_right</span>: <span style=color:#66d9ef>Math.max</span>(
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>rhs</span>.<span style=color:#a6e22e>mss_from_right</span>,
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>lhs</span>.<span style=color:#a6e22e>mss_from_right</span> <span style=color:#f92672>+</span> <span style=color:#a6e22e>rhs</span>.<span style=color:#a6e22e>total_sum</span>
+</span></span><span style=display:flex><span>    ),
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>total_sum</span>: <span style=color:#66d9ef>lhs.total_sum</span> <span style=color:#f92672>+</span> <span style=color:#a6e22e>rhs</span>.<span style=color:#a6e22e>total_sum</span>,
+</span></span><span style=display:flex><span>  };
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>const</span> <span style=color:#a6e22e>h</span> <span style=color:#f92672>=</span> (<span style=color:#a6e22e>input</span>: <span style=color:#66d9ef>Array</span>&lt;<span style=color:#f92672>number</span>&gt;)<span style=color:#f92672>:</span> <span style=color:#a6e22e>IntermediateState</span> <span style=color:#f92672>=&gt;</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>if</span> (<span style=color:#a6e22e>input</span>.<span style=color:#a6e22e>length</span> <span style=color:#f92672>===</span> <span style=color:#ae81ff>0</span>) {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> {
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>mss</span>: <span style=color:#66d9ef>0</span>,
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>mss_from_left</span>: <span style=color:#66d9ef>0</span>,
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>mss_from_right</span>: <span style=color:#66d9ef>0</span>,
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>total_sum</span>: <span style=color:#66d9ef>0</span>,
+</span></span><span style=display:flex><span>    };
+</span></span><span style=display:flex><span>  } <span style=color:#66d9ef>else</span> {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>input</span>.<span style=color:#a6e22e>map</span>((<span style=color:#a6e22e>x</span>) <span style=color:#f92672>=&gt;</span> <span style=color:#a6e22e>f</span>(<span style=color:#a6e22e>x</span>)).<span style=color:#a6e22e>reduce</span>((<span style=color:#a6e22e>acc</span>, <span style=color:#a6e22e>curr</span>) <span style=color:#f92672>=&gt;</span> <span style=color:#a6e22e>dot</span>(<span style=color:#a6e22e>acc</span>, <span style=color:#a6e22e>curr</span>));
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>};
+</span></span></code></pre></div></body></html>
