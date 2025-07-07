@@ -1,8 +1,8 @@
 ---
-title: "Some Examples of List Homomorphism"
+title: "Some Examples of List Homomorphism (draft)"
 date: 2022-12-20
 author: "Hanif Bin Ariffin"
-draft: true
+draft: false
 ---
 
 ## Introduction

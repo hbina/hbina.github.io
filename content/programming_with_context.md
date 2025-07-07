@@ -1,8 +1,8 @@
 ---
-title: "Programming with Context"
+title: "Programming with Context (draft)"
 date: 2022-12-21
 author: "Hanif Bin Ariffin"
-draft: true
+draft: false
 ---
 
 ## Disclaimer
