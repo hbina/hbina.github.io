@@ -49,7 +49,7 @@ Notice how the name just appeared in your consciousness. You didn't consciously 
 
 Where did it come from? Who chose it?
 
-This suggests that thoughts happen *to* you rather than being created *by* you. You're the witness of thinking, not the thinker.
+This suggests that thoughts happen _to_ you rather than being created _by_ you. You're the witness of thinking, not the thinker.
 
 # What Dreams Reveal
 
