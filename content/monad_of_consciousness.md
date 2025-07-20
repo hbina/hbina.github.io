@@ -1,79 +1,150 @@
 ---
-title: "Monad of Consciousness (draft)"
+title: "Monad of Consciousness"
 date: 2025-07-04
 author: "Hanif Bin Ariffin"
 draft: false
 ---
 
-I think consciousness (the fact that there is experience) is the most profound question of all.
-It is perhaps the only question that matters.
-Everything else matters because this matters.
+# What Are You?
 
-Interestingly (for me), there's not that many that are intrigued by this question or problem.
-Or at least they have never talked openly about it.
-So this is my attempt to:
+This might be the most important question you never ask yourself.
 
-1. Start the conversation.
-2. Share an idea that have been consuming me.
-3. Spark some interest in the question.
-4. Put my thoughts into words for my own sanity.
+Not "What do you do?" or "Where are you from?" but literally: what are you?
 
-One thing that I want to avoid in this post is to be philosophical.
-While this question often ends up being philosophical, it arises from the realization or the reality that "there appears to be something".
+Most people would say "I'm my body" or "I'm my thoughts" or "I'm my personality." But if you look closely at your actual experience, something strange emerges.
 
-There are many ways to see the what is being discussed here.
-The most common and relatable one is probably dream.
+You can be aware of your body. You can observe your thoughts. You can notice your emotions coming and going.
 
-It might be tempting to consider these questions religious, but they are really not.
-Again, all you need to explore these ideas is a mind or if you have any internal self that exists.
+So if you can observe these things, are you really identical to them?
 
-# Dreams
+# The Observer and the Observed
 
-Some people dream and never realize it.
-This is not true of everyone because there are people that somehow knows that they are dreaming.
-If this is you, then this won't work.
+Here's a simple experiment: right now, notice that you're aware of reading these words.
 
-Dreams provide a glimpse into the mind's ability to create convincing realities. What we feel in a dream can seem just as real as waking life -- until we wake up. This raises a question: if the mind can construct a dream so vivid, how do we know waking life isn't similarly constructed?
+Notice that you're aware of your surroundings.
 
-For those that fully captured by their dreams, I would like to simply point out that as a matter of experience, there is no way to tell that you are dreaming now.
+Notice that you're aware of any physical sensations in your body.
 
-When something awful happens in a dream, we experience it as "something awful happens" withou the qualifier "in a dream".
-It is interesting to realize here that what is real is purely a construction of the mind.
-Whether or not you actually fall off a building is not a matter of your physical body actually falling from 100ft; is it whether your mind thinks that you are falling off.
+Notice that you're aware of any emotions you might be feeling.
 
-If you _feel_ that you are falling, then you simply are.
+Now here's the key part: notice that you're aware of your thoughts themselves.
 
-# Who or What Are You?
+Thoughts appear in your mind, you observe them, and then they disappear. But something remains constant throughout this process: the awareness that observes them.
 
-i think the question of "who are you" is surprisingly deep.
-Yes, for practical purposes, I am Hanif, but this have a completely different meaning when you dig deeper into what it means.
+This awareness — this capacity to know that experience is happening — seems to be the most fundamental aspect of what you are.
 
-There are several techniques to explore this idea and they approach the problems from different angles.
-One technique is to find this "observer" or "subject".
+# The Illusion of Control
 
-The basic idea is that when we think of ourselves, there's always a subject/object relationship.
-The technique works by stripping away layers and layers of objects until we are left with the true subject that are trying to find.
+Most people assume they're the author of their thoughts. But try this:
 
-If we keep asking what is the subject/object, we should eventually arrive at something that is the subject.
-The instruction boils down to the fact that I (the subject) can be aware of the object.
+Stop thinking for 30 seconds.
 
-1. I am aware of the house.
-2. I am aware of the body.
-3. I am aware of the senses.
-4. I am aware of the emotions.
-5. I am aware of the thoughts.
+Go ahead, try it right now.
 
-Everything up until 4 is perhaps obvious, I think most people agree that this is the case.
-If you don't agree with this, I would be interested to know your perspective.
+What happened? Thoughts kept arising, didn't they? Even when you tried to stop them.
 
-Number 5 is a bit hard to see.
-I think the problem here is that it is so easy to identify with thoughts.
-For the most time, we consider ourselves "doing" the thinking.
-We are controlling the machinery of thinking.
-For example, if I am tasked to find the square root of 1764, I will have the experience of:
+Here's another test: think of a random city.
 
-1. Picking a random number X,
-2. Calculate the value X * X,
-3. See if its too high or too low,
-4. Pick a new X accordingly.
+Notice how the name just appeared in your consciousness. You didn't consciously construct it letter by letter. It simply arose, fully formed.
 
+Where did it come from? Who chose it?
+
+This suggests that thoughts happen *to* you rather than being created *by* you. You're the witness of thinking, not the thinker.
+
+# What Dreams Reveal
+
+Dreams offer a perfect example of how convincing mental constructions can be. In a dream, you experience fear, joy, pain, pleasure — and it feels completely real while it's happening.
+
+Only when you wake up do you realize it was "just" a dream. But while dreaming, there was no way to tell the difference.
+
+This reveals something profound: reality, as you experience it, is always mediated through consciousness. Whether you're awake or dreaming, experience happens in the same place — in awareness itself.
+
+# The Irreducible Core
+
+After stripping away everything you can observe — body, thoughts, emotions, sensations — what remains?
+
+Pure awareness itself.
+
+This awareness has remarkable qualities:
+
+- It's always present (whether you're happy, sad, thinking, or not thinking)
+- It never changes (while everything else in your experience is constantly shifting)
+- It's unaffected by what it observes (like a mirror that reflects everything but is stained by nothing)
+
+This is what I call the "monad of consciousness" — the irreducible unit of experience that cannot be broken down further.
+
+# The Fundamental Certainty
+
+You can doubt almost anything: whether the external world exists, whether other people are conscious, whether your memories are accurate.
+
+But you cannot doubt that experience is happening right now. You cannot doubt that there is awareness.
+
+Even to doubt requires awareness of the doubt.
+
+This makes consciousness the one absolute certainty — more certain than "I think, therefore I am." We don't even need an "I." We just need: "There is experience, therefore something is."
+
+# What This Changes
+
+Recognizing your true nature as awareness rather than as thoughts, emotions, or circumstances brings immediate practical benefits:
+
+**Freedom from identification**: When difficult emotions arise, you can observe them without being overwhelmed. They're weather patterns in the sky of consciousness, not who you are.
+
+**Peace in change**: Knowing that your essential nature is unchanging awareness brings stability even as everything else shifts.
+
+**Present moment clarity**: This witnessing awareness only exists now. Past and future exist only as thoughts arising in present consciousness.
+
+# The Recognition
+
+The beautiful paradox is that there's nothing to achieve. You already are what you're looking for.
+
+The consciousness reading these words right now — that aware presence that knows these thoughts are arising — that's what you actually are.
+
+Not the thoughts themselves. Not the body reading them. But the aware space in which all experience occurs.
+
+This isn't philosophy or belief. It's an invitation to look directly at your immediate experience and notice what's actually there when you stop identifying with the contents of consciousness and recognize consciousness itself.
+
+# The Journey of Recognition
+
+This understanding typically unfolds in stages, each deeper than the last:
+
+## Stage 1: The Reality Behind Appearances
+
+First comes the recognition that reality is not what it seems. The solid world around you, your sense of being a separate self in a world of objects — these feel absolutely real until you begin to question them.
+
+You might notice this through dreams: what felt completely real while dreaming is revealed as a mental construction upon waking. Or through deep focus: the boundaries between "you" and "world" can begin to dissolve when attention becomes absorbed.
+
+This first stage shakes the assumption that your ordinary perception of reality is the whole story.
+
+## Stage 2: Thoughts Think Themselves
+
+Next comes the deeper realization that thoughts are not your own. The voice in your head that you've always assumed was "you" is revealed to be just another phenomenon arising in awareness.
+
+You begin to see that thoughts appear spontaneously, without your control or authorship. The thinker you thought you were is itself just another thought arising in consciousness.
+
+This stage can be disorienting. If you're not your thoughts, and thoughts happen by themselves, then who or what are you?
+
+## Stage 3: What Appears Is All There Is
+
+The final recognition is the most radical: there is no "you" searching for anything because what appears is all there is.
+
+The searcher, the path, and the goal collapse into the simple fact of present experience. There's no hidden reality behind appearances, no deeper self to find — just the immediacy of whatever is happening right now.
+
+This isn't a state you achieve; it's a recognition of what was already the case. The consciousness reading these words, the thoughts arising about them, the sensations in your body — this totality of present experience is the "self" you were seeking.
+
+The spiritual search ends not in finding something new, but in recognizing that you were never separate from what you were seeking. The wave realizes it was always the ocean.
+
+## The Pathless Path
+
+Each stage naturally leads to the next, though the timeline varies for everyone. Some people skip stages or experience them in different orders. What matters is not the progression but the recognition itself.
+
+The beautiful irony is that in the end, there was never anywhere to go. What you are was always completely present and available. The journey of understanding is simply the dissolving of the illusion that you needed to journey anywhere at all.
+
+# The Only Assumption
+
+This entire exploration requires just one assumption: that experience exists. That there's "something it's like" to be you right now.
+
+If you can grant that — and how could you not? — then everything else follows from direct observation.
+
+The consciousness that is aware of these words right now is the most intimate and immediate aspect of your reality. Whether you call it awareness, the observer, or simply "what it's like to be you" — it's always been there, quietly witnessing everything else.
+
+Perhaps it's worth taking a moment to notice it.
