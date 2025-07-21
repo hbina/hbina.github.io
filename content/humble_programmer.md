@@ -5,30 +5,59 @@ author: "Hanif Bin Ariffin"
 draft: false
 ---
 
-The article is freely available [here](https://dl.acm.org/doi/10.1145/355604.361591) or at the bottom where I have also copied the transcript below for prosperity.
-It is crazy to think how much foresight he had 50 years ago.
+In 1972, Edsger Dijkstra gave a speech called "The Humble Programmer." Reading it 50 years later, it's remarkable how many of his predictions came true. You can find the full text [here](https://dl.acm.org/doi/10.1145/355604.361591) or at the bottom of this article.
+
+Here are some thoughts on his most interesting insights:
 
 > The increased power of the hardware, together with the perhaps even more dramatic increase in its reliability, made solutions feasible that the programmer had not dared to dream about a few years before. And now, a few years later, he had to dream about them and, even worse, he had to transform such dreams into reality!
 
-This paragraph describes why programming, or something like it, will always exists. The more powerful our tools become, the more ambitious we will be. So no amount of AI will fix that human condition. There's also a similar observation in economics where the more efficient something is, the more widespread its use. For example, when electricity was hard to produce, people only dreamed of using it to produce light. But now that its abundant, there's desire and ideas to turn everything digital.
+## Why Programming Will Always Exist
+
+This quote explains why programming (or something like it) will never go away. The more powerful our tools become, the more ambitious our dreams become. It's human nature.
+
+Even with AI helping us code, we'll just dream up bigger, more complex systems to build. This mirrors how electricity evolved: when it was scarce, we only used it for lighting. Now that it's abundant, we use it for everything and always want more.
 
 > It would be absolutely unfair to blame them for shortcomings that only became apparent after a decade or so of extensive usage: groups with a successful look-ahead of ten years are quite rare! In retrospect we must rate FORTRAN as a successful coding technique, but with very few effective aids to conception, aids which are now so urgently needed that time has come to consider it out of date. The sooner we can forget that FORTRAN has ever existed, the better, for as a vehicle of thought it is no longer adequate: it wastes our brainpower, is too risky and therefore too expensive to use.
 
-Feels like he's talking about legacy languages here _cough_ C++ _cough_.
+## On Legacy Languages
+
+Sounds familiar, doesn't it? Dijkstra was talking about FORTRAN, but the same critique applies to many languages today. Sometimes we keep using outdated tools because they're familiar, not because they're the best choice.
 
 > The vision is that, well before the seventies have run to completion, we shall be able to design and implement the kind of systems that are now straining our programming ability, at the expense of only a few percent in man-years of what they cost us now, and that besides that, these systems will be virtually free of bugs. [...] Those who want really reliable software will discover that they must find means of avoiding the majority of bugs to start with, and as a result the programming process will become cheaper. If you want more effective programmers, you will discover that they should not waste their time debugging, they should not introduce the bugs to start with.
 
-Here he's either underestimating how hard programming is or overestimating the capability of the average programmer. It seems like he thought that the programming industry would hone and update their tools to eventually arrive at something "perfect". But even now, we still don't know what that is. No one really knows how UI should be done, how async should work, etc etc.
+## The Optimistic Prediction That Didn't Come True
 
-He also thought that software's acceleration will match the hardware's acceleration. But this is simply not true, CPUs have gotten a million times faster but is our tools getting as fast? There's still some delay when I type on a text editor. Is our text editor doing more things today compared to text editor of ye old? Yes, but surely not that bad? For example, take the recent Windows Terminal fiasco (https://github.com/microsoft/terminal/issues/10362). TLDR: Multiple billions dollar company product is shit, someone complained, MS says hard to fix only for said person to implement a fix over a weekend.
+Here, Dijkstra was overly optimistic. He thought programming would become dramatically easier and nearly bug-free by the 1980s. Instead, we're still wrestling with the same fundamental problems.
+
+His prediction missed something important: as our tools get better, we attempt more complex things. CPUs are millions of times faster than in the 1970s, but we're still dealing with slow software. Why? Because we're trying to do things that would have been unimaginable back then.
+
+Consider this: we have text editors that still lag when you type. Are they really doing millions of times more work than 1970s text editors? Maybe, when you count spell-check, syntax highlighting, cloud sync, collaborative editing, and dozens of other features we now take for granted.
 
 > I now suggest that we confine ourselves to the design and implementation of intellectually manageable programs. If someone fears that this restriction is so severe that we cannot live with it, I can reassure him: the class of intellectually manageable programs is still sufficiently rich to contain many very realistic programs for any problem capable of algorithmic solution.
 
-Here he's proposing that we use smaller and more confined language with less foot guns. Something like Rust (does not have UB) or any language with a GC really. In the same paragraph, he's also talking about something like "correct by construction" which is an interesting concept like https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/. He's also predicting the use of static analysis and linters like clangd and ESLint.
+## Predicting Modern Programming Practices
 
-> [...] a specific phenomenon occurs that even has a well-established name: it is called “the one-liners”. It takes one of two different forms: one programmer places a one-line program on the desk of another and either he proudly tells what it does and adds the question “Can you code this in less symbols?” —as if this were of any conceptual relevance!— or he just asks “Guess what it does!”.
+Here, Dijkstra suggests using simpler, safer programming languages. This sounds like modern languages such as Rust (which prevents memory errors) or any language with garbage collection.
 
-Feeling a bit attacked, but he's both right and wrong here. There's some utility in one liner, especially when it is used with familiar and regular tools. For example using filter in JS is much more concise and understandable than using raw loops with an if-else inside (IMO).
+He's also describing what we now call "correct by construction" programming — designing your code so that bugs are impossible rather than trying to catch them later. This philosophy influenced modern tools like static analyzers, linters, and type checkers.
+
+> [...] a specific phenomenon occurs that even has a well-established name: it is called "the one-liners". It takes one of two different forms: one programmer places a one-line program on the desk of another and either he proudly tells what it does and adds the question "Can you code this in less symbols?" —as if this were of any conceptual relevance!— or he just asks "Guess what it does!".
+
+## On One-Liners and Code Golf
+
+Dijkstra is criticizing programmers who try to write the most compact code possible, often at the expense of readability. This critique still rings true today.
+
+But there's a nuance here. Sometimes concise code really is better. Using `filter()` in JavaScript is often clearer than writing a raw loop with if-statements. The problem isn't conciseness itself — it's prioritizing cleverness over clarity.
+
+## What We Can Learn Today
+
+Dijkstra's core message is still relevant: programming is hard, and humility helps us do it better.
+
+Some of his specific predictions were wrong — programming didn't become nearly bug-free, and software complexity kept pace with hardware improvements. But his deeper insights about the nature of programming were spot-on.
+
+The most important takeaway might be his emphasis on intellectual humility. Programming problems are often harder than they first appear. The programmers who acknowledge this complexity upfront tend to build better, more reliable systems.
+
+As he puts it at the end: "We shall do a much better programming job, provided that we approach the task with a full appreciation of its tremendous difficulty."
 
 # Original Text
 

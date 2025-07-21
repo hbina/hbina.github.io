@@ -35,19 +35,19 @@ The only thing that we can do is to abstract it away the complexity.
 Then we just pray that the abstraction doesn't break in a really awful manner down the line.
 At the end of the day, _someone_ gotta pay for the complexity.
 
-## We Begin with Dynamic Types
+## The Problem with Dynamic Types
 
-Dynamic languages will "allow" us to make our computers do "anything we like".
-I say in quotes because this is actually not true.
-The reason is that we most definitely do not want our computers to do "anything we like".
-It is very hard for us human to keep a consistent flow of thought.
-So if a machine is willing to do anything I tell it to, well, most of time, its going to be doing the wrong thing.
-It's very hard for us human to be precise with our desires and even worse to communicate it.
-We make a lot of assumptions that things work the way we think it does, not the way it actually does work.
+Dynamic languages seem flexible at first. You can write code like this in JavaScript and it "works":
 
-My gripe with untyped languge is that it allows you to do even the stupidest mistake.
-It causes the set of possible programs (mostly wrong programs) to be extremely large.
-For example, consider the following JavaScript code,
+```javascript
+let a = "hello";
+let b = 5;
+let c = a + b;  // Results in "hello5"
+```
+
+But is this really what we wanted? Probably not.
+
+The problem with dynamic languages is that they let you make mistakes that seem reasonable at first glance. For example, consider this JavaScript code:
 
 ```javascript
 let a = "a";
@@ -348,21 +348,29 @@ type Option<T> =
 
 // Helper functions
 
-const createSome = <T>(t: T) => {
-    kind : "Some",
-    value : t
-}
+const createSome = <T>(t: T) => ({
+    kind: "Some",
+    value: t
+});
 
-const createNone = <T>() => {
-    kind : "Nothing",
-}
+const createNone = <T>() => ({
+    kind: "Nothing"
+});
 
-class Maybe<Option<T>> implements Monad<Option<T>> {
-    t : Option<T>
-    static return(t: Option<T>) => new Maybe(t)
-    bind(f: (t: T) => Maybe<Option<R>>): Maybe<Option<R>> {
+class Maybe<T> implements Monad<Option<T>> {
+    t: Option<T>
+    
+    constructor(t: Option<T>) {
+        this.t = t;
+    }
+    
+    static return<T>(t: Option<T>): Maybe<T> {
+        return new Maybe(t);
+    }
+    
+    bind<R>(f: (t: T) => Maybe<R>): Maybe<R> {
         if (this.t.kind === "Nothing") {
-            return createNone();
+            return new Maybe(createNone<R>());
         } else {
             return f(this.t.value);
         }
@@ -373,31 +381,41 @@ class Maybe<Option<T>> implements Monad<Option<T>> {
 And using it looks like,
 
 ```typescript
-// Here we implement the behavior that division by 0 is bad.
-const safeAddition = (a: PositiveInteger, b: PositiveInteger) => {
-  if (MAX_POSITIVE_INT - b > a) {
+// Here we implement safe addition that checks for overflow
+const safeAddition = (a: number, b: number): Maybe<number> => {
+  const MAX_SAFE_INT = Number.MAX_SAFE_INTEGER;
+  if (MAX_SAFE_INT - b < a) {
       // Overflow, returns none
-      return Maybe::return(createNone());
+      return Maybe.return(createNone<number>());
   } else {
       // Addition does not overflow
-      return Maybe::return(createSome(a / b));
+      return Maybe.return(createSome(a + b));
   }
-}
+};
 ```
 
 ```typescript
-// Here we implement a funct
+// Here we implement multiplication using repeated addition
 const multiplication = (
-  a: Maybe<Option<T>>,
-  b: Maybe<Option<T>>
-): Maybe<Option<T>> => {
-  return a.bind((l) =>
-    b.bind((r) => (l === 1 ?
-      r : r === 1 ? l : safeAddition(l, l).bind((v) =>
-        multiplication(
-          Maybe::return(createSome(v)),
-          Maybe::return(createSome(r - 1)))))
-    ));
+  a: Maybe<number>,
+  b: Maybe<number>
+): Maybe<number> => {
+  return a.bind((left) =>
+    b.bind((right) => {
+      if (left === 1) {
+        return Maybe.return(createSome(right));
+      } else if (right === 1) {
+        return Maybe.return(createSome(left));
+      } else {
+        return safeAddition(left, left).bind((doubled) =>
+          multiplication(
+            Maybe.return(createSome(doubled)),
+            Maybe.return(createSome(right - 1))
+          )
+        );
+      }
+    })
+  );
 };
 ```
 
@@ -409,8 +427,161 @@ This makes Haskell's implementation of this concept a lot more compact.
 One thing to notice is that we didn't have to perform any check on the behavior that "division by 0 is bad" anywhere in `multiplication`.
 The error handling is done automatically and we only concern ourselves with the details to implement multiplication.
 
-### Implement allCombinations
-
 ## List Monad
 
+The List monad represents computations that can produce multiple results. Think of it as working with all possible outcomes at once.
+
+Let's say you want to find all possible combinations when rolling two dice. Without monads, you might write nested loops:
+
+```typescript
+const results = [];
+for (let die1 = 1; die1 <= 6; die1++) {
+  for (let die2 = 1; die2 <= 6; die2++) {
+    results.push(die1 + die2);
+  }
+}
+```
+
+With the List monad, this becomes much cleaner:
+
+```typescript
+class ListMonad<T> implements Monad<T[]> {
+    values: T[]
+    
+    constructor(values: T[]) {
+        this.values = values;
+    }
+    
+    static return<T>(value: T): ListMonad<T> {
+        return new ListMonad([value]);
+    }
+    
+    bind<R>(f: (t: T) => ListMonad<R>): ListMonad<R> {
+        const results: R[] = [];
+        for (const value of this.values) {
+            const newList = f(value);
+            results.push(...newList.values);
+        }
+        return new ListMonad(results);
+    }
+}
+```
+
+Now rolling two dice becomes:
+
+```typescript
+const die1 = new ListMonad([1, 2, 3, 4, 5, 6]);
+const die2 = new ListMonad([1, 2, 3, 4, 5, 6]);
+
+const allSums = die1.bind(first => 
+    die2.bind(second => 
+        ListMonad.return(first + second)
+    )
+);
+// allSums.values contains all 36 possible sums
+```
+
+The List monad automatically handles combining all possibilities. When you `bind` a function, it applies that function to every item in the list and flattens the results.
+
 ## State Monad
+
+The State monad is for computations that need to carry some state along. Instead of passing state manually through every function, the monad handles it for you.
+
+Imagine you're building a simple counter that needs to track how many operations you've performed:
+
+```typescript
+class StateMonad<S, T> implements Monad<T> {
+    computation: (state: S) => [T, S]
+    
+    constructor(computation: (state: S) => [T, S]) {
+        this.computation = computation;
+    }
+    
+    static return<S, T>(value: T): StateMonad<S, T> {
+        return new StateMonad(state => [value, state]);
+    }
+    
+    bind<R>(f: (t: T) => StateMonad<S, R>): StateMonad<S, R> {
+        return new StateMonad(initialState => {
+            const [value, newState] = this.computation(initialState);
+            const nextComputation = f(value);
+            return nextComputation.computation(newState);
+        });
+    }
+    
+    // Helper to run the computation with initial state
+    run(initialState: S): [T, S] {
+        return this.computation(initialState);
+    }
+}
+```
+
+Here's how you might use it for a counter:
+
+```typescript
+// Get current counter value
+const getCount = new StateMonad<number, number>(count => [count, count]);
+
+// Increment counter
+const increment = new StateMonad<number, void>(count => [undefined, count + 1]);
+
+// A computation that increments twice and returns the final count
+const doubleIncrement = increment.bind(() =>
+    increment.bind(() =>
+        getCount
+    )
+);
+
+const [finalCount, finalState] = doubleIncrement.run(0);
+// finalCount is 2, finalState is 2
+```
+
+The State monad lets you write code that looks like it's just working with values, but behind the scenes it's properly threading state through all your operations.
+
+## Why Monads Matter
+
+Monads solve a fundamental problem in programming: how to compose operations that have side effects or special behaviors.
+
+Without monads, you end up with code that's harder to reason about:
+
+```typescript
+// Without monads - lots of manual error checking
+function complexOperation(input: string): string | null {
+    const step1 = parseInput(input);
+    if (step1 === null) return null;
+    
+    const step2 = validateData(step1);
+    if (step2 === null) return null;
+    
+    const step3 = processData(step2);
+    if (step3 === null) return null;
+    
+    return step3;
+}
+```
+
+With monads, the error handling is abstracted away:
+
+```typescript
+// With Maybe monad - clean composition
+const complexOperation = (input: string) =>
+    parseInput(input)
+        .bind(validateData)
+        .bind(processData);
+```
+
+Monads give us a consistent way to handle complexity while keeping our code focused on what we actually want to accomplish.
+
+## The Bigger Picture
+
+Programming is about managing complexity. As our programs grow, we need better tools to organize our thoughts and code.
+
+Monads are one such tool. They let us:
+
+1. **Abstract away repetitive patterns** - No more manual error checking everywhere
+2. **Compose operations cleanly** - Chain operations without nested callbacks
+3. **Separate concerns** - Business logic stays separate from error handling, state management, etc.
+
+The key insight is that many programming problems follow similar patterns. Once you recognize these patterns, you can build abstractions that handle the boring, error-prone parts automatically.
+
+Monads might seem abstract at first, but they're really just a way to write cleaner, more reliable code. They help us focus on what our program should do, rather than getting bogged down in how to handle all the edge cases.

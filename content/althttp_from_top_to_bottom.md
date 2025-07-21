@@ -5,26 +5,36 @@ author: "Hanif Bin Ariffin"
 draft: false
 ---
 
-## Before Venturing Further...
+## What is althttpd?
 
-It's nice to have the codebase open as reference.
-Each chapters will cover mostly 1 function and I wouldn't go through every single bit.
-Just the parts that I find interesting.
-I will cover the global variables as we go through.
+althttpd is a simple, small web server created by the same person who made SQLite. It's designed to be easy to understand and audit, making it perfect for learning how web servers work.
 
-Sometimes there will be backtracking and jumping ahead of the source code as I see necessary.
+Unlike massive servers like Apache or Nginx, althttpd is just one C file with about 2,000 lines of code. This makes it an excellent case study for understanding the fundamentals of HTTP servers.
 
-Please read about the design philosophy [here](https://sqlite.org/althttpd/doc/trunk/althttpd.md).
+## What We'll Learn
 
-Check out the source code [here](/althttpd/althttpd.c).
+In this walkthrough, we'll examine the most interesting functions in althttpd. You'll learn:
 
-With that out of the way...Let's go!
+- How web servers parse HTTP requests
+- How they handle different types of responses
+- Security considerations when building servers
+- Why simple designs can be more secure
+
+## Before We Start
+
+I recommend having the source code open in another tab: [althttpd.c](/althttpd/althttpd.c)
+
+Also check out the [design philosophy](https://sqlite.org/althttpd/doc/trunk/althttpd.md) to understand why althttpd is built the way it is.
+
+I won't go through every line of code — just the parts that teach us something interesting about web server design.
+
+Ready? Let's dive in!
 
 ## Functions
 
 ### Escape
 
-This function accepts a C-string and returns another C-string with every double-quote doubled.
+This function takes a string and "escapes" any double-quote characters by doubling them. So `hello "world"` becomes `hello ""world""`.
 
 ```c
 /*
@@ -50,23 +60,16 @@ static char *Escape(char *z){
 }
 ```
 
-First we have the variable declarations at the top of the function...
-So its one of those code. _sigh_.
-Second, we can see that there is 0 calls to `strlen`.
-We perform a single pass on the original strings and a second one on the output string.
-Pretty cool.
+## What's Interesting Here
 
-Notice that the caller of this function have no real way to know if allocations have been made.
-However, from the design philosophy,
+**No strlen() calls**: The function counts characters manually in its loops instead of calling `strlen()`. This is slightly more efficient.
 
-```
-Because each althttpd process only needs to service a single connection, althttpd is single threaded.
-Furthermore, each process only lives for the duration of a single connection, which means that althttpd does not need to worry too much about memory leaks.
-These design factors help keep the althttpd source code simple, which facilitates security auditing and analysis.
-```
+**Memory management**: Notice the function allocates memory but doesn't provide a way for the caller to free it. This might seem like a memory leak, but it's intentional.
 
-So this seems like a conscious desicion.
-If you grep for this function, its only being used in one place.
+According to the althttpd design philosophy:
+> Each process only lives for the duration of a single connection, which means that althttpd does not need to worry too much about memory leaks.
+
+This is a classic example of trading complexity for simplicity. Instead of carefully tracking every allocation, the process just exits when done, and the operating system cleans up all memory automatically.
 
 ```bash
 bash-3.2$ rg 'Escape' ./content/althttpd.c
