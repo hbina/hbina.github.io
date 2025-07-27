@@ -3,3 +3,4 @@ public/
 *.lock
 **/.vscode/
 *__pycache__*
+.idea
