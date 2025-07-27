@@ -1,3 +1,10 @@
+---
+title: "Monad of Consciousness"
+date: 2025-07-04
+author: "Hanif Bin Ariffin"
+draft: false
+---
+
 # What Are You?
 
 This might be the most important question you never ask yourself.
