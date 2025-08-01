@@ -2,7 +2,7 @@
 title: "Phenomenology of Lying (draft)"
 date: 2025-08-01T21:51:09+08:00
 author: "Hanif Bin Ariffin"
-draft: true
+draft: false
 ---
 
 This might be a bit "deep" but bear with me.
