@@ -1,8 +1,8 @@
 ---
-title: "Cheating Is A Social Problem"
-date: 2024-11-17
+title: "Multiplayer Cheating Is A Social Problem"
+date: 2025-08-16
 author: "Hanif Bin Ariffin"
-draft: true
+draft: false
 ---
 
 Recently, there have been some discussion in tackling cheating in video games using kernal anti-cheat.
