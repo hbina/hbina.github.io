@@ -107,4 +107,11 @@ Just the parts that I find interesting.
 I will cover the global variables as we go through.&lt;/p>
 &lt;p>Sometimes there will be backtracking and jumping ahead of the source code as I see necessary.&lt;/p>
 &lt;p>Please read about the design philosophy &lt;a href="https://sqlite.org/althttpd/doc/trunk/althttpd.md">here&lt;/a>.&lt;/p>
-&lt;p>Check out the source code &lt;a href="https://hbina.github.io/althttpd/althttpd.c">here&lt;/a>.&lt;/p></description></item></channel></rss>
+&lt;p>Check out the source code &lt;a href="https://hbina.github.io/althttpd/althttpd.c">here&lt;/a>.&lt;/p></description></item><item><title/><link>https://hbina.github.io/cheating_is_a_social_problem/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://hbina.github.io/cheating_is_a_social_problem/</guid><description>&lt;p>title: &amp;ldquo;Multiplayer Cheating Is A Social Problem&amp;rdquo;
+date: 2025-08-16
+author: &amp;ldquo;Hanif Bin Ariffin&amp;rdquo;
+draft: false&lt;/p>
+&lt;p>Recently, there have been some discussion in tackling cheating in video games using kernal anti-cheat.
+This allows the program to run at a much lower level layer of the machine so that it can own and observe the whole system.
+This is basically giving the program root access to your computer and so it can do whatever it want.
+In general, you do not want to have other people to own your system.&lt;/p></description></item></channel></rss>
