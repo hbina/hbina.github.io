@@ -1,9 +1,7 @@
----
 title: "Multiplayer Cheating Is A Social Problem"
 date: 2025-08-16
 author: "Hanif Bin Ariffin"
 draft: false
----
 
 Recently, there have been some discussion in tackling cheating in video games using kernal anti-cheat.
 This allows the program to run at a much lower level layer of the machine so that it can own and observe the whole system.
