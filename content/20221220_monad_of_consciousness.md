@@ -18,7 +18,7 @@ From my own experience, there's a certain of amount "getting it" or "searching" 
 The second reason that this does not make sense will be obvious when you get it.
 So, either way, this will not make any sense.
 
-Additionally, his knowledge is also useless.
+Additionally, this knowledge is also useless.
 There is nothing to be gain from this understanding, it may even be detrimental to your mental health.
 For myself, it caused a great deal of endless seeking and futile attempt at truly comprehending it.
 
