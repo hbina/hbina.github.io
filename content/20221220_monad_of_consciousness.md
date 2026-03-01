@@ -22,8 +22,6 @@ Additionally, this knowledge is also useless.
 There is nothing to be gain from this understanding, it may even be detrimental to your mental health.
 For myself, it caused a great deal of endless seeking and futile attempt at truly comprehending it.
 
-So far, my journey have ended where it began.
-I have learnt things, but they sort of cancel each other out and what is left is simply nothing.
 
 # What Are You?
 
@@ -63,4 +61,6 @@ That is to say that it doesn't matter what happens, the Self must exist for anyt
 If "you" does not exist, nothing would happen.
 On the other hand, if something does not touch you at all, they might as well not exist.
 So the primacy of existence is that you exist.
+
+# Getting It
 
