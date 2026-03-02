@@ -8,9 +8,6 @@
     url: "https://hbina.github.io",
     summary: "Highly experienced and independent problem solver. Contributes to various widely used open source projects",
     location: (
-      address: "Lot 633, Kampung Tok Dokang, Banggol",
-      postalCode: "15350",
-      city: "Kota Bharu",
       countryCode: "MY",
       region: "Kelantan"
     ),
@@ -60,12 +57,12 @@
       url: "https://confinex.com/",
       startDate: "2023-12-31",
       endDate: "",
-      summary: "Help develop and maintain an entire trading infrastructure stack from market data all the way to post-processing to sending orders",
+      summary: "Help develop and maintain an entire trading infrastructure stack from market data processing, risk management, order sending and storage of big data",
       highlights: (
-        "Developed sub-microsecond market data processing library",
-        "Used kernel bypass for packet filtering",
-        "Developed automations to process market data",
-        "Developed risk management and order sending system",
+        "Developed market data processing library at <400 nanosecond latency",
+        "Developed kernel bypass application using SolarFlare NIC",
+        "Developed automations to process terabytes of market data across multiple exchanges every day",
+        "Developed risk management and order sending system for multiple exchanges",
       )
     )
   ),
@@ -200,7 +197,6 @@
 
 // Font settings
 #set text(
-  font: "Linux Libertine",
   size: 10pt,
   lang: "en",
 )
