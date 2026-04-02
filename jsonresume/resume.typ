@@ -161,8 +161,8 @@
 // Set document metadata
 #set document(title: resume_data.basics.name + " - Resume", author: resume_data.basics.name)
 
-// Page setup
-#set page(paper: "a4", margin: (x: 0.5in, y: 0.5in))
+// Page setup - Full bleed sidebar requires 0 margin
+#set page(paper: "a4", margin: 0pt)
 
 // Font settings
 #set text(font: "Libertinus Serif", size: 9.5pt) // Standard Typst-bundled font
@@ -179,129 +179,138 @@
 
 // Skill tag helper
 #let skill_tag(content) = box(
-  fill: light_gray,
+  fill: white, // White tags on gray background
   radius: 2pt,
   inset: (x: 4pt, y: 2pt),
   outset: (y: 1pt),
+  stroke: 0.25pt + gray.lighten(50%),
   text(size: 8pt, weight: "medium", content)
 )
 
 // Main layout
 #grid(
-  columns: (1fr, 2.5fr),
-  column-gutter: 0.4in,
+  columns: (1.2fr, 2.5fr),
+  rows: (100%), // Spans full page height
+  column-gutter: 0pt,
+  fill: (x, y) => if x == 0 { light_gray } else { white },
   
   // Sidebar (Left Column)
   [
-    #align(center)[
-      #box(
-        width: 80%,
-        stroke: 1pt + accent_color,
-        radius: 12pt,
-        clip: true,
-        image("profile pic.jpg", width: 100%)
-      )
-    ]
-    #v(1em)
-    #text(size: 20pt, weight: "bold", fill: accent_color)[#resume_data.basics.name]
-    #v(0.1em)
-    #text(size: 12pt, weight: "medium", gray)[#resume_data.basics.label]
-    
-    #v(1em)
-    
-    // Contact Info
-    #set text(size: 8.5pt)
-    #link("mailto:" + resume_data.basics.email)[#resume_data.basics.email] \
-    #resume_data.basics.phone \
-    #link(resume_data.basics.url)[#resume_data.basics.url] \
-    
-    #v(0.8em)
-    #{
-      for profile in resume_data.basics.profiles [
-        #link(profile.url)[#profile.network] \
+    #set pad(left: 0.4in, right: 0.2in, top: 0.5in, bottom: 0.5in)
+    #pad()[
+      #align(center)[
+        #box(
+          width: 85%,
+          stroke: 1pt + accent_color,
+          radius: 12pt,
+          clip: true,
+          image("profile pic.jpg", width: 100%)
+        )
       ]
-    }
-    
-    #v(1.5em)
-    
-    == Technical Skills
-    #{
-      for skill_group in resume_data.skills [
-        #text(weight: "bold", size: 9pt)[#skill_group.category] \
-        #v(0.2em)
-        #{
-          for item in skill_group.items {
-            skill_tag(item)
-            h(3pt)
-          }
-        }
-        #v(1em)
-      ]
-    }
-    
-    #v(1em)
-    
-    == Education
-    #{
-      for edu in resume_data.education [
-        #text(weight: "bold")[#edu.studyType in #edu.area] \
-        #edu.institution \
-        #text(style: "italic", size: 8.5pt, gray)[
-          #format_date(edu.startDate) -- #format_date(edu.endDate) \
-          #edu.location
+      #v(1.5em)
+      #text(size: 20pt, weight: "bold", fill: accent_color)[#resume_data.basics.name]
+      #v(0.1em)
+      #text(size: 12pt, weight: "medium", gray)[#resume_data.basics.label]
+      
+      #v(1.5em)
+      
+      // Contact Info
+      #set text(size: 8.5pt)
+      #link("mailto:" + resume_data.basics.email)[#resume_data.basics.email] \
+      #resume_data.basics.phone \
+      #link(resume_data.basics.url)[#resume_data.basics.url] \
+      
+      #v(1em)
+      #{
+        for profile in resume_data.basics.profiles [
+          #link(profile.url)[#profile.network] \
         ]
-        #v(1em)
-      ]
-    }
+      }
+      
+      #v(2em)
+      
+      == Technical Skills
+      #{
+        for skill_group in resume_data.skills [
+          #text(weight: "bold", size: 9pt)[#skill_group.category] \
+          #v(0.4em)
+          #{
+            for item in skill_group.items {
+              skill_tag(item)
+              h(3pt)
+            }
+          }
+          #v(1.2em)
+        ]
+      }
+      
+      #v(1.5em)
+      
+      == Education
+      #{
+        for edu in resume_data.education [
+          #text(weight: "bold")[#edu.studyType in #edu.area] \
+          #edu.institution \
+          #text(style: "italic", size: 8.5pt, gray)[
+            #format_date(edu.startDate) -- #format_date(edu.endDate) \
+            #edu.location
+          ]
+          #v(1em)
+        ]
+      }
+    ]
   ],
   
   // Main Content (Right Column)
   [
-    #v(0.5em)
-    #resume_data.basics.summary
-    
-    #v(1.2em)
-    
-    == Work Experience
-    #{
-      for job in resume_data.work [
-        #text(weight: "bold", size: 10.5pt)[#job.position] #h(1fr) #text(style: "italic", size: 9pt)[
-          #format_date(job.startDate) -- #format_date(job.endDate)
-        ] \
-        #text(weight: "semibold")[#job.name] | #text(style: "italic")[#job.location]
-        
-        #v(0.2em)
-        #text(size: 9pt)[#job.summary]
-        #v(0.1em)
-        #for highlight in job.highlights [
-          - #highlight
+    #set pad(left: 0.3in, right: 0.4in, top: 0.5in, bottom: 0.5in)
+    #pad()[
+      #v(0.5em)
+      #resume_data.basics.summary
+      
+      #v(1.5em)
+      
+      == Work Experience
+      #{
+        for job in resume_data.work [
+          #text(weight: "bold", size: 10.5pt)[#job.position] #h(1fr) #text(style: "italic", size: 9pt)[
+            #format_date(job.startDate) -- #format_date(job.endDate)
+          ] \
+          #text(weight: "semibold")[#job.name] | #text(style: "italic")[#job.location]
+          
+          #v(0.2em)
+          #text(size: 9pt)[#job.summary]
+          #v(0.2em)
+          #for highlight in job.highlights [
+            - #highlight
+          ]
+          #v(1em)
         ]
-        #v(0.8em)
-      ]
-    }
-    
-    == Open Source & Contributions
-    #{
-      for contrib in resume_data.contributions [
-        #text(weight: "bold")[#contrib.name] -- #text(style: "italic")[#contrib.role]
-        #v(0.2em)
-        #for highlight in contrib.highlights [
-          - #highlight
+      }
+      
+      == Open Source & Contributions
+      #{
+        for contrib in resume_data.contributions [
+          #text(weight: "bold")[#contrib.name] -- #text(style: "italic")[#contrib.role]
+          #v(0.2em)
+          #for highlight in contrib.highlights [
+            - #highlight
+          ]
+          #v(0.8em)
         ]
-        #v(0.6em)
-      ]
-    }
-    
-    == Key Projects
-    #{
-      for project in resume_data.projects [
-        #text(weight: "bold")[#project.name] | #text(size: 9pt, project.summary)
-        #v(0.1em)
-        #for highlight in project.highlights [
-          - #highlight
+      }
+      
+      == Key Projects
+      #{
+        for project in resume_data.projects [
+          #text(weight: "bold")[#project.name] | #text(size: 9pt, project.summary)
+          #v(0.2em)
+          #for highlight in project.highlights [
+            - #highlight
+          ]
+          #v(0.8em)
         ]
-        #v(0.6em)
-      ]
-    }
+      }
+    ]
   ]
 )
