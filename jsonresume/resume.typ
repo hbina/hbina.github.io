@@ -6,14 +6,14 @@
     email: "hanif.ariffin.4326@gmail.com",
     phone: "+60 175930487",
     url: "https://hbina.github.io",
-    summary: "Systems Engineer specialized in high-performance computing and low-latency infrastructure. Proven track record in optimizing C++ applications at nanosecond scales, processing terabytes of market data, and contributing to core open-source infrastructure like Redis and Rust Coreutils.",
+    summary: "Systems engineer specializing in high-performance computing and low-latency infrastructure, with a proven track record of optimizing performance-critical C++ applications, processing terabytes of market data, and contributing to major open-source projects, including Redis and Rust Coreutils.",
     location: (
       countryCode: "MY",
       region: "Kelantan"
     ),
     profiles: (
       (
-        network: "Github",
+        network: "GitHub",
         username: "hbina",
         url: "https://github.com/hbina"
       ),
@@ -36,7 +36,7 @@
     ),
     (
       category: "Systems & Low Latency",
-      items: ("Kernel Bypass (ef_vi)", "SolarFlare", "Lock-free structures", "Shared Memory", "HFT Infrastructure")
+      items: ("Kernel Bypass (ef_vi)", "Solarflare", "Lock-free structures", "Shared Memory", "HFT Infrastructure")
     ),
     (
       category: "Data & Infrastructure",
@@ -51,32 +51,33 @@
       url: "https://confinex.com/",
       startDate: "2023-12-31",
       endDate: "",
-      summary: "Developing and maintaining an entire trading infrastructure stack for high-frequency trading.",
+      summary: "Developing and maintaining a complete infrastructure stack for high-frequency trading.",
       highlights: (
-        "Optimized C++ lock-free shared memory queue library for sub-microsecond IPC.",
-        "Developed market data processing library with <400ns latency at P99.",
-        "Built kernel bypass C++ applications using SolarFlare's ef_vi for direct NIC access.",
+        "Optimized a lock-free C++ shared-memory queue library.",
+        "Developed a market data processing library supporting data formats from multiple exchanges.",
+        "Built kernel-bypass C++ applications using Solarflare's ef_vi API for direct NIC access.",
         "Engineered high-performance C++ bridges for Python JIT interaction with brokers.",
-        "Automated processing of terabytes of market data across multiple global exchanges.",
+        "Automated the processing of terabytes of market data from exchanges worldwide.",
+        "Developed an FPGA-based market data processor for the ExaNIC X25 card.",
       )
     ),
     (
       name: "Globelise",
       location: "Singapore",
-      position: "Senior Fullstack Developer",
+      position: "Senior Full-Stack Developer",
       url: "https://www.globelise.com/",
       startDate: "2022-02-01",
       endDate: "2022-07-01",
       summary: "Designed and implemented the backend for a global hiring management system.",
       highlights: (
-        "Led development of 3rd party payroll integrations for international markets.",
-        "Implemented secure, scalable backend architecture for multi-region deployment.",
+        "Led the development of third-party payroll integrations for international markets.",
+        "Implemented a secure, scalable backend architecture for multi-region deployment.",
       )
     ),
     (
       name: "Setel (Petronas)",
       location: "Malaysia",
-      position: "Fullstack developer",
+      position: "Full-Stack Developer",
       url: "https://www.setel.com/",
       startDate: "2020-12-01",
       endDate: "2022-02-01",
@@ -93,7 +94,7 @@
       role: "Contributor",
       summary: "Memory database used by millions of applications.",
       highlights: (
-        "Fixed critical crash in ZINTER involving SET and ZSET types.",
+        "Fixed a critical crash in ZINTER involving SET and ZSET types.",
         "Optimized integer checks and suggested SDS memory layout improvements.",
       )
     ),
@@ -102,8 +103,8 @@
       role: "Contributor",
       summary: "GNU coreutils rewrite in Rust.",
       highlights: (
-        "Fully reimplemented 'tr' utility to match POSIX/GNU standards (100% test pass).",
-        "Performance and stability improvements to 'ls' and 'more'.",
+        "Reimplemented the 'tr' utility to match POSIX/GNU standards, achieving a 100% test pass rate.",
+        "Improved the performance and stability of 'ls' and 'more'.",
       )
     ),
     (
@@ -119,12 +120,12 @@
     (
       name: "radish",
       summary: "High-performance Redis clone in Go.",
-      highlights: ("90% of reference Redis performance using multithreaded architecture.",)
+      highlights: ("Achieved 90% of Redis's performance using a multithreaded architecture.",)
     ),
     (
       name: "MIPS Processor",
-      summary: "VHDL circuit with forwarding unit and branch protection.",
-      highlights: ("Implemented full instruction pipeline with hazard mitigation.",)
+      summary: "A VHDL implementation of a MIPS processor with forwarding and branch-hazard protection.",
+      highlights: ("Implemented a full instruction pipeline with hazard mitigation.",)
     )
   ),
   education: (
@@ -288,7 +289,7 @@
         ]
       }
       
-      == Open Source & Contributions
+      == Open-Source Contributions
       #{
         for contrib in resume_data.contributions [
           #text(weight: "bold")[#contrib.name] -- #text(style: "italic")[#contrib.role]
