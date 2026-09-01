@@ -8,8 +8,11 @@
     url: "https://hbina.github.io",
     summary: "Systems engineer specializing in high-performance computing and low-latency infrastructure, with a proven track record of optimizing performance-critical C++ applications, processing terabytes of market data, and contributing to major open-source projects, including Redis and Rust Coreutils.",
     location: (
+      address: "Persiaran Surian, Tropicana Indah",
+      postalCode: "47410",
+      city: "Petaling Jaya",
       countryCode: "MY",
-      region: "Kelantan"
+      region: "Selangor"
     ),
     profiles: (
       (
@@ -220,6 +223,9 @@
       #link("mailto:" + resume_data.basics.email)[#resume_data.basics.email] \
       #resume_data.basics.phone \
       #link(resume_data.basics.url)[#resume_data.basics.url] \
+      #resume_data.basics.location.address, \
+      #resume_data.basics.location.postalCode #resume_data.basics.location.city, \
+      #resume_data.basics.location.region \
       
       #v(1em)
       #{
