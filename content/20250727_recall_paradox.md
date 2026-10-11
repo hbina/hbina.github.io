@@ -2,7 +2,7 @@
 title: "Recall and Tools Like It Are Bad If They're Effective (draft)"
 date: 2025-07-27
 author: "Hanif Bin Ariffin"
-draft: false
+draft: true
 ---
 
 When Microsoft announced Recall, the immediate backlash focused on privacy concerns and security vulnerabilities.
