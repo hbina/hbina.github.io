@@ -1,0 +1,10 @@
+# Overlay for an offline, single-file export.
+staticDir = []
+disableKinds = ['section', 'taxonomy', 'term', 'RSS', 'sitemap', 'robotsTXT']
+
+[outputs]
+home = ['HTML']
+page = []
+
+[params]
+singleFile = true

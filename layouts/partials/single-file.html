@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="{{ .Site.LanguageCode }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ .Site.Title }}</title>
+    <style>
+      body { max-width: 1000px; margin: auto; padding: 1rem; background: #B3B3B3; line-height: 1.5; }
+      article { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #666; }
+      h1 { text-align: center; }
+      pre { overflow-x: auto; padding: 1rem; }
+      img { max-width: 100%; height: auto; }
+      :target { scroll-margin-top: 1rem; }
+    </style>
+  </head>
+  <body>
+    <header id="home">
+      {{ .Content }}
+      <nav aria-label="Articles">
+        <ul>
+          {{ range .Site.RegularPages.ByDate.Reverse }}
+          <li><a href="#post-{{ .File.ContentBaseName }}">{{ .Date.Format "2006-01-02" }} | {{ .Title }}</a></li>
+          {{ end }}
+        </ul>
+      </nav>
+    </header>
+    <main>
+      {{ range .Site.RegularPages.ByDate.Reverse }}
+      <article id="post-{{ .File.ContentBaseName }}">
+        <a href="#home">home</a>
+        <h1>{{ .Title }}</h1>
+        {{/* Embed the source download linked by the althttpd article. */}}
+        {{ $source := readFile "static/althttpd/althttpd.c" | base64Encode }}
+        {{ $download := printf "href=\"data:text/plain;base64,%s\" download=\"althttpd.c\"" $source }}
+        {{ replace .Content "href=\"/althttpd/althttpd.c\"" $download | safeHTML }}
+      </article>
+      {{ end }}
+    </main>
+  </body>
+</html>

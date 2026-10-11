@@ -1,3 +1,6 @@
+{{ if .Site.Params.singleFile }}
+  {{ partial "single-file.html" . }}
+{{ else }}
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -22,3 +25,4 @@
     </ul>
   </body>
 </html>
+{{ end }}
