@@ -5,6 +5,10 @@ author: "Hanif Bin Ariffin"
 draft: false
 ---
 
+See
+
+https://www.principles.com/principles/b1552e2e-f77b-46c0-b7dd-ba1f5c2b3407/
+
 I have been reading and listening to many works by Ray Dalio, and I have learnt many things from him.
 I don't hear people talk about radical transparency often, so I very much appreciate his discussion of it.
 I agree with the principle in general. However, I would like to propose an improvement, mostly around the framing.
